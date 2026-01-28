@@ -1,478 +1,468 @@
 import requests
 import sys
+from datetime import datetime, date
 import json
-from datetime import datetime, timedelta
 
-class StudentManagementAPITester:
+class StudentManagementTester:
     def __init__(self, base_url="https://primary-scholar.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.admin_token = None
         self.teacher_token = None
-        self.parent_token = None
         self.tests_run = 0
         self.tests_passed = 0
-        self.test_results = []
-        
-        # Store created IDs for cleanup and testing
-        self.created_users = []
-        self.created_students = []
-        self.created_classes = []
-        self.created_grades = []
-        self.created_attendance = []
+        self.created_resources = {
+            'users': [],
+            'students': [],
+            'classes': [],
+            'gradebook': []
+        }
 
-    def log_test(self, name, success, details="", error=""):
-        """Log test result"""
-        self.tests_run += 1
-        if success:
-            self.tests_passed += 1
-            print(f"✅ {name}")
-        else:
-            print(f"❌ {name} - {error}")
-        
-        self.test_results.append({
-            "name": name,
-            "success": success,
-            "details": details,
-            "error": error
-        })
-
-    def make_request(self, method, endpoint, data=None, token=None, params=None):
-        """Make HTTP request with proper headers"""
+    def run_test(self, name, method, endpoint, expected_status, data=None, token=None):
+        """Run a single API test"""
         url = f"{self.base_url}/{endpoint}"
         headers = {'Content-Type': 'application/json'}
         if token:
             headers['Authorization'] = f'Bearer {token}'
 
+        self.tests_run += 1
+        print(f"\n🔍 Testing {name}...")
+        
         try:
             if method == 'GET':
-                response = requests.get(url, headers=headers, params=params)
+                response = requests.get(url, headers=headers, params=data)
             elif method == 'POST':
                 response = requests.post(url, json=data, headers=headers)
             elif method == 'PUT':
                 response = requests.put(url, json=data, headers=headers)
             elif method == 'DELETE':
                 response = requests.delete(url, headers=headers)
-            
-            return response
+
+            success = response.status_code == expected_status
+            if success:
+                self.tests_passed += 1
+                print(f"✅ Passed - Status: {response.status_code}")
+                try:
+                    return True, response.json() if response.content else {}
+                except:
+                    return True, {}
+            else:
+                print(f"❌ Failed - Expected {expected_status}, got {response.status_code}")
+                try:
+                    print(f"   Response: {response.json()}")
+                except:
+                    print(f"   Response: {response.text}")
+                return False, {}
+
         except Exception as e:
-            return None
+            print(f"❌ Failed - Error: {str(e)}")
+            return False, {}
 
-    def test_health_check(self):
-        """Test API health endpoints"""
-        print("\n🔍 Testing Health Endpoints...")
+    def test_admin_registration_and_login(self):
+        """Test admin user registration and login"""
+        print("\n=== ADMIN AUTHENTICATION TESTS ===")
         
-        # Test root endpoint
-        response = self.make_request('GET', '')
-        success = response and response.status_code == 200
-        self.log_test("Root endpoint", success, 
-                     response.json() if success else "", 
-                     f"Status: {response.status_code if response else 'No response'}")
-        
-        # Test health endpoint
-        response = self.make_request('GET', 'health')
-        success = response and response.status_code == 200
-        self.log_test("Health check", success,
-                     response.json() if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-    def test_user_registration_and_login(self):
-        """Test user registration and login for all roles"""
-        print("\n🔍 Testing User Registration & Login...")
-        
-        timestamp = datetime.now().strftime("%H%M%S")
-        
-        # Test Admin Registration
+        # Register admin user
         admin_data = {
-            "name": f"Test Admin {timestamp}",
-            "email": f"admin{timestamp}@test.com",
-            "password": "TestPass123!",
-            "role": "admin"
+            "email": f"admin_{datetime.now().strftime('%H%M%S')}@test.com",
+            "name": "Test Admin",
+            "role": "admin",
+            "password": "AdminPass123!"
         }
         
-        response = self.make_request('POST', 'auth/register', admin_data)
-        success = response and response.status_code == 200
-        if success:
-            result = response.json()
-            self.admin_token = result['access_token']
-            self.created_users.append(result['user']['id'])
-        self.log_test("Admin registration", success, 
-                     "Token received" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
+        success, response = self.run_test(
+            "Admin Registration",
+            "POST",
+            "auth/register",
+            200,
+            data=admin_data
+        )
+        
+        if success and 'access_token' in response:
+            self.admin_token = response['access_token']
+            self.created_resources['users'].append(response['user']['id'])
+            print(f"   Admin ID: {response['user']['id']}")
+            print(f"   Admin Role: {response['user']['role']}")
+            return True
+        return False
 
-        # Test Teacher Registration
+    def test_teacher_registration(self):
+        """Test teacher user creation by admin"""
+        print("\n=== TEACHER CREATION TEST ===")
+        
         teacher_data = {
-            "name": f"Test Teacher {timestamp}",
-            "email": f"teacher{timestamp}@test.com", 
-            "password": "TestPass123!",
-            "role": "teacher"
+            "email": f"teacher_{datetime.now().strftime('%H%M%S')}@test.com",
+            "name": "Test Teacher",
+            "role": "teacher",
+            "password": "TeacherPass123!"
         }
         
-        response = self.make_request('POST', 'auth/register', teacher_data)
-        success = response and response.status_code == 200
+        success, response = self.run_test(
+            "Teacher Creation by Admin",
+            "POST",
+            "users",
+            200,
+            data=teacher_data,
+            token=self.admin_token
+        )
+        
         if success:
-            result = response.json()
-            self.teacher_token = result['access_token']
-            self.created_users.append(result['user']['id'])
-        self.log_test("Teacher registration", success,
-                     "Token received" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
+            self.created_resources['users'].append(response['id'])
+            
+            # Login as teacher to get token
+            login_success, login_response = self.run_test(
+                "Teacher Login",
+                "POST",
+                "auth/login",
+                200,
+                data={"email": teacher_data["email"], "password": teacher_data["password"]}
+            )
+            
+            if login_success and 'access_token' in login_response:
+                self.teacher_token = login_response['access_token']
+                return True
+        return False
 
-        # Test Parent Registration
-        parent_data = {
-            "name": f"Test Parent {timestamp}",
-            "email": f"parent{timestamp}@test.com",
-            "password": "TestPass123!",
-            "role": "parent"
-        }
+    def test_navigation_access(self):
+        """Test admin can access all navigation endpoints"""
+        print("\n=== NAVIGATION ACCESS TESTS ===")
         
-        response = self.make_request('POST', 'auth/register', parent_data)
-        success = response and response.status_code == 200
-        if success:
-            result = response.json()
-            self.parent_token = result['access_token']
-            self.created_users.append(result['user']['id'])
-        self.log_test("Parent registration", success,
-                     "Token received" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-        # Test Login
-        login_data = {
-            "email": admin_data["email"],
-            "password": admin_data["password"]
-        }
+        endpoints = [
+            ("Dashboard Stats", "stats/dashboard"),
+            ("Students List", "students"),
+            ("Classes List", "classes"),
+            ("Attendance List", "attendance"),
+            ("Gradebook List", "gradebook"),
+            ("Users List", "users"),
+            ("Subjects List", "subjects"),
+            ("Houses List", "houses"),
+            ("Grading Scheme", "grading-scheme")
+        ]
         
-        response = self.make_request('POST', 'auth/login', login_data)
-        success = response and response.status_code == 200
-        self.log_test("Admin login", success,
-                     "Login successful" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-        # Test /auth/me endpoint
-        response = self.make_request('GET', 'auth/me', token=self.admin_token)
-        success = response and response.status_code == 200
-        self.log_test("Get current user", success,
-                     "User info retrieved" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-    def test_class_management(self):
-        """Test class CRUD operations"""
-        print("\n🔍 Testing Class Management...")
+        all_passed = True
+        for name, endpoint in endpoints:
+            success, _ = self.run_test(
+                f"Admin Access to {name}",
+                "GET",
+                endpoint,
+                200,
+                token=self.admin_token
+            )
+            if not success:
+                all_passed = False
         
-        if not self.admin_token:
-            self.log_test("Class management", False, "", "No admin token available")
-            return
-
-        # Create class
-        class_data = {
-            "name": "Test Class 1A",
-            "grade_level": "1",
-            "teacher_id": "",
-            "room_number": "101",
-            "academic_year": "2025"
-        }
-        
-        response = self.make_request('POST', 'classes', class_data, self.admin_token)
-        success = response and response.status_code == 200
-        class_id = None
-        if success:
-            result = response.json()
-            class_id = result['id']
-            self.created_classes.append(class_id)
-        self.log_test("Create class", success,
-                     f"Class ID: {class_id}" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-        # Get classes
-        response = self.make_request('GET', 'classes', token=self.admin_token)
-        success = response and response.status_code == 200
-        self.log_test("Get classes", success,
-                     f"Found {len(response.json()) if success else 0} classes" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-        # Update class
-        if class_id:
-            update_data = {**class_data, "room_number": "102"}
-            response = self.make_request('PUT', f'classes/{class_id}', update_data, self.admin_token)
-            success = response and response.status_code == 200
-            self.log_test("Update class", success,
-                         "Class updated" if success else "",
-                         f"Status: {response.status_code if response else 'No response'}")
-
-        # Test teacher access (should see only their classes)
-        response = self.make_request('GET', 'classes', token=self.teacher_token)
-        success = response and response.status_code == 200
-        self.log_test("Teacher get classes", success,
-                     "Teacher can access classes" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
+        return all_passed
 
     def test_student_management(self):
-        """Test student CRUD operations"""
-        print("\n🔍 Testing Student Management...")
+        """Test student creation with full details and age calculation"""
+        print("\n=== STUDENT MANAGEMENT TESTS ===")
         
-        if not self.admin_token:
-            self.log_test("Student management", False, "", "No admin token available")
-            return
-
-        # Create student
+        # First create a class
+        class_data = {
+            "name": "Grade 5A",
+            "grade_level": "Grade 5",
+            "academic_year": "2024/2025",
+            "room_number": "101"
+        }
+        
+        success, class_response = self.run_test(
+            "Create Class",
+            "POST",
+            "classes",
+            200,
+            data=class_data,
+            token=self.admin_token
+        )
+        
+        if not success:
+            return False
+        
+        class_id = class_response['id']
+        self.created_resources['classes'].append(class_id)
+        
+        # Create student with full details
         student_data = {
             "first_name": "John",
+            "middle_name": "Michael",
             "last_name": "Doe",
-            "date_of_birth": "2015-05-15",
+            "date_of_birth": "2010-05-15",  # Should calculate age as ~14
             "gender": "Male",
-            "grade_level": "1",
-            "class_id": self.created_classes[0] if self.created_classes else "",
-            "parent_id": self.created_users[2] if len(self.created_users) > 2 else "",
-            "address": "123 Test Street",
-            "emergency_contact": "555-0123",
-            "notes": "Test student"
+            "address": "123 Main Street, Test City",
+            "house": "Red House",
+            "class_id": class_id,
+            "emergency_contact": "+1234567890",
+            "teacher_comment": "Excellent student with great potential"
         }
         
-        response = self.make_request('POST', 'students', student_data, self.admin_token)
-        success = response and response.status_code == 200
-        student_id = None
+        success, student_response = self.run_test(
+            "Create Student with Full Details",
+            "POST",
+            "students",
+            200,
+            data=student_data,
+            token=self.admin_token
+        )
+        
         if success:
-            result = response.json()
-            student_id = result['id']
-            self.created_students.append(student_id)
-        self.log_test("Create student", success,
-                     f"Student ID: {student_id}" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-        # Get students
-        response = self.make_request('GET', 'students', token=self.admin_token)
-        success = response and response.status_code == 200
-        self.log_test("Get students (admin)", success,
-                     f"Found {len(response.json()) if success else 0} students" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-        # Test teacher access
-        response = self.make_request('GET', 'students', token=self.teacher_token)
-        success = response and response.status_code == 200
-        self.log_test("Get students (teacher)", success,
-                     "Teacher can access students" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-        # Test parent access (should only see their children)
-        response = self.make_request('GET', 'students', token=self.parent_token)
-        success = response and response.status_code == 200
-        self.log_test("Get students (parent)", success,
-                     "Parent can access students" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-        # Update student
-        if student_id:
-            update_data = {**student_data, "notes": "Updated test student"}
-            response = self.make_request('PUT', f'students/{student_id}', update_data, self.admin_token)
-            success = response and response.status_code == 200
-            self.log_test("Update student", success,
-                         "Student updated" if success else "",
-                         f"Status: {response.status_code if response else 'No response'}")
-
-    def test_attendance_management(self):
-        """Test attendance tracking"""
-        print("\n🔍 Testing Attendance Management...")
-        
-        if not self.teacher_token or not self.created_students:
-            self.log_test("Attendance management", False, "", "No teacher token or students available")
-            return
-
-        # Mark individual attendance
-        attendance_data = {
-            "student_id": self.created_students[0],
-            "class_id": self.created_classes[0] if self.created_classes else "",
-            "date": datetime.now().strftime("%Y-%m-%d"),
-            "status": "present"
-        }
-        
-        response = self.make_request('POST', 'attendance', attendance_data, self.teacher_token)
-        success = response and response.status_code == 200
-        if success:
-            result = response.json()
-            self.created_attendance.append(result['id'])
-        self.log_test("Mark attendance", success,
-                     "Attendance marked" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-        # Bulk attendance
-        bulk_data = {
-            "class_id": self.created_classes[0] if self.created_classes else "",
-            "date": datetime.now().strftime("%Y-%m-%d"),
-            "records": [
-                {"student_id": self.created_students[0], "status": "present"}
-            ]
-        }
-        
-        response = self.make_request('POST', 'attendance/bulk', bulk_data, self.teacher_token)
-        success = response and response.status_code == 200
-        self.log_test("Bulk attendance", success,
-                     "Bulk attendance recorded" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-        # Get attendance
-        params = {"class_id": self.created_classes[0] if self.created_classes else ""}
-        response = self.make_request('GET', 'attendance', token=self.teacher_token, params=params)
-        success = response and response.status_code == 200
-        self.log_test("Get attendance", success,
-                     f"Found {len(response.json()) if success else 0} records" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-    def test_grade_management(self):
-        """Test grade management"""
-        print("\n🔍 Testing Grade Management...")
-        
-        if not self.teacher_token or not self.created_students:
-            self.log_test("Grade management", False, "", "No teacher token or students available")
-            return
-
-        # Create grade
-        grade_data = {
-            "student_id": self.created_students[0],
-            "class_id": self.created_classes[0] if self.created_classes else "",
-            "subject": "Math",
-            "grade_type": "exam",
-            "score": 85.5,
-            "max_score": 100.0,
-            "date": datetime.now().strftime("%Y-%m-%d"),
-            "term": "Term 1",
-            "comments": "Good work"
-        }
-        
-        response = self.make_request('POST', 'grades', grade_data, self.teacher_token)
-        success = response and response.status_code == 200
-        grade_id = None
-        if success:
-            result = response.json()
-            grade_id = result['id']
-            self.created_grades.append(grade_id)
-        self.log_test("Create grade", success,
-                     f"Grade ID: {grade_id}" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-        # Get grades
-        response = self.make_request('GET', 'grades', token=self.teacher_token)
-        success = response and response.status_code == 200
-        self.log_test("Get grades", success,
-                     f"Found {len(response.json()) if success else 0} grades" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-        # Update grade
-        if grade_id:
-            update_data = {**grade_data, "score": 90.0, "comments": "Excellent work"}
-            response = self.make_request('PUT', f'grades/{grade_id}', update_data, self.teacher_token)
-            success = response and response.status_code == 200
-            self.log_test("Update grade", success,
-                         "Grade updated" if success else "",
-                         f"Status: {response.status_code if response else 'No response'}")
-
-    def test_user_management(self):
-        """Test user management (admin only)"""
-        print("\n🔍 Testing User Management...")
-        
-        if not self.admin_token:
-            self.log_test("User management", False, "", "No admin token available")
-            return
-
-        # Get all users
-        response = self.make_request('GET', 'users', token=self.admin_token)
-        success = response and response.status_code == 200
-        self.log_test("Get users", success,
-                     f"Found {len(response.json()) if success else 0} users" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-        # Test role update
-        if self.created_users:
-            user_id = self.created_users[1]  # Teacher user
-            role_data = {"role": "teacher"}
-            response = self.make_request('PUT', f'users/{user_id}/role', role_data, self.admin_token)
-            success = response and response.status_code == 200
-            self.log_test("Update user role", success,
-                         "Role updated" if success else "",
-                         f"Status: {response.status_code if response else 'No response'}")
-
-        # Test non-admin access (should fail)
-        response = self.make_request('GET', 'users', token=self.teacher_token)
-        success = response and response.status_code == 403
-        self.log_test("Teacher access to users (should fail)", success,
-                     "Access denied as expected" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-    def test_dashboard_stats(self):
-        """Test dashboard statistics"""
-        print("\n🔍 Testing Dashboard Stats...")
-        
-        # Test admin dashboard
-        response = self.make_request('GET', 'stats/dashboard', token=self.admin_token)
-        success = response and response.status_code == 200
-        self.log_test("Admin dashboard stats", success,
-                     "Stats retrieved" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-        # Test teacher dashboard
-        response = self.make_request('GET', 'stats/dashboard', token=self.teacher_token)
-        success = response and response.status_code == 200
-        self.log_test("Teacher dashboard stats", success,
-                     "Stats retrieved" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-        # Test parent dashboard
-        response = self.make_request('GET', 'stats/dashboard', token=self.parent_token)
-        success = response and response.status_code == 200
-        self.log_test("Parent dashboard stats", success,
-                     "Stats retrieved" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-    def test_helper_endpoints(self):
-        """Test helper endpoints"""
-        print("\n🔍 Testing Helper Endpoints...")
-        
-        # Get teachers (admin only)
-        response = self.make_request('GET', 'teachers', token=self.admin_token)
-        success = response and response.status_code == 200
-        self.log_test("Get teachers list", success,
-                     f"Found {len(response.json()) if success else 0} teachers" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-        # Get parents (admin/teacher)
-        response = self.make_request('GET', 'parents', token=self.admin_token)
-        success = response and response.status_code == 200
-        self.log_test("Get parents list", success,
-                     f"Found {len(response.json()) if success else 0} parents" if success else "",
-                     f"Status: {response.status_code if response else 'No response'}")
-
-    def run_all_tests(self):
-        """Run all test suites"""
-        print("🚀 Starting Student Management System API Tests")
-        print(f"📍 Testing against: {self.base_url}")
-        
-        try:
-            self.test_health_check()
-            self.test_user_registration_and_login()
-            self.test_class_management()
-            self.test_student_management()
-            self.test_attendance_management()
-            self.test_grade_management()
-            self.test_user_management()
-            self.test_dashboard_stats()
-            self.test_helper_endpoints()
+            self.created_resources['students'].append(student_response['id'])
             
-        except Exception as e:
-            print(f"❌ Test suite failed with error: {str(e)}")
-            return False
-
-        # Print summary
-        print(f"\n📊 Test Results: {self.tests_passed}/{self.tests_run} passed")
+            # Verify age calculation
+            expected_age = date.today().year - 2010
+            if student_response.get('age') == expected_age:
+                print(f"✅ Age calculation correct: {student_response['age']} years")
+                self.tests_passed += 1
+            else:
+                print(f"❌ Age calculation incorrect: got {student_response.get('age')}, expected {expected_age}")
+            
+            self.tests_run += 1
+            return student_response['id']
         
-        if self.tests_passed == self.tests_run:
-            print("🎉 All tests passed!")
-            return True
-        else:
-            print("⚠️  Some tests failed")
+        return None
+
+    def test_gradebook_functionality(self):
+        """Test gradebook with multiple subjects and grading scheme"""
+        print("\n=== GRADEBOOK TESTS ===")
+        
+        # Get subjects first
+        success, subjects_response = self.run_test(
+            "Get Subjects List",
+            "GET",
+            "subjects",
+            200,
+            token=self.admin_token
+        )
+        
+        if not success or not subjects_response.get('subjects'):
             return False
+        
+        subjects = subjects_response['subjects'][:5]  # Use first 5 subjects
+        
+        # Create gradebook entry
+        if not self.created_resources['students'] or not self.created_resources['classes']:
+            print("❌ No students or classes available for gradebook test")
+            return False
+        
+        student_id = self.created_resources['students'][0]
+        class_id = self.created_resources['classes'][0]
+        
+        # Create grades for multiple subjects
+        subject_grades = []
+        test_scores = [85, 92, 78, 88, 95]  # Different grades to test scheme
+        
+        for i, subject in enumerate(subjects):
+            subject_grades.append({
+                "subject": subject,
+                "score": test_scores[i % len(test_scores)],
+                "comment": f"Good performance in {subject}"
+            })
+        
+        gradebook_data = {
+            "student_id": student_id,
+            "class_id": class_id,
+            "term": "Term 1",
+            "academic_year": "2024/2025",
+            "subjects": subject_grades
+        }
+        
+        success, gradebook_response = self.run_test(
+            "Create Gradebook Entry",
+            "POST",
+            "gradebook",
+            200,
+            data=gradebook_data,
+            token=self.admin_token
+        )
+        
+        if success:
+            self.created_resources['gradebook'].append(gradebook_response['id'])
+            
+            # Verify grading scheme application
+            if 'overall_grade' in gradebook_response and 'overall_score' in gradebook_response:
+                print(f"✅ Overall grade calculated: {gradebook_response['overall_grade']} ({gradebook_response['overall_score']}%)")
+                self.tests_passed += 1
+            else:
+                print("❌ Overall grade not calculated")
+            
+            self.tests_run += 1
+            return gradebook_response['id']
+        
+        return None
+
+    def test_grading_scheme_endpoint(self):
+        """Test grading scheme endpoint returns correct grades A+ through U"""
+        print("\n=== GRADING SCHEME TESTS ===")
+        
+        success, response = self.run_test(
+            "Get Grading Scheme",
+            "GET",
+            "grading-scheme",
+            200,
+            token=self.admin_token
+        )
+        
+        if success and 'grading_scheme' in response:
+            scheme = response['grading_scheme']
+            
+            # Check for expected grades
+            expected_grades = ['A+', 'A', 'A-', 'B', 'B-', 'C', 'C-', 'D', 'D-', 'E', 'U']
+            found_grades = [grade['grade'] for grade in scheme]
+            
+            all_grades_found = all(grade in found_grades for grade in expected_grades)
+            
+            if all_grades_found:
+                print(f"✅ All expected grades found: {found_grades}")
+                self.tests_passed += 1
+            else:
+                print(f"❌ Missing grades. Found: {found_grades}, Expected: {expected_grades}")
+            
+            self.tests_run += 1
+            return True
+        
+        return False
+
+    def test_report_cards_generation(self):
+        """Test report card generation for entire class"""
+        print("\n=== REPORT CARDS TESTS ===")
+        
+        if not self.created_resources['classes']:
+            print("❌ No classes available for report card test")
+            return False
+        
+        class_id = self.created_resources['classes'][0]
+        
+        success, response = self.run_test(
+            "Generate Class Report Cards",
+            "GET",
+            f"report-cards/class/{class_id}",
+            200,
+            data={"term": "Term 1", "academic_year": "2024/2025"},
+            token=self.admin_token
+        )
+        
+        if success:
+            if 'report_cards' in response and 'total_students' in response:
+                print(f"✅ Report cards generated for {response['total_students']} students")
+                
+                # Check if report cards have required data
+                if response['report_cards']:
+                    sample_card = response['report_cards'][0]
+                    required_fields = ['student', 'grades', 'attendance_summary', 'position']
+                    
+                    has_all_fields = all(field in sample_card for field in required_fields)
+                    if has_all_fields:
+                        print("✅ Report cards contain all required fields")
+                        self.tests_passed += 1
+                    else:
+                        print("❌ Report cards missing required fields")
+                
+                self.tests_passed += 1
+            else:
+                print("❌ Report cards response missing required data")
+            
+            self.tests_run += 1
+            return True
+        
+        return False
+
+    def cleanup_resources(self):
+        """Clean up created test resources"""
+        print("\n=== CLEANUP ===")
+        
+        # Delete gradebook entries
+        for gradebook_id in self.created_resources['gradebook']:
+            self.run_test(
+                f"Delete Gradebook {gradebook_id}",
+                "DELETE",
+                f"gradebook/{gradebook_id}",
+                200,
+                token=self.admin_token
+            )
+        
+        # Delete students
+        for student_id in self.created_resources['students']:
+            self.run_test(
+                f"Delete Student {student_id}",
+                "DELETE",
+                f"students/{student_id}",
+                200,
+                token=self.admin_token
+            )
+        
+        # Delete classes
+        for class_id in self.created_resources['classes']:
+            self.run_test(
+                f"Delete Class {class_id}",
+                "DELETE",
+                f"classes/{class_id}",
+                200,
+                token=self.admin_token
+            )
+        
+        # Delete users
+        for user_id in self.created_resources['users']:
+            self.run_test(
+                f"Delete User {user_id}",
+                "DELETE",
+                f"users/{user_id}",
+                200,
+                token=self.admin_token
+            )
 
 def main():
-    tester = StudentManagementAPITester()
-    success = tester.run_all_tests()
-    return 0 if success else 1
+    print("🚀 Starting Student Management System Backend Tests")
+    print("=" * 60)
+    
+    tester = StudentManagementTester()
+    
+    # Run all tests
+    try:
+        # Authentication tests
+        if not tester.test_admin_registration_and_login():
+            print("❌ Admin authentication failed, stopping tests")
+            return 1
+        
+        if not tester.test_teacher_registration():
+            print("❌ Teacher creation failed, stopping tests")
+            return 1
+        
+        # Navigation access tests
+        tester.test_navigation_access()
+        
+        # Student management tests
+        student_id = tester.test_student_management()
+        if not student_id:
+            print("❌ Student management tests failed")
+        
+        # Gradebook tests
+        gradebook_id = tester.test_gradebook_functionality()
+        if not gradebook_id:
+            print("❌ Gradebook tests failed")
+        
+        # Grading scheme tests
+        tester.test_grading_scheme_endpoint()
+        
+        # Report cards tests
+        tester.test_report_cards_generation()
+        
+        # Cleanup
+        tester.cleanup_resources()
+        
+    except Exception as e:
+        print(f"❌ Test execution failed: {str(e)}")
+        return 1
+    
+    # Print results
+    print("\n" + "=" * 60)
+    print(f"📊 FINAL RESULTS")
+    print(f"Tests Run: {tester.tests_run}")
+    print(f"Tests Passed: {tester.tests_passed}")
+    print(f"Success Rate: {(tester.tests_passed/tester.tests_run*100):.1f}%")
+    
+    if tester.tests_passed == tester.tests_run:
+        print("🎉 ALL TESTS PASSED!")
+        return 0
+    else:
+        print(f"⚠️  {tester.tests_run - tester.tests_passed} tests failed")
+        return 1
 
 if __name__ == "__main__":
     sys.exit(main())
