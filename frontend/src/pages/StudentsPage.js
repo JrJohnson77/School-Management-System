@@ -81,12 +81,20 @@ export default function StudentsPage() {
         e.preventDefault();
         setSubmitting(true);
         
+        // Convert "none" values back to empty strings for backend
+        const submitData = {
+            ...formData,
+            house: formData.house === 'none' ? '' : formData.house,
+            class_id: formData.class_id === 'none' ? '' : formData.class_id,
+            parent_id: formData.parent_id === 'none' ? '' : formData.parent_id,
+        };
+        
         try {
             if (editingStudent) {
-                await axios.put(`${API}/students/${editingStudent.id}`, formData);
+                await axios.put(`${API}/students/${editingStudent.id}`, submitData);
                 toast.success('Student updated successfully');
             } else {
-                await axios.post(`${API}/students`, formData);
+                await axios.post(`${API}/students`, submitData);
                 toast.success('Student added successfully');
             }
             setIsDialogOpen(false);
