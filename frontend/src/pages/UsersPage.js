@@ -71,7 +71,7 @@ export default function UsersPage() {
     const filteredUsers = users.filter(u => {
         const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                              u.email.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesRole = !filterRole || u.role === filterRole;
+        const matchesRole = !filterRole || filterRole === 'all' || u.role === filterRole;
         return matchesSearch && matchesRole;
     });
 

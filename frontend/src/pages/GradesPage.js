@@ -162,8 +162,8 @@ export default function GradesPage() {
         const studentName = getStudentName(g.student_id).toLowerCase();
         const matchesSearch = studentName.includes(searchQuery.toLowerCase()) || 
                              g.subject.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesSubject = !filterSubject || g.subject === filterSubject;
-        const matchesTerm = !filterTerm || g.term === filterTerm;
+        const matchesSubject = !filterSubject || filterSubject === 'all' || g.subject === filterSubject;
+        const matchesTerm = !filterTerm || filterTerm === 'all' || g.term === filterTerm;
         return matchesSearch && matchesSubject && matchesTerm;
     });
 
