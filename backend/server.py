@@ -253,9 +253,6 @@ async def get_users(current_user: dict = Depends(require_roles([UserRole.ADMIN])
     users = await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(1000)
     return [UserResponse(**u) for u in users]
 
-class RoleUpdate(BaseModel):
-    role: str
-
 @api_router.put("/users/{user_id}/role")
 async def update_user_role(user_id: str, role_data: RoleUpdate, current_user: dict = Depends(require_roles([UserRole.ADMIN]))):
     if role_data.role not in [UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT]:
