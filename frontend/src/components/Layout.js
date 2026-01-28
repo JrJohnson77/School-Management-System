@@ -18,8 +18,8 @@ import {
     GraduationCap,
     School,
     CalendarCheck,
+    BookOpen,
     FileText,
-    Settings,
     LogOut,
     Menu,
     X,
@@ -71,7 +71,8 @@ export const Layout = ({ children }) => {
         { to: '/students', icon: GraduationCap, label: 'Students', roles: ['admin', 'teacher', 'parent'] },
         { to: '/classes', icon: School, label: 'Classes', roles: ['admin', 'teacher'] },
         { to: '/attendance', icon: CalendarCheck, label: 'Attendance', roles: ['admin', 'teacher', 'parent'] },
-        { to: '/grades', icon: FileText, label: 'Grades', roles: ['admin', 'teacher', 'parent'] },
+        { to: '/gradebook', icon: BookOpen, label: 'Gradebook', roles: ['admin', 'teacher', 'parent'] },
+        { to: '/report-cards', icon: FileText, label: 'Report Cards', roles: ['admin', 'teacher'] },
         { to: '/users', icon: Users, label: 'Users', roles: ['admin'] },
     ];
 
