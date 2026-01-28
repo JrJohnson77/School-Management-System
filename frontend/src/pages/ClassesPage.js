@@ -70,12 +70,18 @@ export default function ClassesPage() {
         e.preventDefault();
         setSubmitting(true);
         
+        // Convert "none" values back to empty strings for backend
+        const submitData = {
+            ...formData,
+            teacher_id: formData.teacher_id === 'none' ? '' : formData.teacher_id,
+        };
+        
         try {
             if (editingClass) {
-                await axios.put(`${API}/classes/${editingClass.id}`, formData);
+                await axios.put(`${API}/classes/${editingClass.id}`, submitData);
                 toast.success('Class updated successfully');
             } else {
-                await axios.post(`${API}/classes`, formData);
+                await axios.post(`${API}/classes`, submitData);
                 toast.success('Class created successfully');
             }
             setIsDialogOpen(false);
