@@ -167,7 +167,7 @@ export default function UsersPage() {
                             </thead>
                             <tbody>
                                 {filteredUsers.map((user, index) => {
-                                    const config = roleConfig[user.role];
+                                    const config = roleConfig[user.role] || roleConfig.parent;
                                     const isCurrentUser = user.id === currentUser?.id;
                                     
                                     return (
@@ -180,7 +180,7 @@ export default function UsersPage() {
                                             <td>
                                                 <div className="flex items-center gap-3">
                                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${config.color}`}>
-                                                        {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                                        {user.name?.split(' ').map(n => n?.[0] || '').join('').slice(0, 2) || '??'}
                                                     </div>
                                                     <div>
                                                         <span className="font-medium">{user.name}</span>
