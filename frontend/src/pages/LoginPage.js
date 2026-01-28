@@ -5,21 +5,15 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Toaster, toast } from 'sonner';
-import { GraduationCap, Mail, Lock, User, Loader2 } from 'lucide-react';
+import { GraduationCap, Mail, Lock, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
-    const [isLogin, setIsLogin] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        password: '',
-        role: 'parent'
-    });
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     
-    const { login, register } = useAuth();
+    const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -27,24 +21,15 @@ export default function LoginPage() {
         setLoading(true);
         
         try {
-            if (isLogin) {
-                await login(formData.email, formData.password);
-                toast.success('Welcome back!');
-            } else {
-                await register(formData.name, formData.email, formData.password, formData.role);
-                toast.success('Account created successfully!');
-            }
+            await login(email, password);
+            toast.success('Welcome back!');
             navigate('/dashboard');
         } catch (error) {
-            const message = error.response?.data?.detail || 'Something went wrong';
+            const message = error.response?.data?.detail || 'Invalid credentials';
             toast.error(message);
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     return (
@@ -96,47 +81,25 @@ export default function LoginPage() {
                             </div>
                         </div>
                         <CardTitle className="text-2xl font-bold">
-                            {isLogin ? 'Welcome Back' : 'Create Account'}
+                            Welcome Back
                         </CardTitle>
                         <CardDescription>
-                            {isLogin 
-                                ? 'Enter your credentials to access your account' 
-                                : 'Fill in your details to get started'}
+                            Sign in with your school email and password
                         </CardDescription>
                     </CardHeader>
                     
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            {!isLogin && (
-                                <div className="space-y-2">
-                                    <Label htmlFor="name">Full Name</Label>
-                                    <div className="relative">
-                                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                                        <Input
-                                            id="name"
-                                            name="name"
-                                            placeholder="John Doe"
-                                            value={formData.name}
-                                            onChange={handleChange}
-                                            className="pl-10 rounded-xl h-12"
-                                            required={!isLogin}
-                                            data-testid="register-name-input"
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                            
                             <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email">School Email</Label>
                                 <div className="relative">
                                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                     <Input
                                         id="email"
-                                        name="email"
                                         type="email"
-                                        placeholder="you@example.com"
-                                        value={formData.email}
-                                        onChange={handleChange}
+                                        placeholder="you@school.edu"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
                                         className="pl-10 rounded-xl h-12"
                                         required
                                         data-testid="login-email-input"
@@ -150,36 +113,16 @@ export default function LoginPage() {
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                     <Input
                                         id="password"
-                                        name="password"
                                         type="password"
                                         placeholder="••••••••"
-                                        value={formData.password}
-                                        onChange={handleChange}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
                                         className="pl-10 rounded-xl h-12"
                                         required
                                         data-testid="login-password-input"
                                     />
                                 </div>
                             </div>
-                            
-                            {!isLogin && (
-                                <div className="space-y-2">
-                                    <Label>I am a</Label>
-                                    <Select 
-                                        value={formData.role} 
-                                        onValueChange={(value) => setFormData({ ...formData, role: value })}
-                                    >
-                                        <SelectTrigger className="rounded-xl h-12" data-testid="register-role-select">
-                                            <SelectValue placeholder="Select your role" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="parent">Parent</SelectItem>
-                                            <SelectItem value="teacher">Teacher</SelectItem>
-                                            <SelectItem value="admin">Administrator</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
                             
                             <Button 
                                 type="submit" 
@@ -190,25 +133,18 @@ export default function LoginPage() {
                                 {loading ? (
                                     <>
                                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                        {isLogin ? 'Signing in...' : 'Creating account...'}
+                                        Signing in...
                                     </>
                                 ) : (
-                                    isLogin ? 'Sign In' : 'Create Account'
+                                    'Sign In'
                                 )}
                             </Button>
                         </form>
                         
                         <div className="mt-6 text-center">
-                            <button
-                                type="button"
-                                onClick={() => setIsLogin(!isLogin)}
-                                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                                data-testid="toggle-auth-mode-btn"
-                            >
-                                {isLogin 
-                                    ? "Don't have an account? Sign up" 
-                                    : 'Already have an account? Sign in'}
-                            </button>
+                            <p className="text-sm text-muted-foreground">
+                                Contact your administrator if you need an account
+                            </p>
                         </div>
                     </CardContent>
                 </Card>
