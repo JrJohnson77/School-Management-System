@@ -7,7 +7,8 @@ import DashboardPage from "./pages/DashboardPage";
 import StudentsPage from "./pages/StudentsPage";
 import ClassesPage from "./pages/ClassesPage";
 import AttendancePage from "./pages/AttendancePage";
-import GradesPage from "./pages/GradesPage";
+import GradebookPage from "./pages/GradebookPage";
+import ReportCardsPage from "./pages/ReportCardsPage";
 import UsersPage from "./pages/UsersPage";
 import { Loader2 } from "lucide-react";
 
@@ -95,10 +96,18 @@ function AppRoutes() {
                 } 
             />
             <Route 
-                path="/grades" 
+                path="/gradebook" 
                 element={
                     <ProtectedRoute>
-                        <GradesPage />
+                        <GradebookPage />
+                    </ProtectedRoute>
+                } 
+            />
+            <Route 
+                path="/report-cards" 
+                element={
+                    <ProtectedRoute allowedRoles={['admin', 'teacher']}>
+                        <ReportCardsPage />
                     </ProtectedRoute>
                 } 
             />
