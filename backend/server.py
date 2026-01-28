@@ -70,6 +70,9 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     user: UserResponse
 
+class RoleUpdate(BaseModel):
+    role: str
+
 class StudentBase(BaseModel):
     first_name: str
     last_name: str
