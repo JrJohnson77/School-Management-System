@@ -143,7 +143,7 @@ export default function UsersPage() {
                         <SelectValue placeholder="All Roles" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">All Roles</SelectItem>
+                        <SelectItem value="all">All Roles</SelectItem>
                         <SelectItem value="admin">Admins</SelectItem>
                         <SelectItem value="teacher">Teachers</SelectItem>
                         <SelectItem value="parent">Parents</SelectItem>

@@ -222,7 +222,7 @@ export default function ClassesPage() {
                                             <SelectValue placeholder="Select teacher" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="">No teacher assigned</SelectItem>
+                                            <SelectItem value="none">No teacher assigned</SelectItem>
                                             {teachers.map(teacher => (
                                                 <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
                                             ))}

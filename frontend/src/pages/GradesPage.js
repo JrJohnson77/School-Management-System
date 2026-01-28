@@ -382,7 +382,7 @@ export default function GradesPage() {
                         <SelectValue placeholder="All Subjects" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">All Subjects</SelectItem>
+                        <SelectItem value="all">All Subjects</SelectItem>
                         {subjects.map(subject => (
                             <SelectItem key={subject} value={subject}>{subject}</SelectItem>
                         ))}
@@ -393,7 +393,7 @@ export default function GradesPage() {
                         <SelectValue placeholder="All Terms" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">All Terms</SelectItem>
+                        <SelectItem value="all">All Terms</SelectItem>
                         {terms.map(term => (
                             <SelectItem key={term} value={term}>{term}</SelectItem>
                         ))}

@@ -274,7 +274,7 @@ export default function StudentsPage() {
                                                 <SelectValue placeholder="Select house" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="">No house</SelectItem>
+                                                <SelectItem value="none">No house</SelectItem>
                                                 {houses.map(house => (
                                                     <SelectItem key={house} value={house}>{house}</SelectItem>
                                                 ))}
@@ -291,7 +291,7 @@ export default function StudentsPage() {
                                                 <SelectValue placeholder="Select class" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="">No class</SelectItem>
+                                                <SelectItem value="none">No class</SelectItem>
                                                 {classes.map(cls => (
                                                     <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
                                                 ))}
@@ -311,7 +311,7 @@ export default function StudentsPage() {
                                                 <SelectValue placeholder="Select parent" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="">No parent assigned</SelectItem>
+                                                <SelectItem value="none">No parent assigned</SelectItem>
                                                 {parents.map(parent => (
                                                     <SelectItem key={parent.id} value={parent.id}>{parent.name}</SelectItem>
                                                 ))}
