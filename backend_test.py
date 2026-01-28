@@ -382,7 +382,8 @@ class StudentManagementAPITester:
         # Test role update
         if self.created_users:
             user_id = self.created_users[1]  # Teacher user
-            response = self.make_request('PUT', f'users/{user_id}/role?role=teacher', token=self.admin_token)
+            role_data = {"role": "teacher"}
+            response = self.make_request('PUT', f'users/{user_id}/role', role_data, self.admin_token)
             success = response and response.status_code == 200
             self.log_test("Update user role", success,
                          "Role updated" if success else "",
