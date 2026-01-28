@@ -1,0 +1,162 @@
+{
+  "identity": {
+    "name": "E1",
+    "archetype": "The Digital Playground",
+    "vibe": "Optimistic, Nurturing, Organized, Tactile",
+    "principles": [
+      "Fusion: Montessori Wood x Clean SaaS",
+      "Emotion: Safety and Growth",
+      "Shape: Soft, rounded, organic",
+      "Texture: Paper grain, matte finishes"
+    ]
+  },
+  "typography": {
+    "primary_font": "Nunito",
+    "secondary_font": "Outfit",
+    "mono_font": "JetBrains Mono",
+    "import_url": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Nunito:wght@400;600;700;800&family=Outfit:wght@300;400;500;600&display=swap",
+    "usage": {
+      "headings": "font-family: 'Nunito', sans-serif; font-weight: 700;",
+      "body": "font-family: 'Outfit', sans-serif;",
+      "code": "font-family: 'JetBrains Mono', monospace;"
+    },
+    "scale": {
+      "h1": "text-4xl md:text-5xl tracking-tight font-extrabold text-primary-900",
+      "h2": "text-3xl md:text-4xl font-bold text-primary-800",
+      "h3": "text-2xl font-bold text-primary-800",
+      "p": "text-base md:text-lg leading-relaxed text-slate-600"
+    }
+  },
+  "colors": {
+    "palette_name": "Sunny Classroom",
+    "theme": "light",
+    "css_variables": {
+      "root": {
+        "--background": "40 33% 98%",
+        "--foreground": "222 47% 11%",
+        "--card": "0 0% 100%",
+        "--card-foreground": "222 47% 11%",
+        "--popover": "0 0% 100%",
+        "--popover-foreground": "222 47% 11%",
+        "--primary": "199 89% 48%",
+        "--primary-foreground": "210 40% 98%",
+        "--secondary": "45 93% 47%",
+        "--secondary-foreground": "26 83% 14%",
+        "--muted": "210 40% 96.1%",
+        "--muted-foreground": "215.4 16.3% 46.9%",
+        "--accent": "162 84% 39%",
+        "--accent-foreground": "222 47% 11%",
+        "--destructive": "0 84.2% 60.2%",
+        "--destructive-foreground": "210 40% 98%",
+        "--border": "214.3 31.8% 91.4%",
+        "--input": "214.3 31.8% 91.4%",
+        "--ring": "199 89% 48%",
+        "--radius": "1rem"
+      },
+      "dark": {
+        "--background": "222 47% 11%",
+        "--foreground": "210 40% 98%",
+        "--card": "222 47% 11%",
+        "--card-foreground": "210 40% 98%",
+        "--popover": "222 47% 11%",
+        "--popover-foreground": "210 40% 98%",
+        "--primary": "199 89% 48%",
+        "--primary-foreground": "222 47% 11%",
+        "--secondary": "45 93% 47%",
+        "--secondary-foreground": "26 83% 14%",
+        "--muted": "217.2 32.6% 17.5%",
+        "--muted-foreground": "215 20.2% 65.1%",
+        "--accent": "162 84% 39%",
+        "--accent-foreground": "210 40% 98%",
+        "--destructive": "0 62.8% 30.6%",
+        "--destructive-foreground": "210 40% 98%",
+        "--border": "217.2 32.6% 17.5%",
+        "--input": "217.2 32.6% 17.5%",
+        "--ring": "199 89% 48%"
+      }
+    },
+    "usage_rules": [
+      "Use Primary Blue (hsl(199 89% 48%)) for main actions and headers.",
+      "Use Secondary Yellow (hsl(45 93% 47%)) for highlights, badges, and 'fun' elements.",
+      "Background is NOT white, it is 'Warm Paper' (hsl(40 33% 98%)).",
+      "Cards are pure white with soft shadows."
+    ]
+  },
+  "layout": {
+    "grid_system": "Bento Grid (Loose)",
+    "spacing": {
+      "container_padding": "p-6 md:p-10",
+      "element_gap": "gap-6 md:gap-8",
+      "section_spacing": "py-16 md:py-24"
+    },
+    "border_radius": {
+      "outer": "rounded-3xl",
+      "inner": "rounded-xl",
+      "button": "rounded-full"
+    },
+    "shadows": {
+      "card": "shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
+      "hover": "shadow-[0_8px_30px_rgb(0,0,0,0.12)]",
+      "button": "shadow-md hover:shadow-lg"
+    }
+  },
+  "components": {
+    "buttons": {
+      "style": "rounded-full font-bold tracking-wide transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0",
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/90"
+    },
+    "cards": {
+      "style": "bg-card text-card-foreground rounded-3xl border border-border/50 shadow-sm hover:shadow-md transition-all duration-300"
+    },
+    "inputs": {
+      "style": "rounded-xl border-2 border-border/50 bg-white/50 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-200"
+    },
+    "navigation": {
+      "sidebar": "bg-white/80 backdrop-blur-xl border-r border-border/50",
+      "navbar": "bg-white/80 backdrop-blur-md border-b border-border/50 sticky top-0 z-50"
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": "backdrop-blur-xl bg-white/70 border border-white/20 shadow-xl",
+    "gradients": {
+      "hero": "bg-gradient-to-br from-blue-50 via-indigo-50 to-white",
+      "accent": "bg-gradient-to-r from-yellow-400 to-orange-400"
+    },
+    "decorations": [
+      "Use 'doodle' style SVGs for empty states.",
+      "Use soft, organic blobs in the background (fixed position, low opacity)."
+    ]
+  },
+  "media": {
+    "image_urls": {
+      "login_hero": "https://images.unsplash.com/photo-1769201153045-98827f62996b?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "dashboard_banner": "https://images.unsplash.com/photo-1636772523547-5577d04e8dc1?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "teacher_profile": "https://images.unsplash.com/photo-1574438041665-06e4221de3bc?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "student_group": "https://images.unsplash.com/photo-1763637675793-da207ba1fe18?crop=entropy&cs=srgb&fm=jpg&q=85"
+    },
+    "icons": "Use 'Lucide React' with rounded stroke endings (stroke-linecap='round')."
+  },
+  "accessibility": {
+    "contrast": "Ensure text is slate-800 or darker on light backgrounds.",
+    "focus_states": "Visible thick ring (ring-4) with primary color opacity.",
+    "reduced_motion": "Respect prefers-reduced-motion media query."
+  },
+  "instructions_to_main_agent": [
+    "1. UPDATE TAILWIND CONFIG: Add the custom colors and fonts defined above.",
+    "2. UPDATE INDEX.CSS: Replace the :root variables with the HSL values provided.",
+    "3. IMPORT FONTS: Add the Google Fonts link to the index.html head.",
+    "4. COMPONENT OVERRIDES: When using Shadcn components, apply the 'rounded-3xl' and 'rounded-full' styles to match the 'Digital Playground' archetype.",
+    "5. LAYOUT: Use the 'Bento Grid' approach for the dashboard. Don't just stack cards vertically.",
+    "6. DATA-TESTID: Add data-testid to all interactive elements."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Avoid generic 'AI slop' designs.",
+    "Do not use gradients for text.",
+    "Use 2-3x more spacing than typical.",
+    "Every interaction needs micro-animations.",
+    "Use 'sonner' for toasts.",
+    "Components must use named exports.",
+    "Pages must use default exports."
+  ]
+}
