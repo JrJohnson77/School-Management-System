@@ -612,6 +612,11 @@ async def health_check():
 # Include the router
 app.include_router(api_router)
 
+# Root-level health endpoint for Kubernetes/deployment health checks
+@app.get("/health")
+async def root_health_check():
+    return {"status": "healthy"}
+
 # CORS
 app.add_middleware(
     CORSMiddleware,
