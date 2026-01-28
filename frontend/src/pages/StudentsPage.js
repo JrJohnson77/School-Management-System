@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Textarea } from '../components/ui/textarea';
@@ -16,31 +16,33 @@ import {
     Trash2, 
     GraduationCap,
     Loader2,
-    User,
     Calendar,
     MapPin,
-    Phone
+    Phone,
+    Home
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const initialFormData = {
     first_name: '',
+    middle_name: '',
     last_name: '',
     date_of_birth: '',
     gender: '',
-    grade_level: '',
+    address: '',
+    house: '',
     class_id: '',
     parent_id: '',
-    address: '',
     emergency_contact: '',
-    notes: ''
+    teacher_comment: ''
 };
 
 export default function StudentsPage() {
     const [students, setStudents] = useState([]);
     const [classes, setClasses] = useState([]);
     const [parents, setParents] = useState([]);
+    const [houses, setHouses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -55,12 +57,14 @@ export default function StudentsPage() {
 
     const fetchData = async () => {
         try {
-            const [studentsRes, classesRes] = await Promise.all([
+            const [studentsRes, classesRes, housesRes] = await Promise.all([
                 axios.get(`${API}/students`),
-                axios.get(`${API}/classes`).catch(() => ({ data: [] }))
+                axios.get(`${API}/classes`).catch(() => ({ data: [] })),
+                axios.get(`${API}/houses`).catch(() => ({ data: { houses: [] } }))
             ]);
             setStudents(studentsRes.data);
             setClasses(classesRes.data);
+            setHouses(housesRes.data.houses || []);
             
             if (isAdmin || isTeacher) {
                 const parentsRes = await axios.get(`${API}/parents`).catch(() => ({ data: [] }));
@@ -99,16 +103,17 @@ export default function StudentsPage() {
     const handleEdit = (student) => {
         setEditingStudent(student);
         setFormData({
-            first_name: student.first_name,
-            last_name: student.last_name,
-            date_of_birth: student.date_of_birth,
-            gender: student.gender,
-            grade_level: student.grade_level,
+            first_name: student.first_name || '',
+            middle_name: student.middle_name || '',
+            last_name: student.last_name || '',
+            date_of_birth: student.date_of_birth || '',
+            gender: student.gender || '',
+            address: student.address || '',
+            house: student.house || '',
             class_id: student.class_id || '',
             parent_id: student.parent_id || '',
-            address: student.address || '',
             emergency_contact: student.emergency_contact || '',
-            notes: student.notes || ''
+            teacher_comment: student.teacher_comment || ''
         });
         setIsDialogOpen(true);
     };
@@ -125,14 +130,24 @@ export default function StudentsPage() {
         }
     };
 
-    const filteredStudents = students.filter(s => 
-        `${s.first_name} ${s.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.grade_level.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredStudents = students.filter(s => {
+        const fullName = `${s.first_name} ${s.middle_name || ''} ${s.last_name}`.toLowerCase();
+        return fullName.includes(searchQuery.toLowerCase());
+    });
 
     const getClassName = (classId) => {
         const cls = classes.find(c => c.id === classId);
         return cls?.name || '-';
+    };
+
+    const getHouseColor = (house) => {
+        const colors = {
+            'Red House': 'bg-red-100 text-red-700 border-red-200',
+            'Blue House': 'bg-blue-100 text-blue-700 border-blue-200',
+            'Green House': 'bg-green-100 text-green-700 border-green-200',
+            'Yellow House': 'bg-yellow-100 text-yellow-700 border-yellow-200'
+        };
+        return colors[house] || 'bg-muted text-muted-foreground';
     };
 
     if (loading) {
@@ -175,7 +190,7 @@ export default function StudentsPage() {
                                 </DialogTitle>
                             </DialogHeader>
                             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-3 gap-4">
                                     <div className="space-y-2">
                                         <Label>First Name *</Label>
                                         <Input
@@ -184,6 +199,15 @@ export default function StudentsPage() {
                                             className="rounded-xl"
                                             required
                                             data-testid="student-first-name-input"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Middle Name</Label>
+                                        <Input
+                                            value={formData.middle_name}
+                                            onChange={(e) => setFormData({ ...formData, middle_name: e.target.value })}
+                                            className="rounded-xl"
+                                            data-testid="student-middle-name-input"
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -222,25 +246,37 @@ export default function StudentsPage() {
                                             <SelectContent>
                                                 <SelectItem value="Male">Male</SelectItem>
                                                 <SelectItem value="Female">Female</SelectItem>
-                                                <SelectItem value="Other">Other</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
                                 </div>
                                 
+                                <div className="space-y-2">
+                                    <Label>Address</Label>
+                                    <Textarea
+                                        value={formData.address}
+                                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                        className="rounded-xl"
+                                        rows={2}
+                                        placeholder="Student's home address"
+                                        data-testid="student-address-input"
+                                    />
+                                </div>
+                                
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>Grade Level *</Label>
+                                        <Label>House</Label>
                                         <Select 
-                                            value={formData.grade_level}
-                                            onValueChange={(value) => setFormData({ ...formData, grade_level: value })}
+                                            value={formData.house}
+                                            onValueChange={(value) => setFormData({ ...formData, house: value })}
                                         >
-                                            <SelectTrigger className="rounded-xl" data-testid="student-grade-select">
-                                                <SelectValue placeholder="Select grade" />
+                                            <SelectTrigger className="rounded-xl" data-testid="student-house-select">
+                                                <SelectValue placeholder="Select house" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {['K', '1', '2', '3', '4', '5', '6'].map(grade => (
-                                                    <SelectItem key={grade} value={grade}>Grade {grade}</SelectItem>
+                                                <SelectItem value="">No house</SelectItem>
+                                                {houses.map(house => (
+                                                    <SelectItem key={house} value={house}>{house}</SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
@@ -264,53 +300,45 @@ export default function StudentsPage() {
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label>Parent/Guardian</Label>
-                                    <Select 
-                                        value={formData.parent_id}
-                                        onValueChange={(value) => setFormData({ ...formData, parent_id: value })}
-                                    >
-                                        <SelectTrigger className="rounded-xl" data-testid="student-parent-select">
-                                            <SelectValue placeholder="Select parent" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="">No parent assigned</SelectItem>
-                                            {parents.map(parent => (
-                                                <SelectItem key={parent.id} value={parent.id}>{parent.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Parent/Guardian</Label>
+                                        <Select 
+                                            value={formData.parent_id}
+                                            onValueChange={(value) => setFormData({ ...formData, parent_id: value })}
+                                        >
+                                            <SelectTrigger className="rounded-xl" data-testid="student-parent-select">
+                                                <SelectValue placeholder="Select parent" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="">No parent assigned</SelectItem>
+                                                {parents.map(parent => (
+                                                    <SelectItem key={parent.id} value={parent.id}>{parent.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Emergency Contact</Label>
+                                        <Input
+                                            value={formData.emergency_contact}
+                                            onChange={(e) => setFormData({ ...formData, emergency_contact: e.target.value })}
+                                            className="rounded-xl"
+                                            placeholder="Phone number"
+                                            data-testid="student-emergency-input"
+                                        />
+                                    </div>
                                 </div>
                                 
                                 <div className="space-y-2">
-                                    <Label>Address</Label>
-                                    <Input
-                                        value={formData.address}
-                                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                        className="rounded-xl"
-                                        data-testid="student-address-input"
-                                    />
-                                </div>
-                                
-                                <div className="space-y-2">
-                                    <Label>Emergency Contact</Label>
-                                    <Input
-                                        value={formData.emergency_contact}
-                                        onChange={(e) => setFormData({ ...formData, emergency_contact: e.target.value })}
-                                        className="rounded-xl"
-                                        placeholder="Phone number"
-                                        data-testid="student-emergency-input"
-                                    />
-                                </div>
-                                
-                                <div className="space-y-2">
-                                    <Label>Notes</Label>
+                                    <Label>Teacher's Comment</Label>
                                     <Textarea
-                                        value={formData.notes}
-                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                        value={formData.teacher_comment}
+                                        onChange={(e) => setFormData({ ...formData, teacher_comment: e.target.value })}
                                         className="rounded-xl"
                                         rows={3}
-                                        data-testid="student-notes-input"
+                                        placeholder="General comments about the student"
+                                        data-testid="student-comment-input"
                                     />
                                 </div>
                                 
@@ -346,7 +374,7 @@ export default function StudentsPage() {
             <div className="relative mb-6">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
-                    placeholder="Search students..."
+                    placeholder="Search students by name..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-12 rounded-xl h-12"
@@ -371,12 +399,14 @@ export default function StudentsPage() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-bold text-lg truncate">
-                                            {student.first_name} {student.last_name}
+                                            {student.first_name} {student.middle_name || ''} {student.last_name}
                                         </h3>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
-                                                Grade {student.grade_level}
-                                            </span>
+                                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                                            {student.house && (
+                                                <span className={`text-xs px-2 py-1 rounded-full border ${getHouseColor(student.house)}`}>
+                                                    {student.house}
+                                                </span>
+                                            )}
                                             <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
                                                 {student.gender}
                                             </span>
@@ -387,12 +417,18 @@ export default function StudentsPage() {
                                 <div className="mt-4 space-y-2 text-sm">
                                     <div className="flex items-center gap-2 text-muted-foreground">
                                         <Calendar className="w-4 h-4" />
-                                        <span>{student.date_of_birth}</span>
+                                        <span>{student.date_of_birth} ({student.age} years old)</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-muted-foreground">
                                         <GraduationCap className="w-4 h-4" />
                                         <span>{getClassName(student.class_id)}</span>
                                     </div>
+                                    {student.address && (
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <MapPin className="w-4 h-4 flex-shrink-0" />
+                                            <span className="truncate">{student.address}</span>
+                                        </div>
+                                    )}
                                     {student.emergency_contact && (
                                         <div className="flex items-center gap-2 text-muted-foreground">
                                             <Phone className="w-4 h-4" />
