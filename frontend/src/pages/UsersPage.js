@@ -50,7 +50,7 @@ export default function UsersPage() {
 
     const handleRoleChange = async (userId, newRole) => {
         try {
-            await axios.put(`${API}/users/${userId}/role?role=${newRole}`);
+            await axios.put(`${API}/users/${userId}/role`, { role: newRole });
             toast.success('Role updated successfully');
             fetchUsers();
         } catch (error) {
