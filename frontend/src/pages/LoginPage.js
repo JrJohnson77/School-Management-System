@@ -98,7 +98,7 @@ export default function LoginPage() {
                                     <Input
                                         id="schoolCode"
                                         type="text"
-                                        placeholder="Enter school code (e.g., JTECH)"
+                                        placeholder="Enter school code"
                                         value={schoolCode}
                                         onChange={(e) => setSchoolCode(e.target.value.toUpperCase())}
                                         className="pl-10 rounded-xl h-12 uppercase"

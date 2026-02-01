@@ -357,11 +357,40 @@ async def login(credentials: UserLogin):
     if not school:
         raise HTTPException(status_code=401, detail="Invalid school code")
     
-    # Find user
+    # First, try to find the user in the requested school
     user = await db.users.find_one({
         "username": credentials.username,
         "school_code": school_code
     }, {"_id": 0})
+    
+    # If not found, check if user is a superuser trying to access another school
+    if not user:
+        # Look for a superuser with this username
+        superuser = await db.users.find_one({
+            "username": credentials.username,
+            "role": UserRole.SUPERUSER
+        }, {"_id": 0})
+        
+        if superuser and verify_password(credentials.password, superuser["password_hash"]):
+            # Superuser can log into any school - use the requested school_code for this session
+            token = create_access_token({
+                "sub": superuser["id"], 
+                "role": superuser["role"],
+                "school_code": school_code  # Use the requested school context
+            })
+            
+            return TokenResponse(
+                access_token=token,
+                user=UserResponse(
+                    id=superuser["id"],
+                    username=superuser["username"],
+                    name=superuser["name"],
+                    role=superuser["role"],
+                    school_code=school_code,  # Return the school they're logging into
+                    permissions=superuser.get("permissions", []),
+                    created_at=superuser["created_at"]
+                )
+            )
     
     if not user or not verify_password(credentials.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
