@@ -4,7 +4,7 @@ from datetime import datetime, date
 import json
 
 class StudentManagementTester:
-    def __init__(self, base_url="https://primary-scholar.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://schoolplus-13.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.admin_token = None
         self.teacher_token = None
