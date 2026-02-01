@@ -134,6 +134,7 @@ class UserBase(BaseModel):
     role: str
     school_code: str
     permissions: List[str] = []
+    photo_url: Optional[str] = ""
 
 class UserCreate(UserBase):
     password: str
@@ -151,6 +152,7 @@ class UserResponse(BaseModel):
     role: str
     school_code: str
     permissions: List[str] = []
+    photo_url: Optional[str] = ""
     created_at: str
 
 class TokenResponse(BaseModel):
