@@ -53,6 +53,8 @@ export default function StudentsPage() {
     const [editingStudent, setEditingStudent] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
     const [submitting, setSubmitting] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef(null);
     const { isAdmin, isTeacher, isParent } = useAuth();
 
     useEffect(() => {
@@ -78,6 +80,41 @@ export default function StudentsPage() {
             toast.error('Failed to load students');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePhotoUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+            toast.error('Invalid file type. Please upload a JPG, PNG, GIF, or WebP image.');
+            return;
+        }
+
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('File too large. Maximum size is 5MB.');
+            return;
+        }
+
+        setUploading(true);
+        try {
+            const formDataUpload = new FormData();
+            formDataUpload.append('file', file);
+
+            const response = await axios.post(`${API}/upload/photo`, formDataUpload, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            setFormData(prev => ({ ...prev, photo_url: response.data.photo_url }));
+            toast.success('Photo uploaded successfully');
+        } catch (error) {
+            toast.error(error.response?.data?.detail || 'Failed to upload photo');
+        } finally {
+            setUploading(false);
         }
     };
 
