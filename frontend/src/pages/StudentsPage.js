@@ -442,14 +442,32 @@ export default function StudentsPage() {
                         >
                             <CardContent className="p-6">
                                 <div className="flex items-start gap-4">
-                                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
-                                        {student.first_name?.[0]}{student.last_name?.[0]}
+                                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg overflow-hidden">
+                                        {student.photo_url ? (
+                                            <img 
+                                                src={student.photo_url} 
+                                                alt={`${student.first_name} ${student.last_name}`}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => { 
+                                                    e.target.style.display = 'none'; 
+                                                    e.target.nextSibling.style.display = 'flex';
+                                                }}
+                                            />
+                                        ) : null}
+                                        <span className={student.photo_url ? 'hidden' : 'flex'}>
+                                            {student.first_name?.[0]}{student.last_name?.[0]}
+                                        </span>
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-bold text-lg truncate">
                                             {student.first_name} {student.middle_name || ''} {student.last_name}
                                         </h3>
                                         <div className="flex flex-wrap items-center gap-2 mt-1">
+                                            {student.student_id && (
+                                                <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-mono">
+                                                    {student.student_id}
+                                                </span>
+                                            )}
                                             {student.house && (
                                                 <span className={`text-xs px-2 py-1 rounded-full border ${getHouseColor(student.house)}`}>
                                                     {student.house}
