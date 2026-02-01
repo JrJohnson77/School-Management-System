@@ -31,25 +31,11 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const login = async (email, password) => {
-        const response = await axios.post(`${API}/auth/login`, { email, password });
-        const { access_token, user: userData } = response.data;
-        
-        localStorage.setItem('token', access_token);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-        setToken(access_token);
-        setUser(userData);
-        
-        return userData;
-    };
-
-    const register = async (name, email, password, role) => {
-        const selectedRole = role || 'parent';
-        const response = await axios.post(`${API}/auth/register`, { 
-            name, 
-            email, 
-            password, 
-            role: selectedRole 
+    const login = async (schoolCode, username, password) => {
+        const response = await axios.post(`${API}/auth/login`, { 
+            school_code: schoolCode.toUpperCase(),
+            username, 
+            password 
         });
         const { access_token, user: userData } = response.data;
         
@@ -73,12 +59,17 @@ export const AuthProvider = ({ children }) => {
         token,
         loading,
         login,
-        register,
         logout,
         isAuthenticated: !!user,
-        isAdmin: user?.role === 'admin',
+        isSuperuser: user?.role === 'superuser',
+        isAdmin: user?.role === 'admin' || user?.role === 'superuser',
         isTeacher: user?.role === 'teacher',
         isParent: user?.role === 'parent',
+        hasPermission: (permission) => {
+            if (user?.role === 'superuser') return true;
+            return user?.permissions?.includes(permission) || false;
+        },
+        schoolCode: user?.school_code,
     };
 
     return (

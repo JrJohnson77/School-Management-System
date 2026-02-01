@@ -6,11 +6,12 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Toaster, toast } from 'sonner';
-import { GraduationCap, Mail, Lock, Loader2 } from 'lucide-react';
+import { GraduationCap, Building2, User, Lock, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
     const [loading, setLoading] = useState(false);
-    const [email, setEmail] = useState('');
+    const [schoolCode, setSchoolCode] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     
     const { login } = useAuth();
@@ -21,7 +22,7 @@ export default function LoginPage() {
         setLoading(true);
         
         try {
-            await login(email, password);
+            await login(schoolCode, username, password);
             toast.success('Welcome back!');
             navigate('/dashboard');
         } catch (error) {
@@ -45,7 +46,7 @@ export default function LoginPage() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-extrabold text-primary">EduManager</h1>
-                            <p className="text-sm text-muted-foreground">Primary School System</p>
+                            <p className="text-sm text-muted-foreground">Multi-School Management</p>
                         </div>
                     </div>
                     
@@ -55,7 +56,7 @@ export default function LoginPage() {
                     </h2>
                     
                     <p className="text-lg text-muted-foreground mb-8">
-                        A comprehensive platform for administrators, teachers, and parents to manage student information, attendance, and grades.
+                        A comprehensive multi-tenant platform for schools to manage student information, attendance, grades, and generate report cards.
                     </p>
                     
                     <div className="relative rounded-3xl overflow-hidden shadow-2xl">
@@ -77,32 +78,49 @@ export default function LoginPage() {
                             </div>
                             <div>
                                 <h1 className="text-xl font-extrabold text-primary">EduManager</h1>
-                                <p className="text-xs text-muted-foreground">Primary School System</p>
+                                <p className="text-xs text-muted-foreground">Multi-School Management</p>
                             </div>
                         </div>
                         <CardTitle className="text-2xl font-bold">
                             Welcome Back
                         </CardTitle>
                         <CardDescription>
-                            Sign in with your school email and password
+                            Sign in with your school code and credentials
                         </CardDescription>
                     </CardHeader>
                     
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="email">School Email</Label>
+                                <Label htmlFor="schoolCode">School Code</Label>
                                 <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                     <Input
-                                        id="email"
-                                        type="email"
-                                        placeholder="you@school.edu"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        id="schoolCode"
+                                        type="text"
+                                        placeholder="Enter school code (e.g., JTECH)"
+                                        value={schoolCode}
+                                        onChange={(e) => setSchoolCode(e.target.value.toUpperCase())}
+                                        className="pl-10 rounded-xl h-12 uppercase"
+                                        required
+                                        data-testid="login-school-code-input"
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <Label htmlFor="username">Username</Label>
+                                <div className="relative">
+                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                    <Input
+                                        id="username"
+                                        type="text"
+                                        placeholder="Enter your username"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
                                         className="pl-10 rounded-xl h-12"
                                         required
-                                        data-testid="login-email-input"
+                                        data-testid="login-username-input"
                                     />
                                 </div>
                             </div>
@@ -143,7 +161,7 @@ export default function LoginPage() {
                         
                         <div className="mt-6 text-center">
                             <p className="text-sm text-muted-foreground">
-                                Contact your administrator if you need an account
+                                Contact your school administrator for login credentials
                             </p>
                         </div>
                     </CardContent>
