@@ -1,20 +1,25 @@
 # Student Management System - PRD
 
 ## Original Problem Statement
-Build a student management system for a primary school with:
+Build a multi-tenant student management system for primary schools with:
 - Student registration with first/middle/last name, DOB (system calculates age), address, house, class
 - Teacher can add students and enter grades
 - Only admin can create users
 - Gradebook with multiple subjects and grading scheme (A+ to U)
-- Generate final report cards for entire class of 25 students
+- Generate final report cards for entire class
+- **Multi-tenancy:** Support multiple schools with data segregation by school_code
+- **Superuser:** Administrative role with access to all schools
 
 ## User Personas
-1. **Administrator**: Full system access - manage users, students, classes
-2. **Teacher**: Add/edit students, mark attendance, enter grades, generate report cards
-3. **Parent**: View-only access for their children's profiles, attendance, and grades
+1. **Superuser**: Platform administrator - manage schools, can access any school context
+2. **Administrator**: School-level admin - manage users, students, classes within their school
+3. **Teacher**: Add/edit students, mark attendance, enter grades, generate report cards
+4. **Parent**: View-only access for their children's profiles, attendance, and grades
 
-## Core Requirements (Static)
+## Core Requirements
 - [x] User authentication with JWT
+- [x] Multi-tenant architecture with school_code segregation
+- [x] Superuser can login to ANY school context for support
 - [x] Role-based access control (Admin creates users only)
 - [x] Student CRUD with full name fields and age calculation
 - [x] House system (Red, Blue, Green, Yellow)
@@ -24,7 +29,17 @@ Build a student management system for a primary school with:
 - [x] Grading scheme: A+ (90-100) to U (0-39) with grade points
 - [x] Report card generation for entire class with positions
 
-## What's Been Implemented (January 2026)
+## What's Been Implemented (December 2025)
+
+### Multi-Tenancy Architecture
+- Schools identified by unique school_code at login
+- All data (students, classes, users, grades, attendance) segregated by school_code
+- JWT tokens store school_code for session context
+- Superuser can authenticate against any active school
+
+### Key Credentials
+- **Superuser:** school_code=JTECH, username=jtech.innovations@outlook.com, password=Xekleidoma@1
+- **Test Admin:** school_code=WPS, username=admin@wps.edu, password=WpsAdmin@123
 
 ### Grading Scheme
 | Grade | Score Range | Domain | Points |
@@ -48,7 +63,8 @@ English Language, Mathematics, Science, Social Studies, Religious Education, Phy
 Red House, Blue House, Green House, Yellow House
 
 ### Backend Endpoints
-- /api/auth/* - Authentication
+- /api/auth/* - Authentication (login with school_code)
+- /api/schools - School CRUD (superuser only)
 - /api/users - User management (admin only)
 - /api/students - Student CRUD with age calculation
 - /api/classes - Class management
@@ -57,10 +73,12 @@ Red House, Blue House, Green House, Yellow House
 - /api/report-card/{student_id} - Individual report card
 - /api/report-cards/class/{class_id} - Class report cards with positions
 - /api/subjects, /api/houses, /api/grading-scheme - Reference data
+- /api/stats/dashboard - Role-based statistics
 
 ### Frontend Pages
-- Login/Register
+- Login (with school code field)
 - Dashboard (role-based stats)
+- Schools (superuser only)
 - Students (with house, address, teacher comments)
 - Classes
 - Attendance
@@ -70,17 +88,17 @@ Red House, Blue House, Green House, Yellow House
 
 ## Prioritized Backlog
 
-### P1 (Important) - Future
-- PDF export for report cards
-- Bulk student import from CSV
-- Email report cards to parents
-- Attendance analytics
+### P1 (Important) - Upcoming
+- [ ] PDF export for report cards
+- [ ] Bulk student/teacher import from CSV
+- [ ] Email report cards to parents
 
 ### P2 (Nice to have)
-- Dark mode
-- Parent-teacher messaging
-- Academic calendar
-- Student photos
+- [ ] Attendance analytics
+- [ ] Dark mode
+- [ ] Parent-teacher messaging
+- [ ] Academic calendar
+- [ ] Student photos
 
 ## Tech Stack
 - Frontend: React 19, Tailwind CSS, Shadcn UI
