@@ -25,6 +25,7 @@ import {
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const initialFormData = {
+    student_id: '',
     first_name: '',
     middle_name: '',
     last_name: '',
@@ -35,7 +36,8 @@ const initialFormData = {
     class_id: '',
     parent_id: '',
     emergency_contact: '',
-    teacher_comment: ''
+    teacher_comment: '',
+    photo_url: ''
 };
 
 export default function StudentsPage() {
