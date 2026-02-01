@@ -158,6 +158,7 @@ class RoleUpdate(BaseModel):
     permissions: Optional[List[str]] = None
 
 class StudentBase(BaseModel):
+    student_id: Optional[str] = ""  # School-assigned student ID
     first_name: str
     middle_name: Optional[str] = ""
     last_name: str
@@ -169,6 +170,7 @@ class StudentBase(BaseModel):
     parent_id: Optional[str] = None
     emergency_contact: Optional[str] = ""
     teacher_comment: Optional[str] = ""
+    photo_url: Optional[str] = ""  # Student photo URL
 
 class StudentCreate(StudentBase):
     pass
