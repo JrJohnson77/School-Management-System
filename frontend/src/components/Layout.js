@@ -20,10 +20,12 @@ import {
     CalendarCheck,
     BookOpen,
     FileText,
+    Building2,
     LogOut,
     Menu,
     X,
-    ChevronDown
+    ChevronDown,
+    Shield
 } from 'lucide-react';
 
 const NavItem = ({ to, icon: Icon, label, isCollapsed, isActive }) => (
@@ -39,7 +41,7 @@ const NavItem = ({ to, icon: Icon, label, isCollapsed, isActive }) => (
 
 export const Layout = ({ children }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const { user, logout, isAdmin, isTeacher, isParent } = useAuth();
+    const { user, logout, isSuperuser, isAdmin, isTeacher, isParent, schoolCode } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -59,6 +61,7 @@ export const Layout = ({ children }) => {
 
     const getRoleBadgeColor = (role) => {
         switch (role) {
+            case 'superuser': return 'bg-purple-100 text-purple-700';
             case 'admin': return 'bg-destructive/10 text-destructive';
             case 'teacher': return 'bg-primary/10 text-primary';
             case 'parent': return 'bg-accent/10 text-accent';
@@ -67,13 +70,14 @@ export const Layout = ({ children }) => {
     };
 
     const navItems = [
-        { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'teacher', 'parent'] },
-        { to: '/students', icon: GraduationCap, label: 'Students', roles: ['admin', 'teacher', 'parent'] },
-        { to: '/classes', icon: School, label: 'Classes', roles: ['admin', 'teacher'] },
-        { to: '/attendance', icon: CalendarCheck, label: 'Attendance', roles: ['admin', 'teacher', 'parent'] },
-        { to: '/gradebook', icon: BookOpen, label: 'Gradebook', roles: ['admin', 'teacher', 'parent'] },
-        { to: '/report-cards', icon: FileText, label: 'Report Cards', roles: ['admin', 'teacher'] },
-        { to: '/users', icon: Users, label: 'Users', roles: ['admin'] },
+        { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['superuser', 'admin', 'teacher', 'parent'] },
+        { to: '/schools', icon: Building2, label: 'Schools', roles: ['superuser'] },
+        { to: '/students', icon: GraduationCap, label: 'Students', roles: ['superuser', 'admin', 'teacher', 'parent'] },
+        { to: '/classes', icon: School, label: 'Classes', roles: ['superuser', 'admin', 'teacher'] },
+        { to: '/attendance', icon: CalendarCheck, label: 'Attendance', roles: ['superuser', 'admin', 'teacher', 'parent'] },
+        { to: '/gradebook', icon: BookOpen, label: 'Gradebook', roles: ['superuser', 'admin', 'teacher', 'parent'] },
+        { to: '/report-cards', icon: FileText, label: 'Report Cards', roles: ['superuser', 'admin', 'teacher'] },
+        { to: '/users', icon: Users, label: 'Users', roles: ['superuser', 'admin'] },
     ];
 
     const filteredNavItems = navItems.filter(item => item.roles.includes(user?.role));
@@ -101,7 +105,7 @@ export const Layout = ({ children }) => {
                             </div>
                             <div>
                                 <h1 className="font-extrabold text-primary text-lg">EduManager</h1>
-                                <p className="text-xs text-muted-foreground">Primary School</p>
+                                <p className="text-xs text-muted-foreground">{schoolCode}</p>
                             </div>
                         </Link>
                         <button 
@@ -127,15 +131,18 @@ export const Layout = ({ children }) => {
                     <div className="p-4 border-t border-border/50">
                         <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
                             <Avatar className="w-10 h-10">
-                                <AvatarFallback className="bg-primary text-primary-foreground font-bold">
+                                <AvatarFallback className={`font-bold ${getRoleBadgeColor(user?.role)}`}>
                                     {getInitials(user?.name)}
                                 </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
                                 <p className="font-semibold text-sm truncate">{user?.name}</p>
-                                <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${getRoleBadgeColor(user?.role)}`}>
-                                    {user?.role}
-                                </span>
+                                <div className="flex items-center gap-1">
+                                    {user?.role === 'superuser' && <Shield className="w-3 h-3 text-purple-600" />}
+                                    <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${getRoleBadgeColor(user?.role)}`}>
+                                        {user?.role}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -164,7 +171,7 @@ export const Layout = ({ children }) => {
                                 data-testid="user-menu-btn"
                             >
                                 <Avatar className="w-8 h-8">
-                                    <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
+                                    <AvatarFallback className={`text-sm font-bold ${getRoleBadgeColor(user?.role)}`}>
                                         {getInitials(user?.name)}
                                     </AvatarFallback>
                                 </Avatar>
@@ -176,7 +183,8 @@ export const Layout = ({ children }) => {
                             <DropdownMenuLabel>
                                 <div className="flex flex-col">
                                     <span>{user?.name}</span>
-                                    <span className="text-xs font-normal text-muted-foreground">{user?.email}</span>
+                                    <span className="text-xs font-normal text-muted-foreground">{user?.username}</span>
+                                    <span className="text-xs font-normal text-muted-foreground">School: {schoolCode}</span>
                                 </div>
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator />
