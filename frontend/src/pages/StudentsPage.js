@@ -202,7 +202,43 @@ export default function StudentsPage() {
                                 </DialogTitle>
                             </DialogHeader>
                             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-                                <div className="grid grid-cols-3 gap-4">
+                                {/* Photo Preview */}
+                                <div className="flex items-center gap-4">
+                                    <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center overflow-hidden">
+                                        {formData.photo_url ? (
+                                            <img 
+                                                src={formData.photo_url} 
+                                                alt="Student" 
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => { e.target.style.display = 'none'; }}
+                                            />
+                                        ) : (
+                                            <GraduationCap className="w-8 h-8 text-primary" />
+                                        )}
+                                    </div>
+                                    <div className="flex-1 space-y-2">
+                                        <Label>Photo URL</Label>
+                                        <Input
+                                            value={formData.photo_url}
+                                            onChange={(e) => setFormData({ ...formData, photo_url: e.target.value })}
+                                            className="rounded-xl"
+                                            placeholder="https://example.com/photo.jpg"
+                                            data-testid="student-photo-input"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-4 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Student ID</Label>
+                                        <Input
+                                            value={formData.student_id}
+                                            onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
+                                            className="rounded-xl"
+                                            placeholder="e.g., STU001"
+                                            data-testid="student-id-input"
+                                        />
+                                    </div>
                                     <div className="space-y-2">
                                         <Label>First Name *</Label>
                                         <Input
