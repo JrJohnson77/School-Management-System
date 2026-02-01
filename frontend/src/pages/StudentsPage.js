@@ -113,6 +113,7 @@ export default function StudentsPage() {
     const handleEdit = (student) => {
         setEditingStudent(student);
         setFormData({
+            student_id: student.student_id || '',
             first_name: student.first_name || '',
             middle_name: student.middle_name || '',
             last_name: student.last_name || '',
@@ -123,7 +124,8 @@ export default function StudentsPage() {
             class_id: student.class_id || '',
             parent_id: student.parent_id || '',
             emergency_contact: student.emergency_contact || '',
-            teacher_comment: student.teacher_comment || ''
+            teacher_comment: student.teacher_comment || '',
+            photo_url: student.photo_url || ''
         });
         setIsDialogOpen(true);
     };
