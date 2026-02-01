@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
@@ -20,7 +20,9 @@ import {
     User,
     GraduationCap,
     UserCheck,
-    Edit2
+    Edit2,
+    Upload,
+    X
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -48,7 +50,8 @@ const initialFormData = {
     name: '',
     password: '',
     role: 'teacher',
-    permissions: []
+    permissions: [],
+    photo_url: ''
 };
 
 export default function UsersPage() {
