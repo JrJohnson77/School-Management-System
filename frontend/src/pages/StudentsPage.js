@@ -242,29 +242,58 @@ export default function StudentsPage() {
                                 </DialogTitle>
                             </DialogHeader>
                             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-                                {/* Photo Preview */}
+                                {/* Photo Upload */}
                                 <div className="flex items-center gap-4">
-                                    <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center overflow-hidden">
+                                    <div className="relative w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center overflow-hidden group">
                                         {formData.photo_url ? (
-                                            <img 
-                                                src={formData.photo_url} 
-                                                alt="Student" 
-                                                className="w-full h-full object-cover"
-                                                onError={(e) => { e.target.style.display = 'none'; }}
-                                            />
+                                            <>
+                                                <img 
+                                                    src={formData.photo_url.startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${formData.photo_url}` : formData.photo_url}
+                                                    alt="Student" 
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, photo_url: '' })}
+                                                    className="absolute top-1 right-1 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </>
                                         ) : (
-                                            <GraduationCap className="w-8 h-8 text-primary" />
+                                            <GraduationCap className="w-10 h-10 text-primary" />
                                         )}
                                     </div>
-                                    <div className="flex-1 space-y-2">
-                                        <Label>Photo URL</Label>
-                                        <Input
-                                            value={formData.photo_url}
-                                            onChange={(e) => setFormData({ ...formData, photo_url: e.target.value })}
-                                            className="rounded-xl"
-                                            placeholder="https://example.com/photo.jpg"
-                                            data-testid="student-photo-input"
-                                        />
+                                    <div className="flex-1 space-y-3">
+                                        <Label>Student Photo</Label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                onChange={handlePhotoUpload}
+                                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                                className="hidden"
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="rounded-xl"
+                                                onClick={() => fileInputRef.current?.click()}
+                                                disabled={uploading}
+                                                data-testid="upload-photo-btn"
+                                            >
+                                                {uploading ? (
+                                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                ) : (
+                                                    <Upload className="w-4 h-4 mr-2" />
+                                                )}
+                                                {uploading ? 'Uploading...' : 'Upload Photo'}
+                                            </Button>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            JPG, PNG, GIF or WebP. Max 5MB.
+                                        </p>
                                     </div>
                                 </div>
 
