@@ -603,7 +603,8 @@ export default function StudentsPage() {
                                 )}
                             </CardContent>
                         </Card>
-                    ))}
+                    );
+                    })}
                 </div>
             ) : (
                 <Card className="rounded-3xl border-border/50 shadow-sm">
