@@ -551,6 +551,7 @@ async def create_user(user_data: UserCreate, current_user: dict = Depends(requir
         "role": user_data.role,
         "school_code": school_code,
         "permissions": permissions,
+        "photo_url": user_data.photo_url or "",
         "password_hash": hash_password(user_data.password),
         "created_at": now
     }
@@ -563,6 +564,7 @@ async def create_user(user_data: UserCreate, current_user: dict = Depends(requir
         role=user_data.role,
         school_code=school_code,
         permissions=permissions,
+        photo_url=user_data.photo_url or "",
         created_at=now
     )
 
