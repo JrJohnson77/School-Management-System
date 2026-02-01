@@ -502,7 +502,11 @@ export default function StudentsPage() {
             {/* Students Grid */}
             {filteredStudents.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredStudents.map((student, index) => (
+                    {filteredStudents.map((student, index) => {
+                        const photoSrc = student.photo_url?.startsWith('/api') 
+                            ? `${process.env.REACT_APP_BACKEND_URL}${student.photo_url}` 
+                            : student.photo_url;
+                        return (
                         <Card 
                             key={student.id}
                             className="rounded-3xl border-border/50 shadow-sm card-hover opacity-0 animate-fade-in"
@@ -514,7 +518,7 @@ export default function StudentsPage() {
                                     <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg overflow-hidden">
                                         {student.photo_url ? (
                                             <img 
-                                                src={student.photo_url} 
+                                                src={photoSrc} 
                                                 alt={`${student.first_name} ${student.last_name}`}
                                                 className="w-full h-full object-cover"
                                                 onError={(e) => { 
