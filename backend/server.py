@@ -533,7 +533,7 @@ async def create_user(user_data: UserCreate, current_user: dict = Depends(requir
             permissions = ALL_PERMISSIONS.copy()
             permissions.remove("manage_schools")  # Admins can't manage schools
         elif user_data.role == UserRole.TEACHER:
-            permissions = ["manage_students", "manage_attendance", "manage_grades", "view_reports", "generate_reports"]
+            permissions = ["manage_students", "manage_classes", "manage_attendance", "manage_grades", "view_reports", "generate_reports"]
         elif user_data.role == UserRole.PARENT:
             permissions = ["view_reports"]
     
