@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Layout } from "./components/Layout";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
+import SchoolsPage from "./pages/SchoolsPage";
 import StudentsPage from "./pages/StudentsPage";
 import ClassesPage from "./pages/ClassesPage";
 import AttendancePage from "./pages/AttendancePage";
@@ -25,6 +26,11 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
+    }
+    
+    // Superuser has access to everything
+    if (user?.role === 'superuser') {
+        return <Layout>{children}</Layout>;
     }
     
     if (allowedRoles && !allowedRoles.includes(user?.role)) {
@@ -72,6 +78,14 @@ function AppRoutes() {
                 } 
             />
             <Route 
+                path="/schools" 
+                element={
+                    <ProtectedRoute allowedRoles={['superuser']}>
+                        <SchoolsPage />
+                    </ProtectedRoute>
+                } 
+            />
+            <Route 
                 path="/students" 
                 element={
                     <ProtectedRoute>
@@ -82,7 +96,7 @@ function AppRoutes() {
             <Route 
                 path="/classes" 
                 element={
-                    <ProtectedRoute allowedRoles={['admin', 'teacher']}>
+                    <ProtectedRoute allowedRoles={['superuser', 'admin', 'teacher']}>
                         <ClassesPage />
                     </ProtectedRoute>
                 } 
@@ -106,7 +120,7 @@ function AppRoutes() {
             <Route 
                 path="/report-cards" 
                 element={
-                    <ProtectedRoute allowedRoles={['admin', 'teacher']}>
+                    <ProtectedRoute allowedRoles={['superuser', 'admin', 'teacher']}>
                         <ReportCardsPage />
                     </ProtectedRoute>
                 } 
@@ -114,7 +128,7 @@ function AppRoutes() {
             <Route 
                 path="/users" 
                 element={
-                    <ProtectedRoute allowedRoles={['admin']}>
+                    <ProtectedRoute allowedRoles={['superuser', 'admin']}>
                         <UsersPage />
                     </ProtectedRoute>
                 } 
