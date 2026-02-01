@@ -36,6 +36,13 @@ Build a multi-tenant student management system for primary schools with:
 - All data (students, classes, users, grades, attendance) segregated by school_code
 - JWT tokens store school_code for session context
 - Superuser can authenticate against any active school
+- Users filtered by school - admins only see their school's users
+
+### Student Management
+- Student ID field for school-assigned identification
+- Photo URL field for student photos
+- Search by name or student ID
+- Auto-calculated age from date of birth
 
 ### Key Credentials
 - **Superuser:** school_code=JTECH, username=jtech.innovations@outlook.com, password=Xekleidoma@1
