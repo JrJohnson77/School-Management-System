@@ -144,7 +144,8 @@ export default function StudentsPage() {
 
     const filteredStudents = students.filter(s => {
         const fullName = `${s.first_name} ${s.middle_name || ''} ${s.last_name}`.toLowerCase();
-        return fullName.includes(searchQuery.toLowerCase());
+        const studentId = (s.student_id || '').toLowerCase();
+        return fullName.includes(searchQuery.toLowerCase()) || studentId.includes(searchQuery.toLowerCase());
     });
 
     const getClassName = (classId) => {
