@@ -740,10 +740,18 @@ async def delete_student(student_id: str, current_user: dict = Depends(require_p
 async def create_class(class_data: ClassCreate, current_user: dict = Depends(require_permission("manage_classes"))):
     class_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
+    
+    class_dict = class_data.model_dump()
+    
+    # If teacher creates a class, auto-assign them as the teacher
+    if current_user["role"] == UserRole.TEACHER and not class_dict.get("teacher_id"):
+        class_dict["teacher_id"] = current_user["id"]
+    
     doc = {
         "id": class_id,
         "school_code": current_user["school_code"],
-        **class_data.model_dump(),
+        "created_by": current_user["id"],  # Track who created the class
+        **class_dict,
         "created_at": now
     }
     await db.classes.insert_one(doc)
@@ -752,8 +760,13 @@ async def create_class(class_data: ClassCreate, current_user: dict = Depends(req
 @api_router.get("/classes", response_model=List[ClassResponse])
 async def get_classes(current_user: dict = Depends(get_current_user)):
     query = {"school_code": current_user["school_code"]}
+    
+    # Teachers can see classes they teach OR classes they created
     if current_user["role"] == UserRole.TEACHER:
-        query["teacher_id"] = current_user["id"]
+        query["$or"] = [
+            {"teacher_id": current_user["id"]},
+            {"created_by": current_user["id"]}
+        ]
     
     classes = await db.classes.find(query, {"_id": 0}).to_list(1000)
     return [ClassResponse(**c) for c in classes]
