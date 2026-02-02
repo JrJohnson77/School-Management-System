@@ -121,7 +121,7 @@ function AppRoutes() {
                 path="/report-cards" 
                 element={
                     <ProtectedRoute allowedRoles={['superuser', 'admin', 'teacher']}>
-                        <ReportCardsPage />
+                        <ReportsPage />
                     </ProtectedRoute>
                 } 
             />
