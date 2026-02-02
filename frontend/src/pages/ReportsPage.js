@@ -201,8 +201,11 @@ const GradebookReport = ({ students, grades, classInfo, term, academicYear }) =>
 const TermReportCard = ({ data, classInfo, term, academicYear, gradingScheme }) => {
     const { student, grades, attendance_summary, position } = data;
     
+    // Extract subjects from grades object (which has a subjects array)
+    const subjectGrades = grades?.subjects || [];
+    
     const getTermDates = () => {
-        const year = parseInt(academicYear.split('/')[0]);
+        const year = parseInt(academicYear.split('-')[0]) || new Date().getFullYear();
         if (term === 'Term 1') {
             return { start: `Sep 1, ${year}`, end: `Dec 15, ${year}` };
         } else if (term === 'Term 2') {
@@ -218,9 +221,9 @@ const TermReportCard = ({ data, classInfo, term, academicYear, gradingScheme }) 
         ? ((attendance_summary.present / attendance_summary.total_days) * 100).toFixed(1)
         : '0.0';
 
-    // Calculate totals
-    const totalScore = grades.reduce((sum, g) => sum + (g.score || 0), 0);
-    const averageScore = grades.length > 0 ? (totalScore / grades.length).toFixed(1) : '0.0';
+    // Use overall score from grades object if available
+    const averageScore = grades?.overall_score?.toFixed(1) || '0.0';
+    const overallGrade = grades?.overall_grade || '-';
 
     return (
         <div className="report-card bg-white p-8 max-w-4xl mx-auto mb-8 print:shadow-none print:mb-0 print:page-break-after-always" style={{ fontFamily: 'Arial, sans-serif' }}>
