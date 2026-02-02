@@ -614,6 +614,52 @@ async def delete_user(user_id: str, current_user: dict = Depends(require_roles([
     await db.users.delete_one({"id": user_id})
     return {"message": "User deleted successfully"}
 
+class ResetCredentials(BaseModel):
+    username: Optional[str] = None
+    password: Optional[str] = None
+
+@api_router.put("/users/{user_id}/credentials")
+async def reset_user_credentials(
+    user_id: str, 
+    credentials: ResetCredentials, 
+    current_user: dict = Depends(require_roles([UserRole.SUPERUSER, UserRole.ADMIN]))
+):
+    """Reset user's username and/or password - Superuser can reset any user, Admin can reset users in their school"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Admins can only reset users in their school
+    if current_user["role"] != UserRole.SUPERUSER:
+        if user["school_code"] != current_user["school_code"]:
+            raise HTTPException(status_code=403, detail="Cannot reset credentials for users in other schools")
+    
+    # Cannot reset superuser credentials unless you are a superuser
+    if user["role"] == UserRole.SUPERUSER and current_user["role"] != UserRole.SUPERUSER:
+        raise HTTPException(status_code=403, detail="Only superuser can reset superuser credentials")
+    
+    update_data = {}
+    if credentials.username:
+        # Check if username already exists
+        existing = await db.users.find_one({
+            "username": credentials.username, 
+            "school_code": user["school_code"],
+            "id": {"$ne": user_id}
+        })
+        if existing:
+            raise HTTPException(status_code=400, detail="Username already exists")
+        update_data["username"] = credentials.username
+    
+    if credentials.password:
+        update_data["password_hash"] = hash_password(credentials.password)
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No credentials provided to update")
+    
+    await db.users.update_one({"id": user_id}, {"$set": update_data})
+    
+    return {"message": "Credentials updated successfully"}
+
 # ==================== STUDENT ROUTES ====================
 
 @api_router.post("/students", response_model=StudentResponse)
