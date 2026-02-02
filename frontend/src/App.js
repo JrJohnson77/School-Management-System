@@ -9,7 +9,7 @@ import StudentsPage from "./pages/StudentsPage";
 import ClassesPage from "./pages/ClassesPage";
 import AttendancePage from "./pages/AttendancePage";
 import GradebookPage from "./pages/GradebookPage";
-import ReportCardsPage from "./pages/ReportCardsPage";
+import ReportsPage from "./pages/ReportsPage";
 import UsersPage from "./pages/UsersPage";
 import { Loader2 } from "lucide-react";
 
