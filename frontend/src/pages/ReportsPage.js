@@ -330,6 +330,7 @@ export default function ReportsPage() {
     const [selectedTerm, setSelectedTerm] = useState(TERMS[0]);
     const [selectedYear, setSelectedYear] = useState(ACADEMIC_YEARS[0]);
     const [reportCards, setReportCards] = useState([]);
+    const [totalStudentsInClass, setTotalStudentsInClass] = useState(0);
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
     const [activeTab, setActiveTab] = useState('class-list');
