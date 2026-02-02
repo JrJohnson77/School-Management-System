@@ -134,8 +134,11 @@ export default function ClassesPage() {
     };
 
     const getTeacherName = (teacherId) => {
+        if (!teacherId) return 'Not assigned';
+        // Check if it's the current user (for teachers)
+        if (teacherId === user?.id) return `${user.name} (You)`;
         const teacher = teachers.find(t => t.id === teacherId);
-        return teacher?.name || 'Not assigned';
+        return teacher?.name || 'Teacher';
     };
 
     const filteredClasses = classes.filter(c => 
