@@ -22,7 +22,11 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const TERMS = ['Term 1', 'Term 2', 'Term 3'];
 const CURRENT_YEAR = new Date().getFullYear();
-const ACADEMIC_YEARS = [`${CURRENT_YEAR-1}/${CURRENT_YEAR}`, `${CURRENT_YEAR}/${CURRENT_YEAR+1}`];
+const ACADEMIC_YEARS = [
+    `${CURRENT_YEAR-1}-${CURRENT_YEAR}`, 
+    `${CURRENT_YEAR}-${CURRENT_YEAR+1}`,
+    `${CURRENT_YEAR+1}-${CURRENT_YEAR+2}`
+];
 
 const SUBJECTS = [
     'English Language', 'Mathematics', 'Science', 'Social Studies', 
