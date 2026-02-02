@@ -58,7 +58,7 @@ export default function ClassesPage() {
             setClasses(classesRes.data);
             setStudents(studentsRes.data);
             
-            if (isAdmin) {
+            if (isAdmin || isTeacher) {
                 const teachersRes = await axios.get(`${API}/teachers`).catch(() => ({ data: [] }));
                 setTeachers(teachersRes.data);
             }
