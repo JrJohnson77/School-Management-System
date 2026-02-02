@@ -220,8 +220,8 @@ export default function ClassesPage() {
                                                 <SelectValue placeholder="Select year" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {[2024, 2025, 2026].map(year => (
-                                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                                {ACADEMIC_YEARS.map(year => (
+                                                    <SelectItem key={year} value={year}>{year}</SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
@@ -229,17 +229,20 @@ export default function ClassesPage() {
                                 </div>
                                 
                                 <div className="space-y-2">
-                                    <Label>Assigned Teacher</Label>
+                                    <Label>Assigned Teacher {isTeacher && '(defaults to you)'}</Label>
                                     <Select 
                                         value={formData.teacher_id}
                                         onValueChange={(value) => setFormData({ ...formData, teacher_id: value })}
                                     >
                                         <SelectTrigger className="rounded-xl" data-testid="class-teacher-select">
-                                            <SelectValue placeholder="Select teacher" />
+                                            <SelectValue placeholder={isTeacher ? "Yourself (default)" : "Select teacher"} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="none">No teacher assigned</SelectItem>
-                                            {teachers.map(teacher => (
+                                            {isTeacher && user && (
+                                                <SelectItem value={user.id}>{user.name} (You)</SelectItem>
+                                            )}
+                                            {teachers.filter(t => !isTeacher || t.id !== user?.id).map(teacher => (
                                                 <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
                                             ))}
                                         </SelectContent>
