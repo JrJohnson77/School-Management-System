@@ -332,7 +332,7 @@ export default function ClassesPage() {
                                     )}
                                 </div>
                                 
-                                {isAdmin && (
+                                {canManageClasses && (
                                     <div className="flex gap-2 mt-4 pt-4 border-t border-border/50">
                                         <Button 
                                             variant="outline" 
