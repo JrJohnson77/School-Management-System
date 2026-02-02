@@ -364,11 +364,18 @@ export default function ReportsPage() {
         try {
             const [studentsRes, gradesRes] = await Promise.all([
                 axios.get(`${API}/students?class_id=${selectedClass}`),
-                axios.get(`${API}/gradebook?class_id=${selectedClass}`)
+                axios.get(`${API}/gradebook?class_id=${selectedClass}&term=${selectedTerm}&academic_year=${selectedYear}`)
             ]);
             
-            setStudents(studentsRes.data.filter(s => s.class_id === selectedClass));
+            const classStudentsList = studentsRes.data.filter(s => s.class_id === selectedClass);
+            setStudents(classStudentsList);
             setGrades(gradesRes.data);
+            
+            if (classStudentsList.length === 0) {
+                toast.info('No students found in this class');
+            } else {
+                toast.success(`Loaded ${classStudentsList.length} students`);
+            }
         } catch (error) {
             toast.error('Failed to fetch class data');
         } finally {
