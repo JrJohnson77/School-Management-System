@@ -602,7 +602,7 @@ export default function ReportsPage() {
                             {reportCards.map((data, index) => (
                                 <TermReportCard
                                     key={data.student.id}
-                                    data={data}
+                                    data={{...data, total_students: totalStudentsInClass}}
                                     classInfo={selectedClassInfo}
                                     term={selectedTerm}
                                     academicYear={selectedYear}
