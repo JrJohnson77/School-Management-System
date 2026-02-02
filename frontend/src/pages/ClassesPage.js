@@ -153,7 +153,7 @@ export default function ClassesPage() {
                     <p className="text-muted-foreground">Manage class assignments and schedules</p>
                 </div>
                 
-                {isAdmin && (
+                {canManageClasses && (
                     <Dialog open={isDialogOpen} onOpenChange={(open) => {
                         setIsDialogOpen(open);
                         if (!open) {
