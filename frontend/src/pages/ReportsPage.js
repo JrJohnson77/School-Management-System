@@ -395,9 +395,15 @@ export default function ReportsPage() {
                 `${API}/report-cards/class/${selectedClass}?term=${selectedTerm}&academic_year=${selectedYear}`
             );
             setReportCards(response.data);
-            toast.success(`Generated ${response.data.length} report cards`);
+            
+            if (response.data.length === 0) {
+                toast.info('No report cards generated - no students with grades found');
+            } else {
+                toast.success(`Generated ${response.data.length} report cards`);
+            }
         } catch (error) {
-            toast.error('Failed to generate report cards');
+            console.error('Report generation error:', error);
+            toast.error(error.response?.data?.detail || 'Failed to generate report cards');
         } finally {
             setGenerating(false);
         }
