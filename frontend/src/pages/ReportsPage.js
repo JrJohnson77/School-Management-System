@@ -264,15 +264,12 @@ const TermReportCard = ({ data, classInfo, term, academicYear, gradingScheme }) 
                 </thead>
                 <tbody>
                     {SUBJECTS.map(subject => {
-                        const grade = grades.find(g => g.subject === subject);
-                        const gradeInfo = gradingScheme?.find(gs => 
-                            grade && grade.score >= gs.min && grade.score <= gs.max
-                        );
+                        const grade = subjectGrades.find(g => g.subject === subject);
                         return (
                             <tr key={subject}>
                                 <td className="border border-gray-300 p-2">{subject}</td>
                                 <td className="border border-gray-300 p-2 text-center">{grade?.score ?? '-'}</td>
-                                <td className="border border-gray-300 p-2 text-center font-bold">{gradeInfo?.grade || '-'}</td>
+                                <td className="border border-gray-300 p-2 text-center font-bold">{grade?.grade || '-'}</td>
                                 <td className="border border-gray-300 p-2 text-xs">{grade?.comment || '-'}</td>
                             </tr>
                         );
@@ -280,10 +277,11 @@ const TermReportCard = ({ data, classInfo, term, academicYear, gradingScheme }) 
                 </tbody>
                 <tfoot>
                     <tr className="bg-gray-100 font-bold">
-                        <td className="border border-gray-300 p-2">Average</td>
+                        <td className="border border-gray-300 p-2">Overall</td>
                         <td className="border border-gray-300 p-2 text-center">{averageScore}</td>
-                        <td className="border border-gray-300 p-2 text-center" colSpan={2}>
-                            Position: {position?.position || '-'} of {position?.total || '-'}
+                        <td className="border border-gray-300 p-2 text-center">{overallGrade}</td>
+                        <td className="border border-gray-300 p-2 text-center">
+                            Position: {position || '-'} of {data.total_students || '-'}
                         </td>
                     </tr>
                 </tfoot>
