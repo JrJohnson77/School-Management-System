@@ -90,9 +90,26 @@ const ClassListReport = ({ students, classInfo }) => {
 
 // ==================== GRADEBOOK REPORT ====================
 const GradebookReport = ({ students, grades, classInfo, term, academicYear }) => {
+    // Flatten grades from gradebook entries - each entry has a subjects array
+    const flattenedGrades = [];
+    grades.forEach(entry => {
+        if (entry.subjects && Array.isArray(entry.subjects)) {
+            entry.subjects.forEach(subj => {
+                flattenedGrades.push({
+                    student_id: entry.student_id,
+                    term: entry.term,
+                    subject: subj.subject,
+                    score: subj.score,
+                    grade: subj.grade,
+                    comment: subj.comment
+                });
+            });
+        }
+    });
+
     // Group grades by student
     const getStudentGrades = (studentId) => {
-        const studentGrades = grades.filter(g => g.student_id === studentId && g.term === term);
+        const studentGrades = flattenedGrades.filter(g => g.student_id === studentId);
         const gradeMap = {};
         studentGrades.forEach(g => {
             gradeMap[g.subject] = g;
@@ -102,7 +119,7 @@ const GradebookReport = ({ students, grades, classInfo, term, academicYear }) =>
 
     // Calculate average for a student
     const calculateAverage = (studentId) => {
-        const studentGrades = grades.filter(g => g.student_id === studentId && g.term === term);
+        const studentGrades = flattenedGrades.filter(g => g.student_id === studentId);
         if (studentGrades.length === 0) return '-';
         const total = studentGrades.reduce((sum, g) => sum + (g.score || 0), 0);
         return (total / studentGrades.length).toFixed(1);
