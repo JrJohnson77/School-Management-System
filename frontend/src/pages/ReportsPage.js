@@ -400,6 +400,7 @@ export default function ReportsPage() {
             const data = response.data;
             const cards = data.report_cards || [];
             setReportCards(cards);
+            setTotalStudentsInClass(data.total_students || cards.length);
             
             // Update grading scheme from response if available
             if (data.grading_scheme) {
