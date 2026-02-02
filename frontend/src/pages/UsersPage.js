@@ -22,7 +22,8 @@ import {
     UserCheck,
     Edit2,
     Upload,
-    X
+    X,
+    KeyRound
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
