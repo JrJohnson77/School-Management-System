@@ -566,6 +566,17 @@ export default function UsersPage() {
                                                             >
                                                                 <Edit2 className="w-4 h-4" />
                                                             </Button>
+                                                            {isSuperuser && user.role !== 'superuser' && (
+                                                                <Button 
+                                                                    variant="ghost" 
+                                                                    size="sm"
+                                                                    onClick={() => handleResetCredentials(user)}
+                                                                    title="Reset Credentials"
+                                                                    data-testid={`reset-user-${user.id}`}
+                                                                >
+                                                                    <KeyRound className="w-4 h-4" />
+                                                                </Button>
+                                                            )}
                                                             <AlertDialog>
                                                                 <AlertDialogTrigger asChild>
                                                                     <Button 
