@@ -40,7 +40,10 @@ export default function ClassesPage() {
     const [editingClass, setEditingClass] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
     const [submitting, setSubmitting] = useState(false);
-    const { isAdmin } = useAuth();
+    const { isAdmin, isTeacher, user } = useAuth();
+    
+    // Check if user has manage_classes permission
+    const canManageClasses = isAdmin || (isTeacher && user?.permissions?.includes('manage_classes'));
 
     useEffect(() => {
         fetchData();
