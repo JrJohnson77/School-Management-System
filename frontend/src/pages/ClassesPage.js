@@ -22,12 +22,19 @@ import {
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+const CURRENT_YEAR = new Date().getFullYear();
+const ACADEMIC_YEARS = [
+    `${CURRENT_YEAR-1}-${CURRENT_YEAR}`,
+    `${CURRENT_YEAR}-${CURRENT_YEAR+1}`,
+    `${CURRENT_YEAR+1}-${CURRENT_YEAR+2}`
+];
+
 const initialFormData = {
     name: '',
     grade_level: '',
     teacher_id: '',
     room_number: '',
-    academic_year: new Date().getFullYear().toString()
+    academic_year: `${CURRENT_YEAR}-${CURRENT_YEAR+1}`
 };
 
 export default function ClassesPage() {
