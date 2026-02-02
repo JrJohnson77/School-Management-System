@@ -394,12 +394,20 @@ export default function ReportsPage() {
             const response = await axios.get(
                 `${API}/report-cards/class/${selectedClass}?term=${selectedTerm}&academic_year=${selectedYear}`
             );
-            setReportCards(response.data);
             
-            if (response.data.length === 0) {
-                toast.info('No report cards generated - no students with grades found');
+            const data = response.data;
+            const cards = data.report_cards || [];
+            setReportCards(cards);
+            
+            // Update grading scheme from response if available
+            if (data.grading_scheme) {
+                setGradingScheme(data.grading_scheme);
+            }
+            
+            if (cards.length === 0) {
+                toast.info('No students found in this class');
             } else {
-                toast.success(`Generated ${response.data.length} report cards`);
+                toast.success(`Generated ${cards.length} report cards`);
             }
         } catch (error) {
             console.error('Report generation error:', error);
