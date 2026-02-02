@@ -204,6 +204,7 @@ class ClassResponse(ClassBase):
     model_config = ConfigDict(extra="ignore")
     id: str
     school_code: str
+    created_by: Optional[str] = None
     created_at: str
 
 class AttendanceBase(BaseModel):
