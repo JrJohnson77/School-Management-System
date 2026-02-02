@@ -630,6 +630,69 @@ export default function UsersPage() {
                     </CardContent>
                 </Card>
             )}
+
+            {/* Reset Credentials Dialog */}
+            <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+                <DialogContent className="rounded-3xl max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <KeyRound className="w-5 h-5" />
+                            Reset Credentials
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-4">
+                        <p className="text-sm text-muted-foreground">
+                            Reset username and/or password for <strong>{resetUser?.name}</strong>
+                        </p>
+                        
+                        <div className="space-y-2">
+                            <Label>New Username</Label>
+                            <Input
+                                value={resetData.username}
+                                onChange={(e) => setResetData({ ...resetData, username: e.target.value })}
+                                className="rounded-xl"
+                                placeholder="Enter new username"
+                                data-testid="reset-username-input"
+                            />
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <Label>New Password</Label>
+                            <Input
+                                type="password"
+                                value={resetData.password}
+                                onChange={(e) => setResetData({ ...resetData, password: e.target.value })}
+                                className="rounded-xl"
+                                placeholder="Enter new password (leave blank to keep current)"
+                                data-testid="reset-password-input"
+                            />
+                        </div>
+                        
+                        <div className="flex gap-2 pt-4">
+                            <Button
+                                variant="outline"
+                                className="flex-1 rounded-full"
+                                onClick={() => setResetDialogOpen(false)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                className="flex-1 rounded-full"
+                                onClick={submitResetCredentials}
+                                disabled={resetting}
+                                data-testid="submit-reset-btn"
+                            >
+                                {resetting ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                    <KeyRound className="w-4 h-4 mr-2" />
+                                )}
+                                Reset Credentials
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
