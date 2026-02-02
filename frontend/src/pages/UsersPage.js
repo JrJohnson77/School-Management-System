@@ -153,9 +153,57 @@ export default function UsersPage() {
             name: user.name,
             password: '',
             role: user.role,
-            permissions: user.permissions || []
+            permissions: user.permissions || [],
+            photo_url: user.photo_url || ''
         });
         setIsDialogOpen(true);
+    };
+
+    // Reset credentials dialog state
+    const [resetDialogOpen, setResetDialogOpen] = useState(false);
+    const [resetUser, setResetUser] = useState(null);
+    const [resetData, setResetData] = useState({ username: '', password: '' });
+    const [resetting, setResetting] = useState(false);
+
+    const handleResetCredentials = (user) => {
+        setResetUser(user);
+        setResetData({ username: user.username, password: '' });
+        setResetDialogOpen(true);
+    };
+
+    const submitResetCredentials = async () => {
+        if (!resetData.username && !resetData.password) {
+            toast.error('Please provide username or password to reset');
+            return;
+        }
+        
+        setResetting(true);
+        try {
+            const payload = {};
+            if (resetData.username && resetData.username !== resetUser.username) {
+                payload.username = resetData.username;
+            }
+            if (resetData.password) {
+                payload.password = resetData.password;
+            }
+            
+            if (Object.keys(payload).length === 0) {
+                toast.error('No changes to save');
+                setResetting(false);
+                return;
+            }
+            
+            await axios.put(`${API}/users/${resetUser.id}/credentials`, payload);
+            toast.success('Credentials updated successfully');
+            setResetDialogOpen(false);
+            setResetUser(null);
+            setResetData({ username: '', password: '' });
+            fetchUsers();
+        } catch (error) {
+            toast.error(error.response?.data?.detail || 'Failed to reset credentials');
+        } finally {
+            setResetting(false);
+        }
     };
 
     const handleDelete = async (userId) => {
