@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { toast } from 'sonner';
@@ -12,10 +12,7 @@ import {
     Loader2,
     Printer,
     Users,
-    GraduationCap,
-    BookOpen,
-    ClipboardList,
-    Download
+    BookOpen
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -28,11 +25,377 @@ const ACADEMIC_YEARS = [
     `${CURRENT_YEAR+1}-${CURRENT_YEAR+2}`
 ];
 
-const SUBJECTS = [
-    'English Language', 'Mathematics', 'Science', 'Social Studies', 
-    'Religious Education', 'Physical Education', 'Creative Arts', 
-    'Music', 'ICT', 'French'
+// MHPS Specific Configuration
+const MHPS_SUBJECTS = [
+    'Language Arts',
+    'Mathematics', 
+    'Social Studies',
+    'Science',
+    'Reading',
+    'Spelling',
+    'Music',
+    'Physical Education'
 ];
+
+// Core subjects for averaging
+const CORE_SUBJECTS = ['Language Arts', 'Mathematics', 'Social Studies', 'Science'];
+
+// Grade Scale for MHPS
+const MHPS_GRADE_SCALE = [
+    { min: 95, max: 100, grade: 'A+', description: 'Excellent' },
+    { min: 90, max: 94, grade: 'A', description: 'Very Good' },
+    { min: 80, max: 89, grade: 'B+', description: 'Good' },
+    { min: 70, max: 79, grade: 'B', description: 'Satisfactory' },
+    { min: 60, max: 69, grade: 'C+', description: 'Satisfactory' },
+    { min: 50, max: 59, grade: 'C', description: 'Needs Improvement' },
+    { min: 40, max: 49, grade: 'D', description: 'Unsatisfactory' },
+    { min: 0, max: 39, grade: 'E', description: 'Poor' }
+];
+
+// Achievement Standards based on END OF TERM EXAM score
+const ACHIEVEMENT_STANDARDS = [
+    { min: 85, max: 100, band: 'Highly Proficient', description: 'Student demonstrates excellent understanding and consistently produces outstanding work.' },
+    { min: 70, max: 84, band: 'Proficient', description: 'Student shows good understanding and produces quality work.' },
+    { min: 50, max: 69, band: 'Developing', description: 'Student shows basic understanding and is making progress.' },
+    { min: 0, max: 49, band: 'Beginning', description: 'Student needs additional support and practice.' }
+];
+
+// Assessment weightings
+const ASSESSMENT_WEIGHTS = {
+    homework: 0.05,      // 5%
+    groupWork: 0.05,     // 5%
+    project: 0.10,       // 10%
+    quiz: 0.10,          // 10%
+    midTerm: 0.30,       // 30%
+    endOfTerm: 0.40      // 40%
+};
+
+// Social Skills Categories
+const SOCIAL_SKILLS = {
+    workEthics: [
+        'Completes Assignments',
+        'Follows Instructions',
+        'Punctuality',
+        'Deportment',
+        'Courteous in Speech and Action',
+        'Class Participation'
+    ],
+    respect: [
+        'Respect for Teacher',
+        'Respect for Peers'
+    ]
+};
+
+const SKILL_RATINGS = ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
+
+// Helper function to get grade from score
+const getGrade = (score) => {
+    if (score === null || score === undefined) return { grade: '-', description: '-' };
+    for (const g of MHPS_GRADE_SCALE) {
+        if (score >= g.min && score <= g.max) {
+            return g;
+        }
+    }
+    return { grade: 'E', description: 'Poor' };
+};
+
+// Helper function to get achievement standard from END OF TERM exam score
+const getAchievementStandard = (endOfTermScore) => {
+    if (endOfTermScore === null || endOfTermScore === undefined) return null;
+    for (const std of ACHIEVEMENT_STANDARDS) {
+        if (endOfTermScore >= std.min && endOfTermScore <= std.max) {
+            return std;
+        }
+    }
+    return ACHIEVEMENT_STANDARDS[ACHIEVEMENT_STANDARDS.length - 1];
+};
+
+// Calculate weighted term grade
+const calculateWeightedGrade = (assessments) => {
+    const {homework = 0, groupWork = 0, project = 0, quiz = 0, midTerm = 0, endOfTerm = 0} = assessments;
+    
+    const weighted = (
+        homework * ASSESSMENT_WEIGHTS.homework +
+        groupWork * ASSESSMENT_WEIGHTS.groupWork +
+        project * ASSESSMENT_WEIGHTS.project +
+        quiz * ASSESSMENT_WEIGHTS.quiz +
+        midTerm * ASSESSMENT_WEIGHTS.midTerm +
+        endOfTerm * ASSESSMENT_WEIGHTS.endOfTerm
+    );
+    
+    return weighted;
+};
+
+// ==================== MHPS REPORT CARD TEMPLATE ====================
+const MHPSReportCard = ({ data, classInfo, term, academicYear, totalStudents }) => {
+    const { student, grades, attendance_summary, position, social_skills } = data;
+    
+    // Process grades
+    const subjectGrades = grades?.subjects || [];
+    
+    // Calculate core subjects average (using mid-term + end-of-term averages)
+    const calculateCoreAverage = () => {
+        const coreGrades = subjectGrades.filter(g => CORE_SUBJECTS.includes(g.subject));
+        if (coreGrades.length === 0) return null;
+        
+        let totalAverage = 0;
+        let count = 0;
+        
+        coreGrades.forEach(g => {
+            const midTerm = g.midTerm || 0;
+            const endOfTerm = g.endOfTerm || 0;
+            // Average of mid-term and end-of-term
+            const subjectAvg = (midTerm + endOfTerm) / 2;
+            totalAverage += subjectAvg;
+            count++;
+        });
+        
+        return count > 0 ? (totalAverage / count).toFixed(1) : null;
+    };
+    
+    const coreAverage = calculateCoreAverage();
+    const coreAverageGrade = coreAverage ? getGrade(parseFloat(coreAverage)) : { grade: '-', description: '-' };
+
+    return (
+        <div 
+            className="mhps-report-card bg-white mx-auto mb-8 print:mb-0 print:page-break-after-always"
+            style={{ 
+                width: '8.5in',
+                minHeight: '14in',
+                padding: '0.5in',
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '10pt',
+                lineHeight: '1.3'
+            }}
+        >
+            {/* Header */}
+            <div className="text-center border-b-2 border-black pb-3 mb-4">
+                <div className="flex justify-center items-center gap-4 mb-2">
+                    <div className="w-16 h-16 bg-blue-800 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                        MHPS
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-bold uppercase tracking-wide">MONA HEIGHTS PRIMARY SCHOOL</h1>
+                        <p className="text-xs text-gray-600">Excellence in Education</p>
+                    </div>
+                </div>
+                <h2 className="text-lg font-bold mt-2">UPPER SCHOOL REPORT CARD</h2>
+                <p className="text-sm">Grades 4 - 6</p>
+            </div>
+            
+            {/* Student Information Row */}
+            <div className="grid grid-cols-4 gap-2 text-xs mb-3 border border-gray-300 p-2">
+                <div><strong>Surname:</strong> {student.last_name}</div>
+                <div><strong>First Name:</strong> {student.first_name} {student.middle_name || ''}</div>
+                <div><strong>Date of Birth:</strong> {student.date_of_birth}</div>
+                <div><strong>Age:</strong> {student.age} years</div>
+                <div><strong>Grade:</strong> {classInfo?.grade_level || '-'}</div>
+                <div><strong>Gender:</strong> {student.gender}</div>
+                <div><strong>House:</strong> {student.house || '-'}</div>
+                <div><strong>Student ID:</strong> {student.student_id || '-'}</div>
+            </div>
+            
+            {/* Term & Class Info */}
+            <div className="grid grid-cols-4 gap-2 text-xs mb-3 border border-gray-300 p-2 bg-gray-50">
+                <div><strong>Term:</strong> {term}</div>
+                <div><strong>Academic Year:</strong> {academicYear}</div>
+                <div><strong>No. in Class:</strong> {totalStudents}</div>
+                <div><strong>Position:</strong> {position} of {totalStudents}</div>
+                <div><strong>Days in Term:</strong> {attendance_summary?.total_days || '-'}</div>
+                <div><strong>Days Absent:</strong> {attendance_summary?.absent || 0}</div>
+                <div><strong>Days Present:</strong> {attendance_summary?.present || '-'}</div>
+                <div><strong>Class:</strong> {classInfo?.name || '-'}</div>
+            </div>
+            
+            {/* Academic Performance Table */}
+            <div className="mb-4">
+                <h3 className="text-sm font-bold bg-blue-800 text-white p-1 mb-0">ACADEMIC PERFORMANCE</h3>
+                <table className="w-full border-collapse text-xs">
+                    <thead>
+                        <tr className="bg-gray-200">
+                            <th className="border border-gray-400 p-1 text-left w-28">Subject</th>
+                            <th className="border border-gray-400 p-1 text-center w-12" title="5%">HW</th>
+                            <th className="border border-gray-400 p-1 text-center w-12" title="5%">GW</th>
+                            <th className="border border-gray-400 p-1 text-center w-12" title="10%">Proj</th>
+                            <th className="border border-gray-400 p-1 text-center w-12" title="10%">Quiz</th>
+                            <th className="border border-gray-400 p-1 text-center w-14" title="30%">Mid-Term</th>
+                            <th className="border border-gray-400 p-1 text-center w-14" title="40%">End of Term</th>
+                            <th className="border border-gray-400 p-1 text-center w-16">Weighted Grade</th>
+                            <th className="border border-gray-400 p-1 text-center w-12">Grade</th>
+                            <th className="border border-gray-400 p-1 text-center w-24">Achievement</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {MHPS_SUBJECTS.map((subject, idx) => {
+                            const subjectData = subjectGrades.find(g => g.subject === subject) || {};
+                            const weightedScore = subjectData.score || calculateWeightedGrade({
+                                homework: subjectData.homework || 0,
+                                groupWork: subjectData.groupWork || 0,
+                                project: subjectData.project || 0,
+                                quiz: subjectData.quiz || 0,
+                                midTerm: subjectData.midTerm || 0,
+                                endOfTerm: subjectData.endOfTerm || 0
+                            });
+                            const gradeInfo = getGrade(weightedScore);
+                            const achievement = getAchievementStandard(subjectData.endOfTerm);
+                            const isCore = CORE_SUBJECTS.includes(subject);
+                            
+                            return (
+                                <tr key={subject} className={isCore ? 'bg-blue-50' : (idx % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
+                                    <td className="border border-gray-400 p-1 font-medium">
+                                        {subject}
+                                        {isCore && <span className="text-blue-600">*</span>}
+                                    </td>
+                                    <td className="border border-gray-400 p-1 text-center">{subjectData.homework ?? '-'}</td>
+                                    <td className="border border-gray-400 p-1 text-center">{subjectData.groupWork ?? '-'}</td>
+                                    <td className="border border-gray-400 p-1 text-center">{subjectData.project ?? '-'}</td>
+                                    <td className="border border-gray-400 p-1 text-center">{subjectData.quiz ?? '-'}</td>
+                                    <td className="border border-gray-400 p-1 text-center font-medium">{subjectData.midTerm ?? '-'}</td>
+                                    <td className="border border-gray-400 p-1 text-center font-medium">{subjectData.endOfTerm ?? '-'}</td>
+                                    <td className="border border-gray-400 p-1 text-center font-bold">{weightedScore > 0 ? weightedScore.toFixed(1) : '-'}</td>
+                                    <td className="border border-gray-400 p-1 text-center font-bold">{gradeInfo.grade}</td>
+                                    <td className="border border-gray-400 p-1 text-center text-xs">{achievement?.band || '-'}</td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                    <tfoot>
+                        <tr className="bg-gray-200 font-bold">
+                            <td className="border border-gray-400 p-1" colSpan={7}>CORE SUBJECTS AVERAGE *</td>
+                            <td className="border border-gray-400 p-1 text-center">{coreAverage || '-'}</td>
+                            <td className="border border-gray-400 p-1 text-center">{coreAverageGrade.grade}</td>
+                            <td className="border border-gray-400 p-1 text-center"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <p className="text-xs text-gray-500 mt-1">* Core subjects used for class ranking: Language Arts, Mathematics, Social Studies, Science</p>
+            </div>
+            
+            {/* Assessment Weights Key */}
+            <div className="grid grid-cols-2 gap-4 mb-4 text-xs">
+                <div className="border border-gray-300 p-2">
+                    <h4 className="font-bold mb-1">ASSESSMENT WEIGHTINGS</h4>
+                    <div className="grid grid-cols-3 gap-1">
+                        <span>HW (Homework): 5%</span>
+                        <span>GW (Group Work): 5%</span>
+                        <span>Project: 10%</span>
+                        <span>Quiz: 10%</span>
+                        <span>Mid-Term: 30%</span>
+                        <span>End of Term: 40%</span>
+                    </div>
+                </div>
+                <div className="border border-gray-300 p-2">
+                    <h4 className="font-bold mb-1">KEY TO ACADEMIC GRADES</h4>
+                    <div className="grid grid-cols-4 gap-1">
+                        {MHPS_GRADE_SCALE.map(g => (
+                            <span key={g.grade} className="text-xs">{g.grade}: {g.min}-{g.max === 100 ? '100' : g.max}</span>
+                        ))}
+                    </div>
+                </div>
+            </div>
+            
+            {/* Achievement Standards */}
+            <div className="mb-4 border border-gray-300 p-2 text-xs">
+                <h4 className="font-bold mb-1">ACHIEVEMENT STANDARDS (Based on End of Term Exam)</h4>
+                <div className="grid grid-cols-4 gap-2">
+                    {ACHIEVEMENT_STANDARDS.map(std => (
+                        <div key={std.band} className="text-center p-1 bg-gray-50 rounded">
+                            <div className="font-bold">{std.band}</div>
+                            <div className="text-gray-600">{std.min}% - {std.max}%</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            
+            {/* Social Skills Assessment */}
+            <div className="mb-4">
+                <h3 className="text-sm font-bold bg-blue-800 text-white p-1 mb-0">PROGRESS IN SOCIAL SKILLS AND ATTITUDES</h3>
+                <div className="grid grid-cols-2 gap-4 text-xs border border-gray-300 p-2">
+                    <div>
+                        <h4 className="font-bold mb-1">WORK AND PERSONAL ETHICS</h4>
+                        <table className="w-full">
+                            <tbody>
+                                {SOCIAL_SKILLS.workEthics.map(skill => (
+                                    <tr key={skill}>
+                                        <td className="py-0.5">{skill}</td>
+                                        <td className="py-0.5 text-right">
+                                            {SKILL_RATINGS.map(rating => (
+                                                <span key={rating} className="inline-block w-4 h-4 border border-gray-400 mx-0.5 text-center text-xs">
+                                                    {social_skills?.[skill] === rating ? '✓' : ''}
+                                                </span>
+                                            ))}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <h4 className="font-bold mb-1">RESPECT</h4>
+                        <table className="w-full">
+                            <tbody>
+                                {SOCIAL_SKILLS.respect.map(skill => (
+                                    <tr key={skill}>
+                                        <td className="py-0.5">{skill}</td>
+                                        <td className="py-0.5 text-right">
+                                            {SKILL_RATINGS.map(rating => (
+                                                <span key={rating} className="inline-block w-4 h-4 border border-gray-400 mx-0.5 text-center text-xs">
+                                                    {social_skills?.[skill] === rating ? '✓' : ''}
+                                                </span>
+                                            ))}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <div className="mt-2 text-xs text-gray-500">
+                            <span className="mr-4">E = Excellent</span>
+                            <span className="mr-4">G = Good</span>
+                            <span className="mr-4">S = Satisfactory</span>
+                            <span>NI = Needs Improvement</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {/* Teacher's Comments */}
+            <div className="mb-4">
+                <h3 className="text-sm font-bold bg-blue-800 text-white p-1 mb-0">CLASS TEACHER'S COMMENTS</h3>
+                <div className="border border-gray-300 p-2 min-h-16 text-sm">
+                    {student.teacher_comment || 'No comments recorded.'}
+                </div>
+            </div>
+            
+            {/* Additional Comments */}
+            <div className="mb-4">
+                <h3 className="text-sm font-bold bg-gray-200 p-1 mb-0">ADDITIONAL COMMENTS</h3>
+                <div className="border border-gray-300 p-2 min-h-12 text-sm">
+                    {data.additional_comments || ''}
+                </div>
+            </div>
+            
+            {/* Signatures */}
+            <div className="grid grid-cols-2 gap-8 mt-6 pt-4">
+                <div className="text-center">
+                    <div className="border-b border-black h-8 mb-1"></div>
+                    <p className="text-sm font-medium">Class Teacher's Signature</p>
+                    <p className="text-xs text-gray-500">Date: _______________</p>
+                </div>
+                <div className="text-center">
+                    <div className="border-b border-black h-8 mb-1"></div>
+                    <p className="text-sm font-medium">Principal's Signature</p>
+                    <p className="text-xs text-gray-500">Date: _______________</p>
+                </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="mt-4 pt-2 border-t border-gray-300 text-center text-xs text-gray-500">
+                <p>Mona Heights Primary School - {term} {academicYear}</p>
+                <p>This report was generated on {new Date().toLocaleDateString()}</p>
+            </div>
+        </div>
+    );
+};
 
 // ==================== CLASS LIST REPORT ====================
 const ClassListReport = ({ students, classInfo }) => {
@@ -90,39 +453,33 @@ const ClassListReport = ({ students, classInfo }) => {
 
 // ==================== GRADEBOOK REPORT ====================
 const GradebookReport = ({ students, grades, classInfo, term, academicYear }) => {
-    // Flatten grades from gradebook entries - each entry has a subjects array
-    const flattenedGrades = [];
-    grades.forEach(entry => {
-        if (entry.subjects && Array.isArray(entry.subjects)) {
-            entry.subjects.forEach(subj => {
-                flattenedGrades.push({
-                    student_id: entry.student_id,
-                    term: entry.term,
-                    subject: subj.subject,
-                    score: subj.score,
-                    grade: subj.grade,
-                    comment: subj.comment
-                });
-            });
-        }
-    });
-
-    // Group grades by student
+    // Flatten grades from gradebook entries
     const getStudentGrades = (studentId) => {
-        const studentGrades = flattenedGrades.filter(g => g.student_id === studentId);
+        const entry = grades.find(g => g.student_id === studentId);
+        if (!entry || !entry.subjects) return {};
+        
         const gradeMap = {};
-        studentGrades.forEach(g => {
-            gradeMap[g.subject] = g;
+        entry.subjects.forEach(s => {
+            gradeMap[s.subject] = s;
         });
         return gradeMap;
     };
 
-    // Calculate average for a student
+    // Calculate weighted average for a student
     const calculateAverage = (studentId) => {
-        const studentGrades = flattenedGrades.filter(g => g.student_id === studentId);
-        if (studentGrades.length === 0) return '-';
-        const total = studentGrades.reduce((sum, g) => sum + (g.score || 0), 0);
-        return (total / studentGrades.length).toFixed(1);
+        const studentGradesMap = getStudentGrades(studentId);
+        const coreSubjectGrades = CORE_SUBJECTS.map(subj => studentGradesMap[subj]).filter(Boolean);
+        
+        if (coreSubjectGrades.length === 0) return '-';
+        
+        let totalAvg = 0;
+        coreSubjectGrades.forEach(g => {
+            const midTerm = g.midTerm || 0;
+            const endOfTerm = g.endOfTerm || 0;
+            totalAvg += (midTerm + endOfTerm) / 2;
+        });
+        
+        return (totalAvg / coreSubjectGrades.length).toFixed(1);
     };
 
     return (
@@ -139,12 +496,12 @@ const GradebookReport = ({ students, grades, classInfo, term, academicYear }) =>
                         <tr className="bg-gray-100">
                             <th className="border border-gray-300 p-1 text-left w-8">#</th>
                             <th className="border border-gray-300 p-1 text-left min-w-[150px]">Student Name</th>
-                            {SUBJECTS.map(subject => (
-                                <th key={subject} className="border border-gray-300 p-1 text-center" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', height: '100px' }}>
+                            {MHPS_SUBJECTS.map(subject => (
+                                <th key={subject} className="border border-gray-300 p-1 text-center" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', height: '80px' }}>
                                     {subject}
                                 </th>
                             ))}
-                            <th className="border border-gray-300 p-1 text-center font-bold">Avg</th>
+                            <th className="border border-gray-300 p-1 text-center font-bold bg-blue-100">Core Avg</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -156,12 +513,16 @@ const GradebookReport = ({ students, grades, classInfo, term, academicYear }) =>
                                     <td className="border border-gray-300 p-1 font-medium">
                                         {student.first_name} {student.last_name}
                                     </td>
-                                    {SUBJECTS.map(subject => (
-                                        <td key={subject} className="border border-gray-300 p-1 text-center">
-                                            {studentGrades[subject]?.score ?? '-'}
-                                        </td>
-                                    ))}
-                                    <td className="border border-gray-300 p-1 text-center font-bold bg-gray-100">
+                                    {MHPS_SUBJECTS.map(subject => {
+                                        const subjData = studentGrades[subject];
+                                        const score = subjData?.score || '-';
+                                        return (
+                                            <td key={subject} className="border border-gray-300 p-1 text-center">
+                                                {typeof score === 'number' ? score.toFixed(0) : score}
+                                            </td>
+                                        );
+                                    })}
+                                    <td className="border border-gray-300 p-1 text-center font-bold bg-blue-50">
                                         {calculateAverage(student.id)}
                                     </td>
                                 </tr>
@@ -175,145 +536,14 @@ const GradebookReport = ({ students, grades, classInfo, term, academicYear }) =>
                 <div>
                     <h4 className="font-bold mb-2">Grading Key:</h4>
                     <div className="grid grid-cols-4 gap-1 text-xs">
-                        <span>A+ (90-100)</span>
-                        <span>A (85-89)</span>
-                        <span>A- (80-84)</span>
-                        <span>B (75-79)</span>
-                        <span>B- (70-74)</span>
-                        <span>C (65-69)</span>
-                        <span>C- (60-64)</span>
-                        <span>D (55-59)</span>
-                        <span>D- (50-54)</span>
-                        <span>E (40-49)</span>
-                        <span>U (0-39)</span>
+                        {MHPS_GRADE_SCALE.map(g => (
+                            <span key={g.grade}>{g.grade} ({g.min}-{g.max === 100 ? '100' : g.max})</span>
+                        ))}
                     </div>
                 </div>
                 <div className="text-right">
                     <p>Total Students: {students.length}</p>
                     <p className="text-xs text-gray-400 mt-2">Generated on {new Date().toLocaleDateString()}</p>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// ==================== TERM REPORT CARD ====================
-const TermReportCard = ({ data, classInfo, term, academicYear, gradingScheme }) => {
-    const { student, grades, attendance_summary, position } = data;
-    
-    // Extract subjects from grades object (which has a subjects array)
-    const subjectGrades = grades?.subjects || [];
-    
-    const getTermDates = () => {
-        const year = parseInt(academicYear.split('-')[0]) || new Date().getFullYear();
-        if (term === 'Term 1') {
-            return { start: `Sep 1, ${year}`, end: `Dec 15, ${year}` };
-        } else if (term === 'Term 2') {
-            return { start: `Jan 10, ${year + 1}`, end: `Apr 15, ${year + 1}` };
-        } else {
-            return { start: `Apr 27, ${year + 1}`, end: `Aug 31, ${year + 1}` };
-        }
-    };
-
-    const termDates = getTermDates();
-    
-    const attendanceRate = attendance_summary?.total_days > 0 
-        ? ((attendance_summary.present / attendance_summary.total_days) * 100).toFixed(1)
-        : '0.0';
-
-    // Use overall score from grades object if available
-    const averageScore = grades?.overall_score?.toFixed(1) || '0.0';
-    const overallGrade = grades?.overall_grade || '-';
-
-    return (
-        <div className="report-card bg-white p-8 max-w-4xl mx-auto mb-8 print:shadow-none print:mb-0 print:page-break-after-always" style={{ fontFamily: 'Arial, sans-serif' }}>
-            {/* Header */}
-            <div className="text-center border-b-2 border-gray-800 pb-4 mb-6">
-                <div className="flex justify-center items-center gap-4 mb-2">
-                    <span className="text-4xl">🎓</span>
-                    <div>
-                        <h1 className="text-2xl font-bold">END OF TERM REPORT</h1>
-                        <p className="text-lg">{term} - Academic Year {academicYear}</p>
-                    </div>
-                </div>
-            </div>
-            
-            {/* Student Info */}
-            <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-                <div className="space-y-1">
-                    <p><strong>Student Name:</strong> {student.first_name} {student.middle_name || ''} {student.last_name}</p>
-                    <p><strong>Student ID:</strong> {student.student_id || '-'}</p>
-                    <p><strong>Class:</strong> {classInfo?.name || '-'}</p>
-                </div>
-                <div className="space-y-1">
-                    <p><strong>Age:</strong> {student.age} years</p>
-                    <p><strong>Gender:</strong> {student.gender}</p>
-                    <p><strong>House:</strong> {student.house || '-'}</p>
-                </div>
-            </div>
-            
-            {/* Grades Table */}
-            <table className="w-full border-collapse border border-gray-300 text-sm mb-6">
-                <thead>
-                    <tr className="bg-gray-100">
-                        <th className="border border-gray-300 p-2 text-left">Subject</th>
-                        <th className="border border-gray-300 p-2 text-center w-16">Score</th>
-                        <th className="border border-gray-300 p-2 text-center w-16">Grade</th>
-                        <th className="border border-gray-300 p-2 text-left">Comment</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {SUBJECTS.map(subject => {
-                        const grade = subjectGrades.find(g => g.subject === subject);
-                        return (
-                            <tr key={subject}>
-                                <td className="border border-gray-300 p-2">{subject}</td>
-                                <td className="border border-gray-300 p-2 text-center">{grade?.score ?? '-'}</td>
-                                <td className="border border-gray-300 p-2 text-center font-bold">{grade?.grade || '-'}</td>
-                                <td className="border border-gray-300 p-2 text-xs">{grade?.comment || '-'}</td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-                <tfoot>
-                    <tr className="bg-gray-100 font-bold">
-                        <td className="border border-gray-300 p-2">Overall</td>
-                        <td className="border border-gray-300 p-2 text-center">{averageScore}</td>
-                        <td className="border border-gray-300 p-2 text-center">{overallGrade}</td>
-                        <td className="border border-gray-300 p-2 text-center">
-                            Position: {position || '-'} of {data.total_students || '-'}
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
-            
-            {/* Attendance & Comments */}
-            <div className="grid grid-cols-2 gap-6 mb-6">
-                <div className="border border-gray-300 p-4">
-                    <h4 className="font-bold mb-2">Attendance Summary</h4>
-                    <p>Days Present: {attendance_summary?.present || 0}</p>
-                    <p>Days Absent: {attendance_summary?.absent || 0}</p>
-                    <p>Attendance Rate: {attendanceRate}%</p>
-                </div>
-                <div className="border border-gray-300 p-4">
-                    <h4 className="font-bold mb-2">Teacher's Comment</h4>
-                    <p className="text-sm italic">{student.teacher_comment || 'Good progress this term.'}</p>
-                </div>
-            </div>
-            
-            {/* Signatures */}
-            <div className="grid grid-cols-3 gap-4 mt-8 pt-4 border-t border-gray-300">
-                <div className="text-center">
-                    <div className="border-b border-gray-400 mb-1 h-8"></div>
-                    <p className="text-sm">Class Teacher</p>
-                </div>
-                <div className="text-center">
-                    <div className="border-b border-gray-400 mb-1 h-8"></div>
-                    <p className="text-sm">Head Teacher</p>
-                </div>
-                <div className="text-center">
-                    <div className="border-b border-gray-400 mb-1 h-8"></div>
-                    <p className="text-sm">Parent/Guardian</p>
                 </div>
             </div>
         </div>
@@ -335,7 +565,10 @@ export default function ReportsPage() {
     const [generating, setGenerating] = useState(false);
     const [activeTab, setActiveTab] = useState('class-list');
     const printRef = useRef();
-    const { isAdmin, isTeacher } = useAuth();
+    const { isAdmin, isTeacher, schoolCode } = useAuth();
+    
+    // Check if this is MHPS school
+    const isMHPS = schoolCode === 'MHPS' || classes.some(c => c.school_code === 'MHPS');
 
     useEffect(() => {
         fetchInitialData();
@@ -402,7 +635,6 @@ export default function ReportsPage() {
             setReportCards(cards);
             setTotalStudentsInClass(data.total_students || cards.length);
             
-            // Update grading scheme from response if available
             if (data.grading_scheme) {
                 setGradingScheme(data.grading_scheme);
             }
@@ -599,14 +831,14 @@ export default function ReportsPage() {
                 <TabsContent value="term-reports" className="mt-6">
                     {reportCards.length > 0 ? (
                         <div ref={printRef} className="print-content space-y-8">
-                            {reportCards.map((data, index) => (
-                                <TermReportCard
+                            {reportCards.map((data) => (
+                                <MHPSReportCard
                                     key={data.student.id}
                                     data={{...data, total_students: totalStudentsInClass}}
                                     classInfo={selectedClassInfo}
                                     term={selectedTerm}
                                     academicYear={selectedYear}
-                                    gradingScheme={gradingScheme}
+                                    totalStudents={totalStudentsInClass}
                                 />
                             ))}
                         </div>
@@ -626,9 +858,13 @@ export default function ReportsPage() {
                 </TabsContent>
             </Tabs>
 
-            {/* Print Styles */}
+            {/* Print Styles for Legal Paper */}
             <style>{`
                 @media print {
+                    @page {
+                        size: legal portrait;
+                        margin: 0.25in;
+                    }
                     body * {
                         visibility: hidden;
                     }
@@ -641,8 +877,9 @@ export default function ReportsPage() {
                         top: 0;
                         width: 100%;
                     }
-                    .report-card {
+                    .mhps-report-card {
                         page-break-after: always;
+                        box-shadow: none !important;
                     }
                     .report-page {
                         page-break-after: always;
