@@ -961,8 +961,9 @@ def get_mhps_grade(score):
     """Get MHPS grade from score"""
     if score is None:
         return {"grade": "-", "description": "-"}
+    rounded = round(score)
     for g in MHPS_GRADE_SCALE:
-        if g["min"] <= score <= g["max"]:
+        if g["min"] <= rounded <= g["max"]:
             return g
     return {"grade": "E", "description": "Poor"}
 
