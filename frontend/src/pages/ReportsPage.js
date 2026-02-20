@@ -26,106 +26,41 @@ const ACADEMIC_YEARS = [
     `${CURRENT_YEAR+1}-${CURRENT_YEAR+2}`
 ];
 
-// MHPS Specific Configuration
-const MHPS_SUBJECTS = [
-    'Language Arts',
-    'Mathematics', 
-    'Social Studies',
-    'Science',
-    'Reading',
-    'Spelling',
-    'Music',
-    'Physical Education'
-];
-
-// Core subjects for averaging
-const CORE_SUBJECTS = ['Language Arts', 'Mathematics', 'Social Studies', 'Science'];
-
-// Grade Scale for MHPS
-const MHPS_GRADE_SCALE = [
-    { min: 95, max: 100, grade: 'A+', description: 'Excellent' },
-    { min: 90, max: 94, grade: 'A', description: 'Very Good' },
-    { min: 80, max: 89, grade: 'B+', description: 'Good' },
-    { min: 70, max: 79, grade: 'B', description: 'Satisfactory' },
-    { min: 60, max: 69, grade: 'C+', description: 'Satisfactory' },
-    { min: 50, max: 59, grade: 'C', description: 'Needs Improvement' },
-    { min: 40, max: 49, grade: 'D', description: 'Unsatisfactory' },
-    { min: 0, max: 39, grade: 'E', description: 'Poor' }
-];
-
-// Achievement Standards based on END OF TERM EXAM score
-const ACHIEVEMENT_STANDARDS = [
-    { min: 85, max: 100, band: 'Highly Proficient', description: 'Student demonstrates excellent understanding and consistently produces outstanding work.' },
-    { min: 70, max: 84, band: 'Proficient', description: 'Student shows good understanding and produces quality work.' },
-    { min: 50, max: 69, band: 'Developing', description: 'Student shows basic understanding and is making progress.' },
-    { min: 0, max: 49, band: 'Beginning', description: 'Student needs additional support and practice.' }
-];
-
-// Assessment weightings
-const ASSESSMENT_WEIGHTS = {
-    homework: 0.05,      // 5%
-    groupWork: 0.05,     // 5%
-    project: 0.10,       // 10%
-    quiz: 0.10,          // 10%
-    midTerm: 0.30,       // 30%
-    endOfTerm: 0.40      // 40%
-};
-
-// Social Skills Categories
-const SOCIAL_SKILLS = {
-    workEthics: [
-        'Completes Assignments',
-        'Follows Instructions',
-        'Punctuality',
-        'Deportment',
-        'Courteous in Speech and Action',
-        'Class Participation'
-    ],
-    respect: [
-        'Respect for Teacher',
-        'Respect for Peers'
-    ]
-};
-
-const SKILL_RATINGS = ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
-
-// Helper function to get grade from score
-const getGrade = (score) => {
-    if (score === null || score === undefined) return { grade: '-', description: '-' };
+// Dynamic helper: get grade from template's grade scale
+const getGradeFromScale = (score, gradeScale) => {
+    if (score === null || score === undefined || !gradeScale?.length) return { grade: '-', description: '-' };
     const rounded = Math.round(score);
-    for (const g of MHPS_GRADE_SCALE) {
+    for (const g of gradeScale) {
         if (rounded >= g.min && rounded <= g.max) {
             return g;
         }
     }
-    return { grade: 'E', description: 'Poor' };
+    return gradeScale[gradeScale.length - 1] || { grade: '-', description: '-' };
 };
 
-// Helper function to get achievement standard from END OF TERM exam score
-const getAchievementStandard = (endOfTermScore) => {
-    if (endOfTermScore === null || endOfTermScore === undefined) return null;
-    for (const std of ACHIEVEMENT_STANDARDS) {
-        if (endOfTermScore >= std.min && endOfTermScore <= std.max) {
+// Dynamic helper: get achievement standard
+const getAchievementFromScale = (score, standards) => {
+    if (score === null || score === undefined || !standards?.length) return null;
+    for (const std of standards) {
+        if (score >= std.min && score <= std.max) {
             return std;
         }
     }
-    return ACHIEVEMENT_STANDARDS[ACHIEVEMENT_STANDARDS.length - 1];
+    return standards[standards.length - 1];
 };
 
-// Calculate weighted term grade
-const calculateWeightedGrade = (assessments) => {
+// Dynamic helper: calculate weighted grade from template weights
+const calcWeightedFromTemplate = (assessments, weights) => {
+    if (!weights) return 0;
     const {homework = 0, groupWork = 0, project = 0, quiz = 0, midTerm = 0, endOfTerm = 0} = assessments;
-    
-    const weighted = (
-        homework * ASSESSMENT_WEIGHTS.homework +
-        groupWork * ASSESSMENT_WEIGHTS.groupWork +
-        project * ASSESSMENT_WEIGHTS.project +
-        quiz * ASSESSMENT_WEIGHTS.quiz +
-        midTerm * ASSESSMENT_WEIGHTS.midTerm +
-        endOfTerm * ASSESSMENT_WEIGHTS.endOfTerm
+    return (
+        homework * ((weights.homework || 0) / 100) +
+        groupWork * ((weights.groupWork || 0) / 100) +
+        project * ((weights.project || 0) / 100) +
+        quiz * ((weights.quiz || 0) / 100) +
+        midTerm * ((weights.midTerm || 0) / 100) +
+        endOfTerm * ((weights.endOfTerm || 0) / 100)
     );
-    
-    return weighted;
 };
 
 // ==================== MHPS REPORT CARD TEMPLATE ====================
