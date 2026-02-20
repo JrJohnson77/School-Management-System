@@ -297,6 +297,130 @@ class SignatureUpload(BaseModel):
     type: str  # "teacher" or "principal"
     school_code: str
 
+# Report Template Model
+class ReportTemplateSubject(BaseModel):
+    name: str
+    is_core: bool = False
+
+class ReportTemplateGrade(BaseModel):
+    min: int
+    max: int
+    grade: str
+    description: str = ""
+
+class ReportTemplateAchievement(BaseModel):
+    min: int
+    max: int
+    band: str
+    description: str = ""
+
+class ReportTemplateSocialCategory(BaseModel):
+    category_name: str
+    skills: List[str]
+
+class ReportTemplateCreate(BaseModel):
+    school_code: str
+    school_name: str
+    school_motto: Optional[str] = ""
+    logo_url: Optional[str] = ""
+    header_text: Optional[str] = "REPORT CARD"
+    sub_header_text: Optional[str] = ""
+    subjects: List[ReportTemplateSubject] = []
+    grade_scale: List[ReportTemplateGrade] = []
+    use_weighted_grading: bool = False
+    assessment_weights: Dict[str, float] = {}
+    sections: Dict[str, bool] = {}
+    social_skills_categories: List[ReportTemplateSocialCategory] = []
+    skill_ratings: List[str] = ["Excellent", "Good", "Satisfactory", "Needs Improvement"]
+    achievement_standards: List[ReportTemplateAchievement] = []
+    paper_size: str = "legal"
+
+DEFAULT_SUBJECTS = [
+    {"name": "English Language", "is_core": True},
+    {"name": "Mathematics", "is_core": True},
+    {"name": "Science", "is_core": True},
+    {"name": "Social Studies", "is_core": True},
+    {"name": "Religious Education", "is_core": False},
+    {"name": "Physical Education", "is_core": False},
+    {"name": "Creative Arts", "is_core": False},
+    {"name": "Music", "is_core": False},
+    {"name": "ICT", "is_core": False},
+    {"name": "French", "is_core": False},
+]
+
+DEFAULT_GRADE_SCALE = [
+    {"min": 90, "max": 100, "grade": "A+", "description": "Excellent"},
+    {"min": 85, "max": 89, "grade": "A", "description": "Very Good"},
+    {"min": 80, "max": 84, "grade": "A-", "description": "Good"},
+    {"min": 75, "max": 79, "grade": "B", "description": "Satisfactory"},
+    {"min": 70, "max": 74, "grade": "B-", "description": "Developing"},
+    {"min": 65, "max": 69, "grade": "C", "description": "Passing"},
+    {"min": 60, "max": 64, "grade": "C-", "description": "Passing"},
+    {"min": 55, "max": 59, "grade": "D", "description": "Marginal"},
+    {"min": 50, "max": 54, "grade": "D-", "description": "Below Average"},
+    {"min": 40, "max": 49, "grade": "E", "description": "Frustration"},
+    {"min": 0, "max": 39, "grade": "U", "description": "No participation"},
+]
+
+DEFAULT_SECTIONS = {
+    "social_skills": True,
+    "attendance_summary": True,
+    "teacher_comments": True,
+    "signatures": True,
+    "achievement_standards": True,
+    "grade_key": True,
+    "weight_key": True,
+}
+
+DEFAULT_SOCIAL_SKILLS = [
+    {"category_name": "Work and Personal Ethics", "skills": [
+        "Completes Assignments", "Follows Instructions", "Punctuality",
+        "Deportment", "Courteous in Speech and Action", "Class Participation"
+    ]},
+    {"category_name": "Respect", "skills": [
+        "Respect for Teacher", "Respect for Peers"
+    ]},
+]
+
+DEFAULT_ACHIEVEMENT_STANDARDS = [
+    {"min": 85, "max": 100, "band": "Highly Proficient", "description": "Student demonstrates excellent understanding and consistently produces outstanding work."},
+    {"min": 70, "max": 84, "band": "Proficient", "description": "Student shows good understanding and produces quality work."},
+    {"min": 50, "max": 69, "band": "Developing", "description": "Student shows basic understanding and is making progress."},
+    {"min": 0, "max": 49, "band": "Beginning", "description": "Student needs additional support and practice."},
+]
+
+DEFAULT_WEIGHTS = {
+    "homework": 5,
+    "groupWork": 5,
+    "project": 10,
+    "quiz": 10,
+    "midTerm": 30,
+    "endOfTerm": 40,
+}
+
+def build_default_template(school_code: str, school_name: str) -> dict:
+    """Build a default report template for a new school"""
+    return {
+        "id": str(uuid.uuid4()),
+        "school_code": school_code,
+        "school_name": school_name,
+        "school_motto": "",
+        "logo_url": "",
+        "header_text": "REPORT CARD",
+        "sub_header_text": "",
+        "subjects": DEFAULT_SUBJECTS,
+        "grade_scale": DEFAULT_GRADE_SCALE,
+        "use_weighted_grading": False,
+        "assessment_weights": DEFAULT_WEIGHTS,
+        "sections": DEFAULT_SECTIONS,
+        "social_skills_categories": DEFAULT_SOCIAL_SKILLS,
+        "skill_ratings": ["Excellent", "Good", "Satisfactory", "Needs Improvement"],
+        "achievement_standards": DEFAULT_ACHIEVEMENT_STANDARDS,
+        "paper_size": "legal",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
 # ==================== AUTH HELPERS ====================
 
 def hash_password(password: str) -> str:
