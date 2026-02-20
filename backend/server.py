@@ -230,8 +230,16 @@ class AttendanceBulkCreate(BaseModel):
 
 class SubjectGrade(BaseModel):
     subject: str
-    score: float
+    score: Optional[float] = None  # Weighted score (calculated)
+    grade: Optional[str] = None    # Letter grade
     comment: Optional[str] = ""
+    # MHPS Assessment Components
+    homework: Optional[float] = None      # 5%
+    groupWork: Optional[float] = None     # 5%
+    project: Optional[float] = None       # 10%
+    quiz: Optional[float] = None          # 10%
+    midTerm: Optional[float] = None       # 30%
+    endOfTerm: Optional[float] = None     # 40%
 
 class GradebookEntry(BaseModel):
     student_id: str
