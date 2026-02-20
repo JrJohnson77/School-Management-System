@@ -827,15 +827,31 @@ export default function ReportsPage() {
                                 {((activeTab === 'class-list' && classStudents.length > 0) ||
                                   (activeTab === 'gradebook' && classStudents.length > 0) ||
                                   (activeTab === 'term-reports' && reportCards.length > 0)) && (
-                                    <Button
-                                        variant="outline"
-                                        onClick={handlePrint}
-                                        className="rounded-full"
-                                        data-testid="print-report-btn"
-                                    >
-                                        <Printer className="w-4 h-4 mr-2" />
-                                        Print
-                                    </Button>
+                                    <>
+                                        <Button
+                                            variant="outline"
+                                            onClick={handleExportPdf}
+                                            disabled={exportingPdf}
+                                            className="rounded-full"
+                                            data-testid="export-pdf-btn"
+                                        >
+                                            {exportingPdf ? (
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            ) : (
+                                                <Download className="w-4 h-4 mr-2" />
+                                            )}
+                                            PDF
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            onClick={handlePrint}
+                                            className="rounded-full"
+                                            data-testid="print-report-btn"
+                                        >
+                                            <Printer className="w-4 h-4 mr-2" />
+                                            Print
+                                        </Button>
+                                    </>
                                 )}
                             </div>
                         </div>
