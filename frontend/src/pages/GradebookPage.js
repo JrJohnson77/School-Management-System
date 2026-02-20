@@ -667,7 +667,7 @@ export default function GradebookPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-4 md:grid-cols-8 gap-2 text-xs">
-                            {MHPS_GRADE_SCALE.map(g => (
+                            {tplGradeScale.map(g => (
                                 <div key={g.grade} className="text-center p-2 rounded-xl bg-muted/50">
                                     <div className={`font-bold ${getGradeColor(g.grade)}`}>{g.grade}</div>
                                     <div className="text-muted-foreground">{g.min}-{g.max}</div>
