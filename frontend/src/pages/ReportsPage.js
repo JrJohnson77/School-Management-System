@@ -840,6 +840,7 @@ export default function ReportsPage() {
                                 classInfo={selectedClassInfo}
                                 term={selectedTerm}
                                 academicYear={selectedYear}
+                                template={reportTemplate}
                             />
                         </div>
                     ) : (
