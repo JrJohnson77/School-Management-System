@@ -616,6 +616,11 @@ async def create_school(school: SchoolCreate, current_user: dict = Depends(requi
         "created_at": now
     }
     await db.schools.insert_one(doc)
+    
+    # Auto-create default report template for the new school
+    template = build_default_template(school.school_code.upper(), school.name)
+    await db.report_templates.insert_one(template)
+    
     return SchoolResponse(**doc)
 
 @api_router.get("/schools", response_model=List[SchoolResponse])
