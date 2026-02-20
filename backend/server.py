@@ -904,23 +904,109 @@ async def get_attendance(
 
 # ==================== GRADEBOOK ROUTES ====================
 
+# MHPS Assessment Weights
+MHPS_WEIGHTS = {
+    "homework": 0.05,
+    "groupWork": 0.05, 
+    "project": 0.10,
+    "quiz": 0.10,
+    "midTerm": 0.30,
+    "endOfTerm": 0.40
+}
+
+# MHPS Grade Scale
+MHPS_GRADE_SCALE = [
+    {"min": 95, "max": 100, "grade": "A+", "description": "Excellent"},
+    {"min": 90, "max": 94, "grade": "A", "description": "Very Good"},
+    {"min": 80, "max": 89, "grade": "B+", "description": "Good"},
+    {"min": 70, "max": 79, "grade": "B", "description": "Satisfactory"},
+    {"min": 60, "max": 69, "grade": "C+", "description": "Satisfactory"},
+    {"min": 50, "max": 59, "grade": "C", "description": "Needs Improvement"},
+    {"min": 40, "max": 49, "grade": "D", "description": "Unsatisfactory"},
+    {"min": 0, "max": 39, "grade": "E", "description": "Poor"}
+]
+
+def get_mhps_grade(score):
+    """Get MHPS grade from score"""
+    if score is None:
+        return {"grade": "-", "description": "-"}
+    for g in MHPS_GRADE_SCALE:
+        if g["min"] <= score <= g["max"]:
+            return g
+    return {"grade": "E", "description": "Poor"}
+
+def calculate_mhps_weighted_score(subj):
+    """Calculate weighted score using MHPS formula"""
+    homework = subj.homework or 0
+    groupWork = subj.groupWork or 0
+    project = subj.project or 0
+    quiz = subj.quiz or 0
+    midTerm = subj.midTerm or 0
+    endOfTerm = subj.endOfTerm or 0
+    
+    weighted = (
+        homework * MHPS_WEIGHTS["homework"] +
+        groupWork * MHPS_WEIGHTS["groupWork"] +
+        project * MHPS_WEIGHTS["project"] +
+        quiz * MHPS_WEIGHTS["quiz"] +
+        midTerm * MHPS_WEIGHTS["midTerm"] +
+        endOfTerm * MHPS_WEIGHTS["endOfTerm"]
+    )
+    return round(weighted, 2)
+
 @api_router.post("/gradebook", response_model=GradebookResponse)
 async def save_gradebook(entry: GradebookEntry, current_user: dict = Depends(require_permission("manage_grades"))):
     subjects_with_grades = []
     total_score = 0
-    for subj in entry.subjects:
-        grade_info = get_grade_info(subj.score)
-        subjects_with_grades.append({
-            "subject": subj.subject,
-            "score": subj.score,
-            "grade": grade_info["grade"],
-            "points": grade_info["points"],
-            "domain": grade_info["domain"],
-            "comment": subj.comment or ""
-        })
-        total_score += subj.score
+    subject_count = 0
     
-    overall_score = total_score / len(entry.subjects) if entry.subjects else 0
+    for subj in entry.subjects:
+        # Check if MHPS assessment components are provided
+        has_mhps_components = any([
+            subj.homework is not None,
+            subj.groupWork is not None,
+            subj.project is not None,
+            subj.quiz is not None,
+            subj.midTerm is not None,
+            subj.endOfTerm is not None
+        ])
+        
+        if has_mhps_components:
+            # Calculate weighted score using MHPS formula
+            weighted_score = calculate_mhps_weighted_score(subj)
+            mhps_grade = get_mhps_grade(weighted_score)
+            
+            subjects_with_grades.append({
+                "subject": subj.subject,
+                "score": weighted_score,
+                "grade": mhps_grade["grade"],
+                "comment": subj.comment or "",
+                # MHPS components
+                "homework": subj.homework,
+                "groupWork": subj.groupWork,
+                "project": subj.project,
+                "quiz": subj.quiz,
+                "midTerm": subj.midTerm,
+                "endOfTerm": subj.endOfTerm
+            })
+            total_score += weighted_score
+        else:
+            # Use simple score
+            score = subj.score or 0
+            grade_info = get_grade_info(score)
+            subjects_with_grades.append({
+                "subject": subj.subject,
+                "score": score,
+                "grade": grade_info["grade"],
+                "points": grade_info["points"],
+                "domain": grade_info["domain"],
+                "comment": subj.comment or ""
+            })
+            total_score += score
+        
+        subject_count += 1
+    
+    overall_score = total_score / subject_count if subject_count > 0 else 0
     overall_info = get_grade_info(overall_score)
     
     now = datetime.now(timezone.utc).isoformat()
