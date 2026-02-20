@@ -7,90 +7,100 @@ Build a multi-tenant student management system for primary schools with:
 - Only admin can create users
 - Gradebook with multiple subjects and grading scheme (A+ to U)
 - Generate final report cards for entire class
-- **Multi-tenancy:** Support multiple schools with data segregation by school_code
-- **Superuser:** Administrative role with access to all schools
-
-## User Personas
-1. **Superuser**: Platform administrator - manage schools, can access any school context
-2. **Administrator**: School-level admin - manage users, students, classes within their school
-3. **Teacher**: Add/edit students, mark attendance, enter grades, generate report cards
-4. **Parent**: View-only access for their children's profiles, attendance, and grades
+- Multi-tenancy: Support multiple schools with data segregation by school_code
+- Superuser: Administrative role with access to all schools
+- Report Template Designer: Superuser can design and edit custom report templates per school
 
 ## Core Requirements
-- [x] User authentication with JWT
+- [x] JWT Authentication
 - [x] Multi-tenant architecture with school_code segregation
-- [x] Superuser can login to ANY school context for support
-- [x] Role-based access control (Admin creates users only)
-- [x] Student CRUD with full name fields and age calculation
-- [x] House system (Red, Blue, Green, Yellow)
+- [x] Superuser can login to ANY school context
+- [x] Role-based access control
+- [x] Student CRUD with auto-calculated age, photo uploads
 - [x] Class/Grade management
 - [x] Attendance tracking
-- [x] Gradebook with 10 subjects and subject comments
-- [x] Grading scheme: A+ (90-100) to U (0-39) with grade points
-- [x] Report card generation for entire class with positions
-- [x] MHPS weighted grading (HW 5%, GW 5%, Project 10%, Quiz 10%, Mid-Term 30%, End of Term 40%)
-- [x] Social skills assessment (Work Ethics, Respect categories)
-- [x] CSV bulk import for students and teachers
-- [x] Signature management (teacher/principal) for report cards
+- [x] Gradebook with weighted and non-weighted grading
+- [x] Report card generation with dynamic templates
+- [x] **Report Template Designer (Superuser Only)** - NEW
+- [x] Social skills assessment
+- [x] CSV bulk import (students & teachers)
+- [x] Signature management (teacher/principal)
 - [x] PDF export for report cards
-- [x] Student/staff photo uploads
+- [x] Grade display bug fix (decimal rounding)
 
-## What's Been Implemented (December 2025)
+## What's Been Implemented
 
-### Multi-Tenancy Architecture
-- Schools identified by unique school_code at login
-- All data segregated by school_code
-- JWT tokens store school_code for session context
-- Superuser can authenticate against any active school
-- Superuser credential reset for any user
+### Report Template Designer (December 2025) - NEW
+- Superuser-only page accessible from Schools page "Template" button
+- Each school gets its own customizable report template
+- Auto-creates default template when school is created or first accessed
+- Configurable sections:
+  - School Branding (name, motto, logo, header/sub-header, paper size)
+  - Subjects (add/remove, mark as core for ranking averages)
+  - Grade Scale (customizable ranges, labels, descriptions)
+  - Assessment Weights (toggle weighted grading, configure component percentages)
+  - Report Sections (toggle social skills, attendance, comments, signatures, etc.)
+  - Social Skills Categories (custom categories with skills, custom ratings)
+  - Achievement Standards (custom bands with score ranges)
+- Template drives all report card rendering and gradebook entry dynamically
+- Replaced hardcoded MHPS constants with dynamic template data
 
-### Student Management
-- Student ID, photo upload, search, auto-calculated age from DOB
+### Previous Features (all working)
+- Multi-tenancy architecture with school-code-based data segregation
+- Superuser role with full administrative access across schools
+- Student management with photo uploads and auto-age calculation
+- User management with password reset
+- Class management with teacher permissions
+- Attendance tracking
+- Gradebook with weighted assessments
+- MHPS-style report card generation
+- Import/Export page (CSV import, signature management)
+- PDF export for report cards
+- Social skills assessment
 
-### Teacher Permissions
-- Teachers can create/manage their own classes
-- Default permissions: manage_students, manage_classes, manage_attendance, manage_grades, view_reports, generate_reports
-
-### Reports Module
-- **Class List Report** - Student roster with ID, name, gender, age, house, contact
-- **Gradebook Report** - All grades for all students in a class
-- **Term Reports** - MHPS report cards with weighted grades, social skills, signatures
-- **PDF Export** - Client-side PDF generation using html2canvas + jsPDF
-- **Print Support** - Legal paper format with page break support
-
-### Grade Bug Fix (December 2025)
-- Fixed: Decimal scores (e.g., 89.2) now correctly round before grade lookup
-- Applied Math.round()/round() in 4 grade lookup functions (2 backend, 2 frontend)
-
-### Import/Export Module (December 2025)
-- CSV import for students (with class assignment) and teachers
-- CSV template downloads for both
-- Signature management - upload teacher/principal signatures
-- Signatures display on MHPS report cards
-
-### Social Skills Assessment (December 2025)
-- Work & Personal Ethics: Completes Assignments, Follows Instructions, Punctuality, Deportment, Courteous, Class Participation
-- Respect: Respect for Teacher, Respect for Peers
-- Ratings: Excellent, Good, Satisfactory, Needs Improvement
-- Integrated into Gradebook page and MHPS report card display
-
-### Key Credentials
+## Credentials
 - **Superuser:** school_code=JTECH, username=jtech.innovations@outlook.com, password=Xekleidoma@1
-- **Test Admin (WPS):** school_code=WPS, username=admin@wps.edu, password=WpsAdmin@123
+- **Test Admin (WPS):** school_code=WPS, username=wps.admin@school.com, password=Password@123
+
+## Architecture
+```
+/app/
+├── backend/
+│   ├── server.py              # FastAPI app, all API logic
+│   ├── requirements.txt
+│   ├── tests/
+│   │   └── test_report_templates.py
+│   └── .env
+└── frontend/
+    ├── src/
+    │   ├── context/AuthContext.js
+    │   ├── components/Layout.js
+    │   ├── pages/
+    │   │   ├── LoginPage.js
+    │   │   ├── SchoolsPage.js          # Template button per school
+    │   │   ├── ReportTemplateDesigner.js # NEW - Template editor
+    │   │   ├── StudentsPage.js
+    │   │   ├── ClassesPage.js
+    │   │   ├── AttendancePage.js
+    │   │   ├── GradebookPage.js        # Dynamic template-driven
+    │   │   ├── ReportsPage.js          # Dynamic template-driven
+    │   │   ├── ImportExportPage.js
+    │   │   └── UsersPage.js
+    │   ├── App.js
+    │   └── index.css
+    └── .env
+```
+
+## Key DB Collections
+- schools, users, students, classes, attendance, gradebook
+- report_templates (NEW), social_skills, signatures
 
 ## Prioritized Backlog
-
-### P1 (Important) - Upcoming
+### P1 (Important)
 - [ ] Email report cards to parents
 - [ ] Attendance analytics dashboard
 
 ### P2 (Nice to have)
 - [ ] Dark mode
-- [ ] Parent-teacher messaging
-- [ ] Academic calendar
 - [ ] Parent portal enhancements
-
-## Tech Stack
-- Frontend: React 19, Tailwind CSS, Shadcn UI, html2canvas, jsPDF
-- Backend: FastAPI, Motor (MongoDB), PyJWT, bcrypt, fpdf2
-- Database: MongoDB
+- [ ] Academic calendar
