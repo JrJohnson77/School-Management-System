@@ -267,6 +267,35 @@ class GradebookResponse(BaseModel):
     created_at: str
     updated_at: str
 
+# Social Skills Model
+class SocialSkillsEntry(BaseModel):
+    student_id: str
+    term: str
+    academic_year: str
+    skills: Dict[str, str] = {}  # skill_name -> rating (Excellent, Good, Satisfactory, Needs Improvement)
+
+# CSV Import Models
+class StudentCSVRow(BaseModel):
+    student_id: Optional[str] = ""
+    first_name: str
+    middle_name: Optional[str] = ""
+    last_name: str
+    date_of_birth: str
+    gender: str
+    address: Optional[str] = ""
+    house: Optional[str] = ""
+    emergency_contact: Optional[str] = ""
+
+class TeacherCSVRow(BaseModel):
+    username: str
+    name: str
+    password: Optional[str] = "Teacher@123"  # Default password
+
+# Signature Model
+class SignatureUpload(BaseModel):
+    type: str  # "teacher" or "principal"
+    school_code: str
+
 # ==================== AUTH HELPERS ====================
 
 def hash_password(password: str) -> str:
