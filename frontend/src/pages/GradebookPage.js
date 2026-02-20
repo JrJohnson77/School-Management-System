@@ -323,18 +323,12 @@ export default function GradebookPage() {
                 </div>
                 {(isAdmin || isTeacher) && (
                     <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                            <Switch
-                                checked={useMHPSMode}
-                                onCheckedChange={(checked) => {
-                                    setUseMHPSMode(checked);
-                                    setSubjects(checked ? MHPS_SUBJECTS : STANDARD_SUBJECTS);
-                                    setGrades({});
-                                }}
-                                data-testid="mhps-mode-toggle"
-                            />
-                            <Label className="text-sm">MHPS Mode</Label>
-                        </div>
+                        {template?.use_weighted_grading && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Award className="w-4 h-4" />
+                                <span>Weighted grading enabled</span>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
