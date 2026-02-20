@@ -8,6 +8,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Switch } from '../components/ui/switch';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import { 
     Plus, 
     Search, 
@@ -16,7 +17,8 @@ import {
     Building2,
     Loader2,
     Users,
-    GraduationCap
+    GraduationCap,
+    FileText
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
