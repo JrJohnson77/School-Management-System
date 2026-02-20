@@ -482,7 +482,7 @@ export default function GradebookPage() {
                                                 <thead>
                                                     <tr className="border-b">
                                                         <th className="text-left p-2 w-32">Subject</th>
-                                                        {MHPS_COMPONENTS.map(comp => (
+                                                        {tplComponents.map(comp => (
                                                             <th key={comp.key} className="text-center p-2 w-20">
                                                                 <div>{comp.label}</div>
                                                                 <div className="text-xs text-muted-foreground">({comp.weight}%)</div>
@@ -496,13 +496,13 @@ export default function GradebookPage() {
                                                 <tbody>
                                                     {subjects.map(subject => {
                                                         const gradeData = grades[subject] || {};
-                                                        const weightedScore = calculateWeightedScore(gradeData);
-                                                        const gradeInfo = getMHPSGrade(weightedScore);
+                                                        const weightedScore = calcWeightedFromWeights(gradeData, tplWeights);
+                                                        const gradeInfo = getGradeFromScale(weightedScore, tplGradeScale);
                                                         
                                                         return (
                                                             <tr key={subject} className="border-b hover:bg-muted/50">
                                                                 <td className="p-2 font-medium">{subject}</td>
-                                                                {MHPS_COMPONENTS.map(comp => (
+                                                                {tplComponents.map(comp => (
                                                                     <td key={comp.key} className="p-1">
                                                                         <Input
                                                                             type="number"
