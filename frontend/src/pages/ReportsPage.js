@@ -63,42 +63,46 @@ const calcWeightedFromTemplate = (assessments, weights) => {
     );
 };
 
-// ==================== MHPS REPORT CARD TEMPLATE ====================
-const MHPSReportCard = ({ data, classInfo, term, academicYear, totalStudents, signatures }) => {
+// ==================== DYNAMIC REPORT CARD TEMPLATE ====================
+const DynamicReportCard = ({ data, classInfo, term, academicYear, totalStudents, signatures, template }) => {
     const { student, grades, attendance_summary, position, social_skills } = data;
-    
-    // Process grades
     const subjectGrades = grades?.subjects || [];
-    
-    // Calculate core subjects average (using mid-term + end-of-term averages)
+    const tpl = template || {};
+    const gradeScale = tpl.grade_scale || [];
+    const subjects = tpl.subjects || [];
+    const subjectNames = subjects.map(s => s.name);
+    const coreSubjectNames = subjects.filter(s => s.is_core).map(s => s.name);
+    const useWeighted = tpl.use_weighted_grading;
+    const weights = tpl.assessment_weights || {};
+    const sections = tpl.sections || {};
+    const achievementStds = tpl.achievement_standards || [];
+    const socialCategories = tpl.social_skills_categories || [];
+    const skillRatings = tpl.skill_ratings || ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
+    const paperHeight = tpl.paper_size === 'letter' ? '11in' : tpl.paper_size === 'a4' ? '297mm' : '14in';
+
     const calculateCoreAverage = () => {
-        const coreGrades = subjectGrades.filter(g => CORE_SUBJECTS.includes(g.subject));
+        const coreGrades = subjectGrades.filter(g => coreSubjectNames.includes(g.subject));
         if (coreGrades.length === 0) return null;
-        
-        let totalAverage = 0;
-        let count = 0;
-        
+        let totalAvg = 0;
         coreGrades.forEach(g => {
-            const midTerm = g.midTerm || 0;
-            const endOfTerm = g.endOfTerm || 0;
-            // Average of mid-term and end-of-term
-            const subjectAvg = (midTerm + endOfTerm) / 2;
-            totalAverage += subjectAvg;
-            count++;
+            if (useWeighted) {
+                totalAvg += (((g.midTerm || 0) + (g.endOfTerm || 0)) / 2);
+            } else {
+                totalAvg += (g.score || 0);
+            }
         });
-        
-        return count > 0 ? (totalAverage / count).toFixed(1) : null;
+        return (totalAvg / coreGrades.length).toFixed(1);
     };
-    
+
     const coreAverage = calculateCoreAverage();
-    const coreAverageGrade = coreAverage ? getGrade(parseFloat(coreAverage)) : { grade: '-', description: '-' };
+    const coreAverageGrade = coreAverage ? getGradeFromScale(parseFloat(coreAverage), gradeScale) : { grade: '-' };
 
     return (
-        <div 
+        <div
             className="mhps-report-card bg-white mx-auto mb-8 print:mb-0 print:page-break-after-always"
-            style={{ 
+            style={{
                 width: '8.5in',
-                minHeight: '14in',
+                minHeight: paperHeight,
                 padding: '0.5in',
                 fontFamily: 'Arial, sans-serif',
                 fontSize: '10pt',
@@ -108,19 +112,23 @@ const MHPSReportCard = ({ data, classInfo, term, academicYear, totalStudents, si
             {/* Header */}
             <div className="text-center border-b-2 border-black pb-3 mb-4">
                 <div className="flex justify-center items-center gap-4 mb-2">
-                    <div className="w-16 h-16 bg-blue-800 rounded-full flex items-center justify-center text-white font-bold text-xl">
-                        MHPS
-                    </div>
+                    {tpl.logo_url ? (
+                        <img src={tpl.logo_url.startsWith('http') ? tpl.logo_url : `${process.env.REACT_APP_BACKEND_URL}${tpl.logo_url}`} alt="Logo" className="w-16 h-16 object-contain" />
+                    ) : (
+                        <div className="w-16 h-16 bg-blue-800 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                            {tpl.school_code || '?'}
+                        </div>
+                    )}
                     <div>
-                        <h1 className="text-xl font-bold uppercase tracking-wide">MONA HEIGHTS PRIMARY SCHOOL</h1>
-                        <p className="text-xs text-gray-600">Excellence in Education</p>
+                        <h1 className="text-xl font-bold uppercase tracking-wide">{tpl.school_name || 'SCHOOL'}</h1>
+                        {tpl.school_motto && <p className="text-xs text-gray-600">{tpl.school_motto}</p>}
                     </div>
                 </div>
-                <h2 className="text-lg font-bold mt-2">UPPER SCHOOL REPORT CARD</h2>
-                <p className="text-sm">Grades 4 - 6</p>
+                {tpl.header_text && <h2 className="text-lg font-bold mt-2">{tpl.header_text}</h2>}
+                {tpl.sub_header_text && <p className="text-sm">{tpl.sub_header_text}</p>}
             </div>
-            
-            {/* Student Information Row */}
+
+            {/* Student Info */}
             <div className="grid grid-cols-4 gap-2 text-xs mb-3 border border-gray-300 p-2">
                 <div><strong>Surname:</strong> {student.last_name}</div>
                 <div><strong>First Name:</strong> {student.first_name} {student.middle_name || ''}</div>
@@ -131,219 +139,219 @@ const MHPSReportCard = ({ data, classInfo, term, academicYear, totalStudents, si
                 <div><strong>House:</strong> {student.house || '-'}</div>
                 <div><strong>Student ID:</strong> {student.student_id || '-'}</div>
             </div>
-            
-            {/* Term & Class Info */}
+
+            {/* Term & Attendance Info */}
             <div className="grid grid-cols-4 gap-2 text-xs mb-3 border border-gray-300 p-2 bg-gray-50">
                 <div><strong>Term:</strong> {term}</div>
                 <div><strong>Academic Year:</strong> {academicYear}</div>
                 <div><strong>No. in Class:</strong> {totalStudents}</div>
                 <div><strong>Position:</strong> {position} of {totalStudents}</div>
-                <div><strong>Days in Term:</strong> {attendance_summary?.total_days || '-'}</div>
-                <div><strong>Days Absent:</strong> {attendance_summary?.absent || 0}</div>
-                <div><strong>Days Present:</strong> {attendance_summary?.present || '-'}</div>
+                {sections.attendance_summary !== false && (
+                    <>
+                        <div><strong>Days in Term:</strong> {attendance_summary?.total_days || '-'}</div>
+                        <div><strong>Days Absent:</strong> {attendance_summary?.absent || 0}</div>
+                        <div><strong>Days Present:</strong> {attendance_summary?.present || '-'}</div>
+                    </>
+                )}
                 <div><strong>Class:</strong> {classInfo?.name || '-'}</div>
             </div>
-            
-            {/* Academic Performance Table */}
+
+            {/* Academic Performance */}
             <div className="mb-4">
                 <h3 className="text-sm font-bold bg-blue-800 text-white p-1 mb-0">ACADEMIC PERFORMANCE</h3>
                 <table className="w-full border-collapse text-xs">
                     <thead>
                         <tr className="bg-gray-200">
                             <th className="border border-gray-400 p-1 text-left w-28">Subject</th>
-                            <th className="border border-gray-400 p-1 text-center w-12" title="5%">HW</th>
-                            <th className="border border-gray-400 p-1 text-center w-12" title="5%">GW</th>
-                            <th className="border border-gray-400 p-1 text-center w-12" title="10%">Proj</th>
-                            <th className="border border-gray-400 p-1 text-center w-12" title="10%">Quiz</th>
-                            <th className="border border-gray-400 p-1 text-center w-14" title="30%">Mid-Term</th>
-                            <th className="border border-gray-400 p-1 text-center w-14" title="40%">End of Term</th>
-                            <th className="border border-gray-400 p-1 text-center w-16">Weighted Grade</th>
+                            {useWeighted ? (
+                                <>
+                                    <th className="border border-gray-400 p-1 text-center w-12">HW</th>
+                                    <th className="border border-gray-400 p-1 text-center w-12">GW</th>
+                                    <th className="border border-gray-400 p-1 text-center w-12">Proj</th>
+                                    <th className="border border-gray-400 p-1 text-center w-12">Quiz</th>
+                                    <th className="border border-gray-400 p-1 text-center w-14">Mid-Term</th>
+                                    <th className="border border-gray-400 p-1 text-center w-14">End of Term</th>
+                                    <th className="border border-gray-400 p-1 text-center w-16">Weighted</th>
+                                </>
+                            ) : (
+                                <th className="border border-gray-400 p-1 text-center w-16">Score</th>
+                            )}
                             <th className="border border-gray-400 p-1 text-center w-12">Grade</th>
-                            <th className="border border-gray-400 p-1 text-center w-24">Achievement</th>
+                            {sections.achievement_standards !== false && achievementStds.length > 0 && (
+                                <th className="border border-gray-400 p-1 text-center w-24">Achievement</th>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
-                        {MHPS_SUBJECTS.map((subject, idx) => {
+                        {subjectNames.map((subject, idx) => {
                             const subjectData = subjectGrades.find(g => g.subject === subject) || {};
-                            const weightedScore = subjectData.score || calculateWeightedGrade({
-                                homework: subjectData.homework || 0,
-                                groupWork: subjectData.groupWork || 0,
-                                project: subjectData.project || 0,
-                                quiz: subjectData.quiz || 0,
-                                midTerm: subjectData.midTerm || 0,
-                                endOfTerm: subjectData.endOfTerm || 0
-                            });
-                            const gradeInfo = getGrade(weightedScore);
-                            const achievement = getAchievementStandard(subjectData.endOfTerm);
-                            const isCore = CORE_SUBJECTS.includes(subject);
-                            
+                            let displayScore;
+                            if (useWeighted) {
+                                displayScore = subjectData.score || calcWeightedFromTemplate({
+                                    homework: subjectData.homework || 0, groupWork: subjectData.groupWork || 0,
+                                    project: subjectData.project || 0, quiz: subjectData.quiz || 0,
+                                    midTerm: subjectData.midTerm || 0, endOfTerm: subjectData.endOfTerm || 0
+                                }, weights);
+                            } else {
+                                displayScore = subjectData.score || 0;
+                            }
+                            const gradeInfo = getGradeFromScale(displayScore, gradeScale);
+                            const achievement = getAchievementFromScale(subjectData.endOfTerm, achievementStds);
+                            const isCore = coreSubjectNames.includes(subject);
+
                             return (
                                 <tr key={subject} className={isCore ? 'bg-blue-50' : (idx % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
                                     <td className="border border-gray-400 p-1 font-medium">
-                                        {subject}
-                                        {isCore && <span className="text-blue-600">*</span>}
+                                        {subject}{isCore && <span className="text-blue-600">*</span>}
                                     </td>
-                                    <td className="border border-gray-400 p-1 text-center">{subjectData.homework ?? '-'}</td>
-                                    <td className="border border-gray-400 p-1 text-center">{subjectData.groupWork ?? '-'}</td>
-                                    <td className="border border-gray-400 p-1 text-center">{subjectData.project ?? '-'}</td>
-                                    <td className="border border-gray-400 p-1 text-center">{subjectData.quiz ?? '-'}</td>
-                                    <td className="border border-gray-400 p-1 text-center font-medium">{subjectData.midTerm ?? '-'}</td>
-                                    <td className="border border-gray-400 p-1 text-center font-medium">{subjectData.endOfTerm ?? '-'}</td>
-                                    <td className="border border-gray-400 p-1 text-center font-bold">{weightedScore > 0 ? weightedScore.toFixed(1) : '-'}</td>
+                                    {useWeighted ? (
+                                        <>
+                                            <td className="border border-gray-400 p-1 text-center">{subjectData.homework ?? '-'}</td>
+                                            <td className="border border-gray-400 p-1 text-center">{subjectData.groupWork ?? '-'}</td>
+                                            <td className="border border-gray-400 p-1 text-center">{subjectData.project ?? '-'}</td>
+                                            <td className="border border-gray-400 p-1 text-center">{subjectData.quiz ?? '-'}</td>
+                                            <td className="border border-gray-400 p-1 text-center font-medium">{subjectData.midTerm ?? '-'}</td>
+                                            <td className="border border-gray-400 p-1 text-center font-medium">{subjectData.endOfTerm ?? '-'}</td>
+                                            <td className="border border-gray-400 p-1 text-center font-bold">{displayScore > 0 ? displayScore.toFixed(1) : '-'}</td>
+                                        </>
+                                    ) : (
+                                        <td className="border border-gray-400 p-1 text-center font-bold">{displayScore > 0 ? Math.round(displayScore) : '-'}</td>
+                                    )}
                                     <td className="border border-gray-400 p-1 text-center font-bold">{gradeInfo.grade}</td>
-                                    <td className="border border-gray-400 p-1 text-center text-xs">{achievement?.band || '-'}</td>
+                                    {sections.achievement_standards !== false && achievementStds.length > 0 && (
+                                        <td className="border border-gray-400 p-1 text-center text-xs">{achievement?.band || '-'}</td>
+                                    )}
                                 </tr>
                             );
                         })}
                     </tbody>
-                    <tfoot>
-                        <tr className="bg-gray-200 font-bold">
-                            <td className="border border-gray-400 p-1" colSpan={7}>CORE SUBJECTS AVERAGE *</td>
-                            <td className="border border-gray-400 p-1 text-center">{coreAverage || '-'}</td>
-                            <td className="border border-gray-400 p-1 text-center">{coreAverageGrade.grade}</td>
-                            <td className="border border-gray-400 p-1 text-center"></td>
-                        </tr>
-                    </tfoot>
+                    {coreSubjectNames.length > 0 && (
+                        <tfoot>
+                            <tr className="bg-gray-200 font-bold">
+                                <td className="border border-gray-400 p-1" colSpan={useWeighted ? 7 : 1}>CORE SUBJECTS AVERAGE *</td>
+                                <td className="border border-gray-400 p-1 text-center">{coreAverage || '-'}</td>
+                                <td className="border border-gray-400 p-1 text-center">{coreAverageGrade.grade}</td>
+                                {sections.achievement_standards !== false && achievementStds.length > 0 && <td className="border border-gray-400 p-1"></td>}
+                            </tr>
+                        </tfoot>
+                    )}
                 </table>
-                <p className="text-xs text-gray-500 mt-1">* Core subjects used for class ranking: Language Arts, Mathematics, Social Studies, Science</p>
+                {coreSubjectNames.length > 0 && (
+                    <p className="text-xs text-gray-500 mt-1">* Core subjects used for ranking: {coreSubjectNames.join(', ')}</p>
+                )}
             </div>
-            
-            {/* Assessment Weights Key */}
+
+            {/* Weights & Grade Key */}
             <div className="grid grid-cols-2 gap-4 mb-4 text-xs">
-                <div className="border border-gray-300 p-2">
-                    <h4 className="font-bold mb-1">ASSESSMENT WEIGHTINGS</h4>
-                    <div className="grid grid-cols-3 gap-1">
-                        <span>HW (Homework): 5%</span>
-                        <span>GW (Group Work): 5%</span>
-                        <span>Project: 10%</span>
-                        <span>Quiz: 10%</span>
-                        <span>Mid-Term: 30%</span>
-                        <span>End of Term: 40%</span>
+                {sections.weight_key !== false && useWeighted && (
+                    <div className="border border-gray-300 p-2">
+                        <h4 className="font-bold mb-1">ASSESSMENT WEIGHTINGS</h4>
+                        <div className="grid grid-cols-3 gap-1">
+                            {Object.entries(weights).map(([k, v]) => (
+                                <span key={k}>{k.replace(/([A-Z])/g, ' $1').trim()}: {v}%</span>
+                            ))}
+                        </div>
                     </div>
-                </div>
-                <div className="border border-gray-300 p-2">
-                    <h4 className="font-bold mb-1">KEY TO ACADEMIC GRADES</h4>
-                    <div className="grid grid-cols-4 gap-1">
-                        {MHPS_GRADE_SCALE.map(g => (
-                            <span key={g.grade} className="text-xs">{g.grade}: {g.min}-{g.max === 100 ? '100' : g.max}</span>
+                )}
+                {sections.grade_key !== false && (
+                    <div className="border border-gray-300 p-2">
+                        <h4 className="font-bold mb-1">KEY TO ACADEMIC GRADES</h4>
+                        <div className="grid grid-cols-4 gap-1">
+                            {gradeScale.map(g => (
+                                <span key={g.grade} className="text-xs">{g.grade}: {g.min}-{g.max}</span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Achievement Standards */}
+            {sections.achievement_standards !== false && achievementStds.length > 0 && (
+                <div className="mb-4 border border-gray-300 p-2 text-xs">
+                    <h4 className="font-bold mb-1">ACHIEVEMENT STANDARDS (Based on End of Term Exam)</h4>
+                    <div className={`grid gap-2`} style={{ gridTemplateColumns: `repeat(${achievementStds.length}, 1fr)` }}>
+                        {achievementStds.map(std => (
+                            <div key={std.band} className="text-center p-1 bg-gray-50 rounded">
+                                <div className="font-bold">{std.band}</div>
+                                <div className="text-gray-600">{std.min}% - {std.max}%</div>
+                            </div>
                         ))}
                     </div>
                 </div>
-            </div>
-            
-            {/* Achievement Standards */}
-            <div className="mb-4 border border-gray-300 p-2 text-xs">
-                <h4 className="font-bold mb-1">ACHIEVEMENT STANDARDS (Based on End of Term Exam)</h4>
-                <div className="grid grid-cols-4 gap-2">
-                    {ACHIEVEMENT_STANDARDS.map(std => (
-                        <div key={std.band} className="text-center p-1 bg-gray-50 rounded">
-                            <div className="font-bold">{std.band}</div>
-                            <div className="text-gray-600">{std.min}% - {std.max}%</div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-            
-            {/* Social Skills Assessment */}
-            <div className="mb-4">
-                <h3 className="text-sm font-bold bg-blue-800 text-white p-1 mb-0">PROGRESS IN SOCIAL SKILLS AND ATTITUDES</h3>
-                <div className="grid grid-cols-2 gap-4 text-xs border border-gray-300 p-2">
-                    <div>
-                        <h4 className="font-bold mb-1">WORK AND PERSONAL ETHICS</h4>
-                        <table className="w-full">
-                            <tbody>
-                                {SOCIAL_SKILLS.workEthics.map(skill => (
-                                    <tr key={skill}>
-                                        <td className="py-0.5">{skill}</td>
-                                        <td className="py-0.5 text-right">
-                                            {SKILL_RATINGS.map(rating => (
-                                                <span key={rating} className="inline-block w-4 h-4 border border-gray-400 mx-0.5 text-center text-xs">
-                                                    {social_skills?.[skill] === rating ? '✓' : ''}
-                                                </span>
-                                            ))}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+            )}
+
+            {/* Social Skills */}
+            {sections.social_skills !== false && socialCategories.length > 0 && (
+                <div className="mb-4">
+                    <h3 className="text-sm font-bold bg-blue-800 text-white p-1 mb-0">PROGRESS IN SOCIAL SKILLS AND ATTITUDES</h3>
+                    <div className={`grid gap-4 text-xs border border-gray-300 p-2`} style={{ gridTemplateColumns: `repeat(${Math.min(socialCategories.length, 2)}, 1fr)` }}>
+                        {socialCategories.map(cat => (
+                            <div key={cat.category_name}>
+                                <h4 className="font-bold mb-1 uppercase">{cat.category_name}</h4>
+                                <table className="w-full">
+                                    <tbody>
+                                        {cat.skills.map(skill => (
+                                            <tr key={skill}>
+                                                <td className="py-0.5">{skill}</td>
+                                                <td className="py-0.5 text-right">
+                                                    {skillRatings.map(rating => (
+                                                        <span key={rating} className="inline-block w-4 h-4 border border-gray-400 mx-0.5 text-center text-xs">
+                                                            {social_skills?.[skill] === rating ? '✓' : ''}
+                                                        </span>
+                                                    ))}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ))}
                     </div>
-                    <div>
-                        <h4 className="font-bold mb-1">RESPECT</h4>
-                        <table className="w-full">
-                            <tbody>
-                                {SOCIAL_SKILLS.respect.map(skill => (
-                                    <tr key={skill}>
-                                        <td className="py-0.5">{skill}</td>
-                                        <td className="py-0.5 text-right">
-                                            {SKILL_RATINGS.map(rating => (
-                                                <span key={rating} className="inline-block w-4 h-4 border border-gray-400 mx-0.5 text-center text-xs">
-                                                    {social_skills?.[skill] === rating ? '✓' : ''}
-                                                </span>
-                                            ))}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <div className="mt-2 text-xs text-gray-500">
-                            <span className="mr-4">E = Excellent</span>
-                            <span className="mr-4">G = Good</span>
-                            <span className="mr-4">S = Satisfactory</span>
-                            <span>NI = Needs Improvement</span>
-                        </div>
+                    <div className="mt-1 text-xs text-gray-500 flex gap-3">
+                        {skillRatings.map((r, i) => (
+                            <span key={r}>{r[0]} = {r}</span>
+                        ))}
                     </div>
                 </div>
-            </div>
-            
-            {/* Teacher's Comments */}
-            <div className="mb-4">
-                <h3 className="text-sm font-bold bg-blue-800 text-white p-1 mb-0">CLASS TEACHER'S COMMENTS</h3>
-                <div className="border border-gray-300 p-2 min-h-16 text-sm">
-                    {student.teacher_comment || 'No comments recorded.'}
+            )}
+
+            {/* Teacher Comments */}
+            {sections.teacher_comments !== false && (
+                <div className="mb-4">
+                    <h3 className="text-sm font-bold bg-blue-800 text-white p-1 mb-0">CLASS TEACHER'S COMMENTS</h3>
+                    <div className="border border-gray-300 p-2 min-h-16 text-sm">
+                        {student.teacher_comment || 'No comments recorded.'}
+                    </div>
                 </div>
-            </div>
-            
-            {/* Additional Comments */}
-            <div className="mb-4">
-                <h3 className="text-sm font-bold bg-gray-200 p-1 mb-0">ADDITIONAL COMMENTS</h3>
-                <div className="border border-gray-300 p-2 min-h-12 text-sm">
-                    {data.additional_comments || ''}
-                </div>
-            </div>
-            
+            )}
+
             {/* Signatures */}
-            <div className="grid grid-cols-2 gap-8 mt-6 pt-4">
-                <div className="text-center">
-                    {signatures?.teacher_signature ? (
-                        <img
-                            src={`${process.env.REACT_APP_BACKEND_URL}${signatures.teacher_signature}`}
-                            alt="Teacher Signature"
-                            className="h-10 mx-auto mb-1 object-contain"
-                        />
-                    ) : (
-                        <div className="border-b border-black h-8 mb-1"></div>
-                    )}
-                    <p className="text-sm font-medium">Class Teacher's Signature</p>
-                    <p className="text-xs text-gray-500">Date: _______________</p>
+            {sections.signatures !== false && (
+                <div className="grid grid-cols-2 gap-8 mt-6 pt-4">
+                    <div className="text-center">
+                        {signatures?.teacher_signature ? (
+                            <img src={`${process.env.REACT_APP_BACKEND_URL}${signatures.teacher_signature}`} alt="Teacher Signature" className="h-10 mx-auto mb-1 object-contain" />
+                        ) : (
+                            <div className="border-b border-black h-8 mb-1"></div>
+                        )}
+                        <p className="text-sm font-medium">Class Teacher's Signature</p>
+                        <p className="text-xs text-gray-500">Date: _______________</p>
+                    </div>
+                    <div className="text-center">
+                        {signatures?.principal_signature ? (
+                            <img src={`${process.env.REACT_APP_BACKEND_URL}${signatures.principal_signature}`} alt="Principal Signature" className="h-10 mx-auto mb-1 object-contain" />
+                        ) : (
+                            <div className="border-b border-black h-8 mb-1"></div>
+                        )}
+                        <p className="text-sm font-medium">Principal's Signature</p>
+                        <p className="text-xs text-gray-500">Date: _______________</p>
+                    </div>
                 </div>
-                <div className="text-center">
-                    {signatures?.principal_signature ? (
-                        <img
-                            src={`${process.env.REACT_APP_BACKEND_URL}${signatures.principal_signature}`}
-                            alt="Principal Signature"
-                            className="h-10 mx-auto mb-1 object-contain"
-                        />
-                    ) : (
-                        <div className="border-b border-black h-8 mb-1"></div>
-                    )}
-                    <p className="text-sm font-medium">Principal's Signature</p>
-                    <p className="text-xs text-gray-500">Date: _______________</p>
-                </div>
-            </div>
-            
+            )}
+
             {/* Footer */}
             <div className="mt-4 pt-2 border-t border-gray-300 text-center text-xs text-gray-500">
-                <p>Mona Heights Primary School - {term} {academicYear}</p>
+                <p>{tpl.school_name || 'School'} - {term} {academicYear}</p>
                 <p>This report was generated on {new Date().toLocaleDateString()}</p>
             </div>
         </div>
