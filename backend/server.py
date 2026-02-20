@@ -81,8 +81,9 @@ ALL_PERMISSIONS = list(PERMISSIONS.values())
 
 def get_grade_info(score: float) -> dict:
     """Get grade, domain and points for a given score"""
+    rounded = round(score)
     for scheme in GRADING_SCHEME:
-        if scheme["min"] <= score <= scheme["max"]:
+        if scheme["min"] <= rounded <= scheme["max"]:
             return {"grade": scheme["grade"], "domain": scheme["domain"], "points": scheme["points"]}
     return {"grade": "U", "domain": "No participation", "points": 0}
 

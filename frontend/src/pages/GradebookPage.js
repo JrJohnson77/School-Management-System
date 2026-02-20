@@ -93,8 +93,9 @@ const getGradeColor = (grade) => {
 
 const getMHPSGrade = (score) => {
     if (score === null || score === undefined || isNaN(score)) return { grade: '-', description: '-' };
+    const rounded = Math.round(score);
     for (const g of MHPS_GRADE_SCALE) {
-        if (score >= g.min && score <= g.max) return g;
+        if (rounded >= g.min && rounded <= g.max) return g;
     }
     return { grade: 'E', description: 'Poor' };
 };

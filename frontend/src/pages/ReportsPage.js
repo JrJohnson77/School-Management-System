@@ -91,8 +91,9 @@ const SKILL_RATINGS = ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement']
 // Helper function to get grade from score
 const getGrade = (score) => {
     if (score === null || score === undefined) return { grade: '-', description: '-' };
+    const rounded = Math.round(score);
     for (const g of MHPS_GRADE_SCALE) {
-        if (score >= g.min && score <= g.max) {
+        if (rounded >= g.min && rounded <= g.max) {
             return g;
         }
     }
