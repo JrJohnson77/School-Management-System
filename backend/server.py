@@ -662,6 +662,53 @@ async def delete_school(school_id: str, current_user: dict = Depends(require_sup
     await db.schools.delete_one({"id": school_id})
     return {"message": "School deleted successfully"}
 
+# ==================== REPORT TEMPLATES (Superuser Only) ====================
+
+@api_router.get("/report-templates/{school_code}")
+async def get_report_template(school_code: str, current_user: dict = Depends(get_current_user)):
+    """Get report template for a school. Any authenticated user can read their school's template."""
+    template = await db.report_templates.find_one(
+        {"school_code": school_code.upper()}, {"_id": 0}
+    )
+    if not template:
+        # Auto-create default if missing
+        school = await db.schools.find_one({"school_code": school_code.upper()}, {"_id": 0})
+        if not school:
+            raise HTTPException(status_code=404, detail="School not found")
+        template = build_default_template(school_code.upper(), school.get("name", school_code))
+        await db.report_templates.insert_one(template)
+        template.pop("_id", None)
+    return template
+
+@api_router.put("/report-templates/{school_code}")
+async def update_report_template(
+    school_code: str,
+    template_data: ReportTemplateCreate,
+    current_user: dict = Depends(require_superuser())
+):
+    """Update report template for a school (superuser only)"""
+    sc = school_code.upper()
+    existing = await db.report_templates.find_one({"school_code": sc})
+    
+    now = datetime.now(timezone.utc).isoformat()
+    update_doc = template_data.model_dump()
+    update_doc["school_code"] = sc
+    update_doc["updated_at"] = now
+    
+    if existing:
+        await db.report_templates.update_one(
+            {"school_code": sc},
+            {"$set": update_doc}
+        )
+        updated = await db.report_templates.find_one({"school_code": sc}, {"_id": 0})
+        return updated
+    else:
+        update_doc["id"] = str(uuid.uuid4())
+        update_doc["created_at"] = now
+        await db.report_templates.insert_one(update_doc)
+        update_doc.pop("_id", None)
+        return update_doc
+
 # ==================== USER MANAGEMENT ====================
 
 @api_router.get("/users", response_model=List[UserResponse])
