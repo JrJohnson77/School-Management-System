@@ -319,6 +319,16 @@ export default function SchoolsPage() {
                                             variant="outline" 
                                             size="sm" 
                                             className="flex-1 rounded-full"
+                                            onClick={() => navigate(`/report-template?school=${school.school_code}`)}
+                                            data-testid={`design-template-${school.id}`}
+                                        >
+                                            <FileText className="w-4 h-4 mr-1" />
+                                            Template
+                                        </Button>
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="flex-1 rounded-full"
                                             onClick={() => handleEdit(school)}
                                             data-testid={`edit-school-${school.id}`}
                                         >
