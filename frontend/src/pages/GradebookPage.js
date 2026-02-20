@@ -68,7 +68,7 @@ const calcWeightedFromWeights = (components, weights) => {
 export default function GradebookPage() {
     const [classes, setClasses] = useState([]);
     const [students, setStudents] = useState([]);
-    const [subjects, setSubjects] = useState(STANDARD_SUBJECTS);
+    const [subjects, setSubjects] = useState([]);
     const [gradingScheme, setGradingScheme] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -84,19 +84,32 @@ export default function GradebookPage() {
     const [socialSkills, setSocialSkills] = useState({});
     const [existingGradebook, setExistingGradebook] = useState(null);
     const [useMHPSMode, setUseMHPSMode] = useState(false);
+    const [template, setTemplate] = useState(null);
     
     const { isAdmin, isTeacher, isParent, schoolCode } = useAuth();
+
+    // Derive template-based values
+    const tplSubjects = template?.subjects?.map(s => s.name) || [];
+    const tplGradeScale = template?.grade_scale || [];
+    const tplWeights = template?.assessment_weights || {};
+    const tplComponents = template?.use_weighted_grading
+        ? Object.entries(tplWeights).map(([key, weight]) => ({
+            key, label: key.replace(/([A-Z])/g, ' $1').trim(), weight
+        }))
+        : [];
+    const tplSocialCategories = template?.social_skills_categories || [];
+    const tplSkillRatings = template?.skill_ratings || ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
 
     useEffect(() => {
         fetchInitialData();
     }, []);
 
     useEffect(() => {
-        if (schoolCode === 'MHPS') {
-            setUseMHPSMode(true);
-            setSubjects(MHPS_SUBJECTS);
+        if (template) {
+            setUseMHPSMode(!!template.use_weighted_grading);
+            setSubjects(tplSubjects);
         }
-    }, [schoolCode]);
+    }, [template]);
 
     useEffect(() => {
         if (selectedClass) {
@@ -113,15 +126,18 @@ export default function GradebookPage() {
 
     const fetchInitialData = async () => {
         try {
-            const [classesRes, schemeRes, subjectsRes] = await Promise.all([
+            const requests = [
                 axios.get(`${API}/classes`),
                 axios.get(`${API}/grading-scheme`),
-                axios.get(`${API}/subjects`).catch(() => ({ data: { subjects: STANDARD_SUBJECTS } }))
-            ]);
-            setClasses(classesRes.data);
-            setGradingScheme(schemeRes.data.grading_scheme || []);
-            if (!useMHPSMode) {
-                setSubjects(subjectsRes.data.subjects || STANDARD_SUBJECTS);
+            ];
+            if (schoolCode) {
+                requests.push(axios.get(`${API}/report-templates/${schoolCode}`));
+            }
+            const results = await Promise.all(requests);
+            setClasses(results[0].data);
+            setGradingScheme(results[1].data.grading_scheme || []);
+            if (results[2]?.data) {
+                setTemplate(results[2].data);
             }
         } catch (error) {
             toast.error('Failed to load data');
