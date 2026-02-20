@@ -28,96 +28,69 @@ Build a multi-tenant student management system for primary schools with:
 - [x] Gradebook with 10 subjects and subject comments
 - [x] Grading scheme: A+ (90-100) to U (0-39) with grade points
 - [x] Report card generation for entire class with positions
+- [x] MHPS weighted grading (HW 5%, GW 5%, Project 10%, Quiz 10%, Mid-Term 30%, End of Term 40%)
+- [x] Social skills assessment (Work Ethics, Respect categories)
+- [x] CSV bulk import for students and teachers
+- [x] Signature management (teacher/principal) for report cards
+- [x] PDF export for report cards
+- [x] Student/staff photo uploads
 
 ## What's Been Implemented (December 2025)
 
 ### Multi-Tenancy Architecture
 - Schools identified by unique school_code at login
-- All data (students, classes, users, grades, attendance) segregated by school_code
+- All data segregated by school_code
 - JWT tokens store school_code for session context
 - Superuser can authenticate against any active school
-- Users filtered by school - admins only see their school's users
-- **Superuser credential reset** - Can reset username/password for any user
+- Superuser credential reset for any user
 
 ### Student Management
-- Student ID field for school-assigned identification
-- Photo upload for student photos (JPG, PNG, GIF, WebP - max 5MB)
-- Search by name or student ID
-- Auto-calculated age from date of birth
+- Student ID, photo upload, search, auto-calculated age from DOB
 
 ### Teacher Permissions
-- Teachers can now create/manage classes (manage_classes permission)
-- Default teacher permissions: manage_students, manage_classes, manage_attendance, manage_grades, view_reports, generate_reports
+- Teachers can create/manage their own classes
+- Default permissions: manage_students, manage_classes, manage_attendance, manage_grades, view_reports, generate_reports
 
-### Reports Module (NEW)
+### Reports Module
 - **Class List Report** - Student roster with ID, name, gender, age, house, contact
-- **Gradebook Report** - All grades for all students in a class by subject
-- **Term Reports** - End-of-term report cards with grades, attendance, comments
+- **Gradebook Report** - All grades for all students in a class
+- **Term Reports** - MHPS report cards with weighted grades, social skills, signatures
+- **PDF Export** - Client-side PDF generation using html2canvas + jsPDF
+- **Print Support** - Legal paper format with page break support
+
+### Grade Bug Fix (December 2025)
+- Fixed: Decimal scores (e.g., 89.2) now correctly round before grade lookup
+- Applied Math.round()/round() in 4 grade lookup functions (2 backend, 2 frontend)
+
+### Import/Export Module (December 2025)
+- CSV import for students (with class assignment) and teachers
+- CSV template downloads for both
+- Signature management - upload teacher/principal signatures
+- Signatures display on MHPS report cards
+
+### Social Skills Assessment (December 2025)
+- Work & Personal Ethics: Completes Assignments, Follows Instructions, Punctuality, Deportment, Courteous, Class Participation
+- Respect: Respect for Teacher, Respect for Peers
+- Ratings: Excellent, Good, Satisfactory, Needs Improvement
+- Integrated into Gradebook page and MHPS report card display
 
 ### Key Credentials
 - **Superuser:** school_code=JTECH, username=jtech.innovations@outlook.com, password=Xekleidoma@1
-- **Test Admin:** school_code=WPS, username=admin@wps.edu, password=WpsAdmin@123
-
-### Grading Scheme
-| Grade | Score Range | Domain | Points |
-|-------|-------------|--------|--------|
-| A+ | 90-100 | Expert performance | 4.0 |
-| A | 85-89 | Highly Proficient | 3.8 |
-| A- | 80-84 | Proficient | 3.7 |
-| B | 75-79 | Satisfactory | 3.5 |
-| B- | 70-74 | Developing | 3.3 |
-| C | 65-69 | Passing | 3.2 |
-| C- | 60-64 | Passing | 2.8 |
-| D | 55-59 | Marginal | 2.6 |
-| D- | 50-54 | Below Average | 2.4 |
-| E | 40-49 | Frustration | 1.0 |
-| U | 0-39 | No participation | 0 |
-
-### Subjects
-English Language, Mathematics, Science, Social Studies, Religious Education, Physical Education, Creative Arts, Music, ICT, French
-
-### Houses
-Red House, Blue House, Green House, Yellow House
-
-### Backend Endpoints
-- /api/auth/* - Authentication (login with school_code)
-- /api/schools - School CRUD (superuser only)
-- /api/users - User management (admin only)
-- /api/students - Student CRUD with age calculation
-- /api/classes - Class management
-- /api/attendance - Attendance tracking
-- /api/gradebook - Grade entry with subject comments
-- /api/report-card/{student_id} - Individual report card
-- /api/report-cards/class/{class_id} - Class report cards with positions
-- /api/subjects, /api/houses, /api/grading-scheme - Reference data
-- /api/stats/dashboard - Role-based statistics
-
-### Frontend Pages
-- Login (with school code field)
-- Dashboard (role-based stats)
-- Schools (superuser only)
-- Students (with house, address, teacher comments)
-- Classes
-- Attendance
-- Gradebook (enter grades with subject comments)
-- Report Cards (generate for entire class, print support)
-- Users (admin only)
+- **Test Admin (WPS):** school_code=WPS, username=admin@wps.edu, password=WpsAdmin@123
 
 ## Prioritized Backlog
 
 ### P1 (Important) - Upcoming
-- [ ] PDF export for report cards
-- [ ] Bulk student/teacher import from CSV
 - [ ] Email report cards to parents
+- [ ] Attendance analytics dashboard
 
 ### P2 (Nice to have)
-- [ ] Attendance analytics
 - [ ] Dark mode
 - [ ] Parent-teacher messaging
 - [ ] Academic calendar
-- [ ] Student photos
+- [ ] Parent portal enhancements
 
 ## Tech Stack
-- Frontend: React 19, Tailwind CSS, Shadcn UI
-- Backend: FastAPI, Motor (MongoDB), PyJWT, bcrypt
+- Frontend: React 19, Tailwind CSS, Shadcn UI, html2canvas, jsPDF
+- Backend: FastAPI, Motor (MongoDB), PyJWT, bcrypt, fpdf2
 - Database: MongoDB
