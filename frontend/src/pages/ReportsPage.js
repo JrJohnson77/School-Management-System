@@ -524,15 +524,13 @@ export default function ReportsPage() {
     const [reportCards, setReportCards] = useState([]);
     const [totalStudentsInClass, setTotalStudentsInClass] = useState(0);
     const [reportSignatures, setReportSignatures] = useState({});
+    const [reportTemplate, setReportTemplate] = useState(null);
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
     const [exportingPdf, setExportingPdf] = useState(false);
     const [activeTab, setActiveTab] = useState('class-list');
     const printRef = useRef();
     const { isAdmin, isTeacher, schoolCode } = useAuth();
-    
-    // Check if this is MHPS school
-    const isMHPS = schoolCode === 'MHPS' || classes.some(c => c.school_code === 'MHPS');
 
     useEffect(() => {
         fetchInitialData();
@@ -540,12 +538,19 @@ export default function ReportsPage() {
 
     const fetchInitialData = async () => {
         try {
-            const [classesRes, schemeRes] = await Promise.all([
+            const requests = [
                 axios.get(`${API}/classes`),
-                axios.get(`${API}/grading-scheme`)
-            ]);
-            setClasses(classesRes.data);
-            setGradingScheme(schemeRes.data.grading_scheme || []);
+                axios.get(`${API}/grading-scheme`),
+            ];
+            if (schoolCode) {
+                requests.push(axios.get(`${API}/report-templates/${schoolCode}`));
+            }
+            const results = await Promise.all(requests);
+            setClasses(results[0].data);
+            setGradingScheme(results[1].data.grading_scheme || []);
+            if (results[2]) {
+                setReportTemplate(results[2].data);
+            }
         } catch (error) {
             toast.error('Failed to load data');
         } finally {
