@@ -280,11 +280,11 @@ class TestGradeBugFix:
         
         # Test cases from bug report
         test_cases = [
-            (89.2, "A"),    # Bug: was showing "E" before fix
+            (89.2, "A"),    # Bug: was showing "E" before fix - rounds to 89
             (91.9, "A+"),   # Should show A+ (rounds to 92)
             (88.1, "A"),    # Should show A (rounds to 88)
             (86.9, "A"),    # Should show A (rounds to 87)
-            (79.5, "B"),    # Should show B (rounds to 80? or 79?)
+            (79.5, "A-"),   # Should show A- (rounds to 80, which is in 80-84 range)
             (74.4, "B-"),   # Should show B- (rounds to 74)
         ]
         
