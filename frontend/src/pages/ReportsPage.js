@@ -654,6 +654,7 @@ export default function ReportsPage() {
             const cards = data.report_cards || [];
             setReportCards(cards);
             setTotalStudentsInClass(data.total_students || cards.length);
+            setReportSignatures(data.signatures || {});
             
             if (data.grading_scheme) {
                 setGradingScheme(data.grading_scheme);
