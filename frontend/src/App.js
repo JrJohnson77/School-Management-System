@@ -12,6 +12,7 @@ import GradebookPage from "./pages/GradebookPage";
 import ReportsPage from "./pages/ReportsPage";
 import UsersPage from "./pages/UsersPage";
 import ImportExportPage from "./pages/ImportExportPage";
+import ReportTemplateDesigner from "./pages/ReportTemplateDesigner";
 import { Loader2 } from "lucide-react";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -123,6 +124,14 @@ function AppRoutes() {
                 element={
                     <ProtectedRoute allowedRoles={['superuser', 'admin', 'teacher']}>
                         <ReportsPage />
+                    </ProtectedRoute>
+                } 
+            />
+            <Route 
+                path="/report-template" 
+                element={
+                    <ProtectedRoute allowedRoles={['superuser']}>
+                        <ReportTemplateDesigner />
                     </ProtectedRoute>
                 } 
             />
