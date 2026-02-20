@@ -1208,10 +1208,19 @@ async def get_class_report_cards(
             "excused": len([a for a in attendance_records if a["status"] == "excused"])
         }
         
+        # Get social skills
+        social_skills = await db.social_skills.find_one({
+            "student_id": student["id"],
+            "term": term,
+            "academic_year": academic_year,
+            "school_code": current_user["school_code"]
+        }, {"_id": 0})
+        
         report_cards.append({
             "student": student,
             "grades": gradebook or {},
-            "attendance_summary": attendance_summary
+            "attendance_summary": attendance_summary,
+            "social_skills": social_skills.get("skills", {}) if social_skills else {}
         })
     
     report_cards.sort(key=lambda x: x["grades"].get("overall_score", 0) if x["grades"] else 0, reverse=True)
@@ -1219,13 +1228,19 @@ async def get_class_report_cards(
     for idx, card in enumerate(report_cards):
         card["position"] = idx + 1
     
+    # Get school signatures
+    signatures = await db.signatures.find_one({
+        "school_code": current_user["school_code"]
+    }, {"_id": 0})
+    
     return {
         "class_info": class_info,
         "term": term,
         "academic_year": academic_year,
         "total_students": len(students),
         "report_cards": report_cards,
-        "grading_scheme": GRADING_SCHEME
+        "grading_scheme": GRADING_SCHEME,
+        "signatures": signatures or {}
     }
 
 # ==================== REFERENCE DATA ====================
