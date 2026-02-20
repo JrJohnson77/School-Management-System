@@ -919,6 +919,7 @@ export default function ReportsPage() {
                                     term={selectedTerm}
                                     academicYear={selectedYear}
                                     totalStudents={totalStudentsInClass}
+                                    signatures={reportSignatures}
                                 />
                             ))}
                         </div>
