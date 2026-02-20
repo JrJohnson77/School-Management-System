@@ -677,6 +677,49 @@ export default function ReportsPage() {
         window.print();
     };
 
+    const handleExportPdf = async () => {
+        if (!printRef.current) return;
+        setExportingPdf(true);
+        try {
+            const html2canvas = (await import('html2canvas')).default;
+            const { jsPDF } = await import('jspdf');
+
+            const element = printRef.current;
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                logging: false
+            });
+
+            // Legal paper: 8.5 x 14 inches
+            const pdf = new jsPDF('p', 'in', 'legal');
+            const imgWidth = 8.5;
+            const pageHeight = 14;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft > 0) {
+                position -= pageHeight;
+                pdf.addPage();
+                pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            const classLabel = selectedClassInfo?.name || 'Report';
+            pdf.save(`${classLabel}_${selectedTerm}_${selectedYear}.pdf`);
+            toast.success('PDF exported successfully');
+        } catch (error) {
+            console.error('PDF export error:', error);
+            toast.error('Failed to export PDF');
+        } finally {
+            setExportingPdf(false);
+        }
+    };
+
     const selectedClassInfo = classes.find(c => c.id === selectedClass);
     const classStudents = students.filter(s => s.class_id === selectedClass);
 
