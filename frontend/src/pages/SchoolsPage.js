@@ -42,6 +42,7 @@ export default function SchoolsPage() {
     const [formData, setFormData] = useState(initialFormData);
     const [submitting, setSubmitting] = useState(false);
     const { isSuperuser } = useAuth();
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchSchools();
