@@ -25,7 +25,8 @@ import {
     Menu,
     X,
     ChevronDown,
-    Shield
+    Shield,
+    FolderInput
 } from 'lucide-react';
 
 const NavItem = ({ to, icon: Icon, label, isCollapsed, isActive }) => (
@@ -77,6 +78,7 @@ export const Layout = ({ children }) => {
         { to: '/attendance', icon: CalendarCheck, label: 'Attendance', roles: ['superuser', 'admin', 'teacher', 'parent'] },
         { to: '/gradebook', icon: BookOpen, label: 'Gradebook', roles: ['superuser', 'admin', 'teacher', 'parent'] },
         { to: '/report-cards', icon: FileText, label: 'Report Cards', roles: ['superuser', 'admin', 'teacher'] },
+        { to: '/import-export', icon: FolderInput, label: 'Import/Export', roles: ['superuser', 'admin'] },
         { to: '/users', icon: Users, label: 'Users', roles: ['superuser', 'admin'] },
     ];
 

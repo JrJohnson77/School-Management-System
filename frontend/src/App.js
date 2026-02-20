@@ -11,6 +11,7 @@ import AttendancePage from "./pages/AttendancePage";
 import GradebookPage from "./pages/GradebookPage";
 import ReportsPage from "./pages/ReportsPage";
 import UsersPage from "./pages/UsersPage";
+import ImportExportPage from "./pages/ImportExportPage";
 import { Loader2 } from "lucide-react";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -122,6 +123,14 @@ function AppRoutes() {
                 element={
                     <ProtectedRoute allowedRoles={['superuser', 'admin', 'teacher']}>
                         <ReportsPage />
+                    </ProtectedRoute>
+                } 
+            />
+            <Route 
+                path="/import-export" 
+                element={
+                    <ProtectedRoute allowedRoles={['superuser', 'admin']}>
+                        <ImportExportPage />
                     </ProtectedRoute>
                 } 
             />
