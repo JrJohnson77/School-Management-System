@@ -7,6 +7,8 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Textarea } from '../components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Switch } from '../components/ui/switch';
 import { toast } from 'sonner';
 import { 
     BookOpen,
@@ -14,14 +16,54 @@ import {
     Save,
     User,
     Award,
-    TrendingUp
+    TrendingUp,
+    Calculator
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const TERMS = ['Term 1', 'Term 2', 'Term 3'];
 const CURRENT_YEAR = new Date().getFullYear();
-const ACADEMIC_YEARS = [`${CURRENT_YEAR-1}/${CURRENT_YEAR}`, `${CURRENT_YEAR}/${CURRENT_YEAR+1}`];
+const ACADEMIC_YEARS = [
+    `${CURRENT_YEAR-1}-${CURRENT_YEAR}`, 
+    `${CURRENT_YEAR}-${CURRENT_YEAR+1}`,
+    `${CURRENT_YEAR+1}-${CURRENT_YEAR+2}`
+];
+
+// Standard subjects
+const STANDARD_SUBJECTS = [
+    'English Language', 'Mathematics', 'Science', 'Social Studies', 
+    'Religious Education', 'Physical Education', 'Creative Arts', 
+    'Music', 'ICT', 'French'
+];
+
+// MHPS subjects
+const MHPS_SUBJECTS = [
+    'Language Arts', 'Mathematics', 'Social Studies', 'Science',
+    'Reading', 'Spelling', 'Music', 'Physical Education'
+];
+
+// MHPS Assessment Components with weights
+const MHPS_COMPONENTS = [
+    { key: 'homework', label: 'Homework', weight: 5 },
+    { key: 'groupWork', label: 'Group Work', weight: 5 },
+    { key: 'project', label: 'Project', weight: 10 },
+    { key: 'quiz', label: 'Quiz', weight: 10 },
+    { key: 'midTerm', label: 'Mid-Term', weight: 30 },
+    { key: 'endOfTerm', label: 'End of Term', weight: 40 }
+];
+
+// MHPS Grade Scale
+const MHPS_GRADE_SCALE = [
+    { min: 95, max: 100, grade: 'A+', description: 'Excellent' },
+    { min: 90, max: 94, grade: 'A', description: 'Very Good' },
+    { min: 80, max: 89, grade: 'B+', description: 'Good' },
+    { min: 70, max: 79, grade: 'B', description: 'Satisfactory' },
+    { min: 60, max: 69, grade: 'C+', description: 'Satisfactory' },
+    { min: 50, max: 59, grade: 'C', description: 'Needs Improvement' },
+    { min: 40, max: 49, grade: 'D', description: 'Unsatisfactory' },
+    { min: 0, max: 39, grade: 'E', description: 'Poor' }
+];
 
 const getGradeColor = (grade) => {
     if (!grade) return 'text-muted-foreground';
@@ -32,10 +74,36 @@ const getGradeColor = (grade) => {
     return 'text-red-600';
 };
 
+const getMHPSGrade = (score) => {
+    if (score === null || score === undefined || isNaN(score)) return { grade: '-', description: '-' };
+    for (const g of MHPS_GRADE_SCALE) {
+        if (score >= g.min && score <= g.max) return g;
+    }
+    return { grade: 'E', description: 'Poor' };
+};
+
+const calculateWeightedScore = (components) => {
+    const homework = parseFloat(components.homework) || 0;
+    const groupWork = parseFloat(components.groupWork) || 0;
+    const project = parseFloat(components.project) || 0;
+    const quiz = parseFloat(components.quiz) || 0;
+    const midTerm = parseFloat(components.midTerm) || 0;
+    const endOfTerm = parseFloat(components.endOfTerm) || 0;
+    
+    return (
+        homework * 0.05 +
+        groupWork * 0.05 +
+        project * 0.10 +
+        quiz * 0.10 +
+        midTerm * 0.30 +
+        endOfTerm * 0.40
+    );
+};
+
 export default function GradebookPage() {
     const [classes, setClasses] = useState([]);
     const [students, setStudents] = useState([]);
-    const [subjects, setSubjects] = useState([]);
+    const [subjects, setSubjects] = useState(STANDARD_SUBJECTS);
     const [gradingScheme, setGradingScheme] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -47,12 +115,21 @@ export default function GradebookPage() {
     
     const [grades, setGrades] = useState({});
     const [existingGradebook, setExistingGradebook] = useState(null);
+    const [useMHPSMode, setUseMHPSMode] = useState(false);
     
-    const { isAdmin, isTeacher, isParent } = useAuth();
+    const { isAdmin, isTeacher, isParent, schoolCode } = useAuth();
 
     useEffect(() => {
         fetchInitialData();
     }, []);
+
+    useEffect(() => {
+        // Auto-enable MHPS mode for MHPS school
+        if (schoolCode === 'MHPS') {
+            setUseMHPSMode(true);
+            setSubjects(MHPS_SUBJECTS);
+        }
+    }, [schoolCode]);
 
     useEffect(() => {
         if (selectedClass) {
@@ -68,17 +145,15 @@ export default function GradebookPage() {
 
     const fetchInitialData = async () => {
         try {
-            const [classesRes, subjectsRes, schemeRes] = await Promise.all([
+            const [classesRes, schemeRes, subjectsRes] = await Promise.all([
                 axios.get(`${API}/classes`),
-                axios.get(`${API}/subjects`),
-                axios.get(`${API}/grading-scheme`)
+                axios.get(`${API}/grading-scheme`),
+                axios.get(`${API}/subjects`).catch(() => ({ data: { subjects: STANDARD_SUBJECTS } }))
             ]);
             setClasses(classesRes.data);
-            setSubjects(subjectsRes.data.subjects || []);
             setGradingScheme(schemeRes.data.grading_scheme || []);
-            
-            if (classesRes.data.length > 0) {
-                setSelectedClass(classesRes.data[0].id);
+            if (!useMHPSMode) {
+                setSubjects(subjectsRes.data.subjects || STANDARD_SUBJECTS);
             }
         } catch (error) {
             toast.error('Failed to load data');
@@ -89,175 +164,185 @@ export default function GradebookPage() {
 
     const fetchStudents = async () => {
         try {
-            const response = await axios.get(`${API}/students`, {
-                params: { class_id: selectedClass }
-            });
-            setStudents(response.data);
-            if (response.data.length > 0) {
-                setSelectedStudent(response.data[0].id);
-            } else {
-                setSelectedStudent('');
-            }
+            const response = await axios.get(`${API}/students?class_id=${selectedClass}`);
+            setStudents(response.data.filter(s => s.class_id === selectedClass));
         } catch (error) {
-            console.error('Failed to fetch students');
+            toast.error('Failed to load students');
         }
     };
 
     const fetchExistingGrades = async () => {
         try {
-            const response = await axios.get(`${API}/gradebook`, {
-                params: {
-                    student_id: selectedStudent,
-                    term: selectedTerm,
-                    academic_year: selectedYear
-                }
-            });
-            
+            const response = await axios.get(
+                `${API}/gradebook?student_id=${selectedStudent}&term=${selectedTerm}&academic_year=${selectedYear}`
+            );
             if (response.data.length > 0) {
                 const existing = response.data[0];
                 setExistingGradebook(existing);
                 
-                // Populate grades from existing data
-                const gradesMap = {};
-                existing.subjects.forEach(subj => {
-                    gradesMap[subj.subject] = {
-                        score: subj.score,
-                        comment: subj.comment || ''
-                    };
+                // Convert to grades state
+                const gradesObj = {};
+                existing.subjects.forEach(s => {
+                    if (useMHPSMode) {
+                        gradesObj[s.subject] = {
+                            homework: s.homework ?? '',
+                            groupWork: s.groupWork ?? '',
+                            project: s.project ?? '',
+                            quiz: s.quiz ?? '',
+                            midTerm: s.midTerm ?? '',
+                            endOfTerm: s.endOfTerm ?? '',
+                            comment: s.comment || ''
+                        };
+                    } else {
+                        gradesObj[s.subject] = {
+                            score: s.score ?? '',
+                            comment: s.comment || ''
+                        };
+                    }
                 });
-                setGrades(gradesMap);
+                setGrades(gradesObj);
             } else {
                 setExistingGradebook(null);
                 // Initialize empty grades
                 const emptyGrades = {};
                 subjects.forEach(subj => {
-                    emptyGrades[subj] = { score: '', comment: '' };
+                    if (useMHPSMode) {
+                        emptyGrades[subj] = {
+                            homework: '', groupWork: '', project: '',
+                            quiz: '', midTerm: '', endOfTerm: '', comment: ''
+                        };
+                    } else {
+                        emptyGrades[subj] = { score: '', comment: '' };
+                    }
                 });
                 setGrades(emptyGrades);
             }
         } catch (error) {
-            console.error('Failed to fetch grades');
+            console.error('Error fetching grades:', error);
         }
     };
 
-    const handleScoreChange = (subject, value) => {
-        const score = value === '' ? '' : Math.min(100, Math.max(0, parseFloat(value) || 0));
+    const handleGradeChange = (subject, field, value) => {
         setGrades(prev => ({
             ...prev,
-            [subject]: { ...prev[subject], score }
-        }));
-    };
-
-    const handleCommentChange = (subject, value) => {
-        setGrades(prev => ({
-            ...prev,
-            [subject]: { ...prev[subject], comment: value }
-        }));
-    };
-
-    const getGradeForScore = (score) => {
-        if (score === '' || score === undefined) return null;
-        const numScore = parseFloat(score);
-        for (const scheme of gradingScheme) {
-            if (numScore >= scheme.min && numScore <= scheme.max) {
-                return scheme;
+            [subject]: {
+                ...prev[subject],
+                [field]: value
             }
-        }
-        return null;
-    };
-
-    const calculateOverall = () => {
-        const validScores = Object.values(grades)
-            .map(g => parseFloat(g.score))
-            .filter(s => !isNaN(s));
-        
-        if (validScores.length === 0) return null;
-        
-        const avg = validScores.reduce((a, b) => a + b, 0) / validScores.length;
-        return getGradeForScore(avg);
+        }));
     };
 
     const handleSave = async () => {
-        if (!selectedStudent || !selectedClass) {
-            toast.error('Please select a class and student');
-            return;
-        }
-
-        const subjectGrades = Object.entries(grades)
-            .filter(([_, data]) => data.score !== '' && data.score !== undefined)
-            .map(([subject, data]) => ({
-                subject,
-                score: parseFloat(data.score),
-                comment: data.comment || ''
-            }));
-
-        if (subjectGrades.length === 0) {
-            toast.error('Please enter at least one grade');
+        if (!selectedStudent) {
+            toast.error('Please select a student');
             return;
         }
 
         setSaving(true);
         try {
+            const subjectsData = subjects.map(subject => {
+                const gradeData = grades[subject] || {};
+                
+                if (useMHPSMode) {
+                    return {
+                        subject,
+                        homework: gradeData.homework ? parseFloat(gradeData.homework) : null,
+                        groupWork: gradeData.groupWork ? parseFloat(gradeData.groupWork) : null,
+                        project: gradeData.project ? parseFloat(gradeData.project) : null,
+                        quiz: gradeData.quiz ? parseFloat(gradeData.quiz) : null,
+                        midTerm: gradeData.midTerm ? parseFloat(gradeData.midTerm) : null,
+                        endOfTerm: gradeData.endOfTerm ? parseFloat(gradeData.endOfTerm) : null,
+                        comment: gradeData.comment || ''
+                    };
+                } else {
+                    return {
+                        subject,
+                        score: gradeData.score ? parseFloat(gradeData.score) : 0,
+                        comment: gradeData.comment || ''
+                    };
+                }
+            });
+
             await axios.post(`${API}/gradebook`, {
                 student_id: selectedStudent,
                 class_id: selectedClass,
                 term: selectedTerm,
                 academic_year: selectedYear,
-                subjects: subjectGrades
+                subjects: subjectsData
             });
-            toast.success('Grades saved successfully');
+
+            toast.success('Grades saved successfully!');
             fetchExistingGrades();
         } catch (error) {
-            toast.error('Failed to save grades');
+            toast.error(error.response?.data?.detail || 'Failed to save grades');
         } finally {
             setSaving(false);
         }
     };
 
     const selectedStudentData = students.find(s => s.id === selectedStudent);
-    const overallGrade = calculateOverall();
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="flex items-center justify-center h-64">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
         );
     }
 
     return (
-        <div data-testid="gradebook-page">
+        <div className="space-y-6" data-testid="gradebook-page">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-foreground">Gradebook</h1>
-                    <p className="text-muted-foreground">
-                        {isParent ? 'View your children\'s grades' : 'Enter and manage student grades'}
-                    </p>
+                    <h1 className="text-3xl font-bold tracking-tight">Gradebook</h1>
+                    <p className="text-muted-foreground">Enter and manage student grades</p>
                 </div>
+                {(isAdmin || isTeacher) && (
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <Switch
+                                checked={useMHPSMode}
+                                onCheckedChange={(checked) => {
+                                    setUseMHPSMode(checked);
+                                    setSubjects(checked ? MHPS_SUBJECTS : STANDARD_SUBJECTS);
+                                    setGrades({});
+                                }}
+                                data-testid="mhps-mode-toggle"
+                            />
+                            <Label className="text-sm">MHPS Mode</Label>
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {/* Filters */}
-            <Card className="rounded-3xl border-border/50 shadow-sm mb-6">
+            {/* Selection Controls */}
+            <Card className="rounded-3xl border-border/50 shadow-sm">
                 <CardContent className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                            <Label className="mb-2 block">Class</Label>
+                        <div className="space-y-2">
+                            <Label>Class *</Label>
                             <Select value={selectedClass} onValueChange={setSelectedClass}>
                                 <SelectTrigger className="rounded-xl" data-testid="gradebook-class-select">
                                     <SelectValue placeholder="Select class" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {classes.map(cls => (
-                                        <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
+                                        <SelectItem key={cls.id} value={cls.id}>
+                                            {cls.name}
+                                        </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
                         
-                        <div>
-                            <Label className="mb-2 block">Student</Label>
-                            <Select value={selectedStudent} onValueChange={setSelectedStudent}>
+                        <div className="space-y-2">
+                            <Label>Student *</Label>
+                            <Select 
+                                value={selectedStudent} 
+                                onValueChange={setSelectedStudent}
+                                disabled={!selectedClass}
+                            >
                                 <SelectTrigger className="rounded-xl" data-testid="gradebook-student-select">
                                     <SelectValue placeholder="Select student" />
                                 </SelectTrigger>
@@ -271,10 +356,10 @@ export default function GradebookPage() {
                             </Select>
                         </div>
                         
-                        <div>
-                            <Label className="mb-2 block">Term</Label>
+                        <div className="space-y-2">
+                            <Label>Term</Label>
                             <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-                                <SelectTrigger className="rounded-xl" data-testid="gradebook-term-select">
+                                <SelectTrigger className="rounded-xl">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -285,10 +370,10 @@ export default function GradebookPage() {
                             </Select>
                         </div>
                         
-                        <div>
-                            <Label className="mb-2 block">Academic Year</Label>
+                        <div className="space-y-2">
+                            <Label>Academic Year</Label>
                             <Select value={selectedYear} onValueChange={setSelectedYear}>
-                                <SelectTrigger className="rounded-xl" data-testid="gradebook-year-select">
+                                <SelectTrigger className="rounded-xl">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -302,165 +387,186 @@ export default function GradebookPage() {
                 </CardContent>
             </Card>
 
+            {/* Student Info Card */}
             {selectedStudentData && (
-                <>
-                    {/* Student Info Card */}
-                    <Card className="rounded-3xl border-border/50 shadow-sm mb-6">
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
-                                        {selectedStudentData.first_name?.[0]}{selectedStudentData.last_name?.[0]}
-                                    </div>
-                                    <div>
-                                        <h2 className="text-xl font-bold">
-                                            {selectedStudentData.first_name} {selectedStudentData.middle_name || ''} {selectedStudentData.last_name}
-                                        </h2>
-                                        <p className="text-muted-foreground">
-                                            Age: {selectedStudentData.age} years • {selectedStudentData.house || 'No house'}
-                                        </p>
-                                    </div>
-                                </div>
-                                
-                                {overallGrade && (
-                                    <div className="text-right">
-                                        <div className="flex items-center gap-2">
-                                            <Award className="w-5 h-5 text-primary" />
-                                            <span className="text-sm text-muted-foreground">Overall Grade</span>
-                                        </div>
-                                        <div className={`text-3xl font-bold ${getGradeColor(overallGrade.grade)}`}>
-                                            {overallGrade.grade}
-                                        </div>
-                                        <p className="text-sm text-muted-foreground">{overallGrade.domain}</p>
-                                    </div>
-                                )}
+                <Card className="rounded-3xl border-border/50 shadow-sm bg-primary/5">
+                    <CardContent className="p-6">
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                                <User className="w-8 h-8 text-primary" />
                             </div>
-                        </CardContent>
-                    </Card>
+                            <div>
+                                <h3 className="text-xl font-bold">
+                                    {selectedStudentData.first_name} {selectedStudentData.last_name}
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                    {selectedStudentData.student_id && `ID: ${selectedStudentData.student_id} • `}
+                                    Age: {selectedStudentData.age} • {selectedStudentData.gender}
+                                    {selectedStudentData.house && ` • ${selectedStudentData.house}`}
+                                </p>
+                            </div>
+                            {existingGradebook && (
+                                <div className="ml-auto text-right">
+                                    <div className="flex items-center gap-2">
+                                        <Award className={`w-5 h-5 ${getGradeColor(existingGradebook.overall_grade)}`} />
+                                        <span className={`text-2xl font-bold ${getGradeColor(existingGradebook.overall_grade)}`}>
+                                            {existingGradebook.overall_grade}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                        Overall: {existingGradebook.overall_score?.toFixed(1)}%
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
-                    {/* Grades Entry */}
-                    <Card className="rounded-3xl border-border/50 shadow-sm mb-6">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <BookOpen className="w-5 h-5 text-primary" />
-                                Subject Grades - {selectedTerm} ({selectedYear})
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
+            {/* Grades Entry */}
+            {selectedStudent && (
+                <Card className="rounded-3xl border-border/50 shadow-sm">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <BookOpen className="w-5 h-5" />
+                            {useMHPSMode ? 'MHPS Assessment Entry' : 'Subject Grades'}
+                        </CardTitle>
+                        {useMHPSMode && (
+                            <p className="text-sm text-muted-foreground">
+                                Weights: HW 5% | GW 5% | Project 10% | Quiz 10% | Mid-Term 30% | End of Term 40%
+                            </p>
+                        )}
+                    </CardHeader>
+                    <CardContent>
+                        {useMHPSMode ? (
+                            /* MHPS Mode - Detailed Assessment Entry */
                             <div className="space-y-4">
-                                {subjects.map((subject, index) => {
-                                    const gradeData = grades[subject] || { score: '', comment: '' };
-                                    const gradeInfo = getGradeForScore(gradeData.score);
-                                    
-                                    return (
-                                        <div 
-                                            key={subject}
-                                            className="grid grid-cols-12 gap-4 items-start p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
-                                            data-testid={`grade-row-${index}`}
-                                        >
-                                            <div className="col-span-3">
-                                                <Label className="font-medium">{subject}</Label>
-                                            </div>
-                                            <div className="col-span-2">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b">
+                                                <th className="text-left p-2 w-32">Subject</th>
+                                                {MHPS_COMPONENTS.map(comp => (
+                                                    <th key={comp.key} className="text-center p-2 w-20">
+                                                        <div>{comp.label}</div>
+                                                        <div className="text-xs text-muted-foreground">({comp.weight}%)</div>
+                                                    </th>
+                                                ))}
+                                                <th className="text-center p-2 w-20 bg-primary/10">Weighted</th>
+                                                <th className="text-center p-2 w-16 bg-primary/10">Grade</th>
+                                                <th className="text-left p-2 w-40">Comment</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {subjects.map(subject => {
+                                                const gradeData = grades[subject] || {};
+                                                const weightedScore = calculateWeightedScore(gradeData);
+                                                const gradeInfo = getMHPSGrade(weightedScore);
+                                                
+                                                return (
+                                                    <tr key={subject} className="border-b hover:bg-muted/50">
+                                                        <td className="p-2 font-medium">{subject}</td>
+                                                        {MHPS_COMPONENTS.map(comp => (
+                                                            <td key={comp.key} className="p-1">
+                                                                <Input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    max="100"
+                                                                    value={gradeData[comp.key] ?? ''}
+                                                                    onChange={(e) => handleGradeChange(subject, comp.key, e.target.value)}
+                                                                    className="w-16 h-8 text-center rounded-lg text-sm"
+                                                                    placeholder="-"
+                                                                />
+                                                            </td>
+                                                        ))}
+                                                        <td className="p-2 text-center font-bold bg-primary/5">
+                                                            {weightedScore > 0 ? weightedScore.toFixed(1) : '-'}
+                                                        </td>
+                                                        <td className={`p-2 text-center font-bold bg-primary/5 ${getGradeColor(gradeInfo.grade)}`}>
+                                                            {gradeInfo.grade}
+                                                        </td>
+                                                        <td className="p-1">
+                                                            <Input
+                                                                value={gradeData.comment || ''}
+                                                                onChange={(e) => handleGradeChange(subject, 'comment', e.target.value)}
+                                                                className="h-8 rounded-lg text-sm"
+                                                                placeholder="Comment..."
+                                                            />
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        ) : (
+                            /* Standard Mode - Simple Score Entry */
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {subjects.map(subject => (
+                                    <div key={subject} className="p-4 rounded-2xl bg-muted/30">
+                                        <Label className="font-medium">{subject}</Label>
+                                        <div className="grid grid-cols-3 gap-2 mt-2">
+                                            <div className="col-span-1">
                                                 <Input
                                                     type="number"
                                                     min="0"
                                                     max="100"
-                                                    value={gradeData.score}
-                                                    onChange={(e) => handleScoreChange(subject, e.target.value)}
-                                                    className="rounded-xl text-center"
-                                                    placeholder="0-100"
-                                                    disabled={isParent}
-                                                    data-testid={`grade-score-${index}`}
+                                                    value={grades[subject]?.score ?? ''}
+                                                    onChange={(e) => handleGradeChange(subject, 'score', e.target.value)}
+                                                    className="rounded-xl"
+                                                    placeholder="Score"
                                                 />
                                             </div>
-                                            <div className="col-span-2 text-center">
-                                                {gradeInfo && (
-                                                    <div>
-                                                        <span className={`text-2xl font-bold ${getGradeColor(gradeInfo.grade)}`}>
-                                                            {gradeInfo.grade}
-                                                        </span>
-                                                        <p className="text-xs text-muted-foreground">{gradeInfo.points} pts</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="col-span-5">
-                                                <Textarea
-                                                    value={gradeData.comment}
-                                                    onChange={(e) => handleCommentChange(subject, e.target.value)}
-                                                    className="rounded-xl text-sm"
-                                                    placeholder="Teacher's comment for this subject..."
-                                                    rows={1}
-                                                    disabled={isParent}
-                                                    data-testid={`grade-comment-${index}`}
+                                            <div className="col-span-2">
+                                                <Input
+                                                    value={grades[subject]?.comment || ''}
+                                                    onChange={(e) => handleGradeChange(subject, 'comment', e.target.value)}
+                                                    className="rounded-xl"
+                                                    placeholder="Comment"
                                                 />
                                             </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                            
-                            {(isAdmin || isTeacher) && (
-                                <div className="mt-6 flex justify-end">
-                                    <Button 
-                                        onClick={handleSave}
-                                        className="rounded-full shadow-md"
-                                        disabled={saving}
-                                        data-testid="save-gradebook-btn"
-                                    >
-                                        {saving ? (
-                                            <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                                        ) : (
-                                            <Save className="w-5 h-5 mr-2" />
-                                        )}
-                                        Save Grades
-                                    </Button>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Grading Scheme Reference */}
-                    <Card className="rounded-3xl border-border/50 shadow-sm">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <TrendingUp className="w-5 h-5 text-primary" />
-                                Grading Scheme
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                                {gradingScheme.map((scheme, index) => (
-                                    <div 
-                                        key={index}
-                                        className="p-3 rounded-xl bg-muted/50 text-center"
-                                    >
-                                        <div className={`text-xl font-bold ${getGradeColor(scheme.grade)}`}>
-                                            {scheme.grade}
-                                        </div>
-                                        <div className="text-sm text-muted-foreground">
-                                            {scheme.min}-{scheme.max}%
-                                        </div>
-                                        <div className="text-xs text-muted-foreground">
-                                            {scheme.points} pts
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                        </CardContent>
-                    </Card>
-                </>
+                        )}
+
+                        {/* Save Button */}
+                        <div className="flex justify-end mt-6">
+                            <Button
+                                onClick={handleSave}
+                                disabled={saving || !selectedStudent}
+                                className="rounded-full px-8"
+                                data-testid="save-grades-btn"
+                            >
+                                {saving ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                    <Save className="w-4 h-4 mr-2" />
+                                )}
+                                Save Grades
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
             )}
 
-            {!selectedStudentData && students.length === 0 && (
+            {/* Grading Key */}
+            {useMHPSMode && (
                 <Card className="rounded-3xl border-border/50 shadow-sm">
-                    <CardContent className="py-16">
-                        <div className="empty-state">
-                            <BookOpen className="empty-state-icon" />
-                            <h3 className="text-lg font-semibold mb-2">No students in this class</h3>
-                            <p className="text-muted-foreground">
-                                Add students to this class to start entering grades
-                            </p>
+                    <CardHeader>
+                        <CardTitle className="text-sm">MHPS Grading Scale</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-4 md:grid-cols-8 gap-2 text-xs">
+                            {MHPS_GRADE_SCALE.map(g => (
+                                <div key={g.grade} className="text-center p-2 rounded-xl bg-muted/50">
+                                    <div className={`font-bold ${getGradeColor(g.grade)}`}>{g.grade}</div>
+                                    <div className="text-muted-foreground">{g.min}-{g.max}</div>
+                                    <div className="text-muted-foreground truncate">{g.description}</div>
+                                </div>
+                            ))}
                         </div>
                     </CardContent>
                 </Card>
