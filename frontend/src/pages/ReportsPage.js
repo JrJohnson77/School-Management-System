@@ -861,7 +861,7 @@ export default function ReportsPage() {
                     {reportCards.length > 0 ? (
                         <div ref={printRef} className="print-content space-y-8">
                             {reportCards.map((data) => (
-                                <MHPSReportCard
+                                <DynamicReportCard
                                     key={data.student.id}
                                     data={{...data, total_students: totalStudentsInClass}}
                                     classInfo={selectedClassInfo}
@@ -869,6 +869,7 @@ export default function ReportsPage() {
                                     academicYear={selectedYear}
                                     totalStudents={totalStudentsInClass}
                                     signatures={reportSignatures}
+                                    template={reportTemplate}
                                 />
                             ))}
                         </div>
