@@ -579,8 +579,10 @@ export default function ReportsPage() {
     const [selectedYear, setSelectedYear] = useState(ACADEMIC_YEARS[0]);
     const [reportCards, setReportCards] = useState([]);
     const [totalStudentsInClass, setTotalStudentsInClass] = useState(0);
+    const [reportSignatures, setReportSignatures] = useState({});
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
+    const [exportingPdf, setExportingPdf] = useState(false);
     const [activeTab, setActiveTab] = useState('class-list');
     const printRef = useRef();
     const { isAdmin, isTeacher, schoolCode } = useAuth();
