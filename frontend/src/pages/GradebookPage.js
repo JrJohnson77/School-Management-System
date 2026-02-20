@@ -29,59 +29,6 @@ const ACADEMIC_YEARS = [
     `${CURRENT_YEAR+1}-${CURRENT_YEAR+2}`
 ];
 
-// Standard subjects
-const STANDARD_SUBJECTS = [
-    'English Language', 'Mathematics', 'Science', 'Social Studies', 
-    'Religious Education', 'Physical Education', 'Creative Arts', 
-    'Music', 'ICT', 'French'
-];
-
-// MHPS subjects
-const MHPS_SUBJECTS = [
-    'Language Arts', 'Mathematics', 'Social Studies', 'Science',
-    'Reading', 'Spelling', 'Music', 'Physical Education'
-];
-
-// MHPS Assessment Components with weights
-const MHPS_COMPONENTS = [
-    { key: 'homework', label: 'Homework', weight: 5 },
-    { key: 'groupWork', label: 'Group Work', weight: 5 },
-    { key: 'project', label: 'Project', weight: 10 },
-    { key: 'quiz', label: 'Quiz', weight: 10 },
-    { key: 'midTerm', label: 'Mid-Term', weight: 30 },
-    { key: 'endOfTerm', label: 'End of Term', weight: 40 }
-];
-
-// MHPS Grade Scale
-const MHPS_GRADE_SCALE = [
-    { min: 95, max: 100, grade: 'A+', description: 'Excellent' },
-    { min: 90, max: 94, grade: 'A', description: 'Very Good' },
-    { min: 80, max: 89, grade: 'B+', description: 'Good' },
-    { min: 70, max: 79, grade: 'B', description: 'Satisfactory' },
-    { min: 60, max: 69, grade: 'C+', description: 'Satisfactory' },
-    { min: 50, max: 59, grade: 'C', description: 'Needs Improvement' },
-    { min: 40, max: 49, grade: 'D', description: 'Unsatisfactory' },
-    { min: 0, max: 39, grade: 'E', description: 'Poor' }
-];
-
-// Social Skills Categories
-const SOCIAL_SKILLS = {
-    workEthics: [
-        'Completes Assignments',
-        'Follows Instructions',
-        'Punctuality',
-        'Deportment',
-        'Courteous in Speech and Action',
-        'Class Participation'
-    ],
-    respect: [
-        'Respect for Teacher',
-        'Respect for Peers'
-    ]
-};
-
-const SKILL_RATINGS = ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
-
 const getGradeColor = (grade) => {
     if (!grade) return 'text-muted-foreground';
     if (grade.startsWith('A')) return 'text-green-600';
@@ -91,16 +38,16 @@ const getGradeColor = (grade) => {
     return 'text-red-600';
 };
 
-const getMHPSGrade = (score) => {
+const getGradeFromScale = (score, gradeScale) => {
     if (score === null || score === undefined || isNaN(score)) return { grade: '-', description: '-' };
     const rounded = Math.round(score);
-    for (const g of MHPS_GRADE_SCALE) {
+    for (const g of gradeScale) {
         if (rounded >= g.min && rounded <= g.max) return g;
     }
-    return { grade: 'E', description: 'Poor' };
+    return gradeScale[gradeScale.length - 1] || { grade: '-', description: '-' };
 };
 
-const calculateWeightedScore = (components) => {
+const calcWeightedFromWeights = (components, weights) => {
     const homework = parseFloat(components.homework) || 0;
     const groupWork = parseFloat(components.groupWork) || 0;
     const project = parseFloat(components.project) || 0;
@@ -109,12 +56,12 @@ const calculateWeightedScore = (components) => {
     const endOfTerm = parseFloat(components.endOfTerm) || 0;
     
     return (
-        homework * 0.05 +
-        groupWork * 0.05 +
-        project * 0.10 +
-        quiz * 0.10 +
-        midTerm * 0.30 +
-        endOfTerm * 0.40
+        homework * ((weights.homework || 0) / 100) +
+        groupWork * ((weights.groupWork || 0) / 100) +
+        project * ((weights.project || 0) / 100) +
+        quiz * ((weights.quiz || 0) / 100) +
+        midTerm * ((weights.midTerm || 0) / 100) +
+        endOfTerm * ((weights.endOfTerm || 0) / 100)
     );
 };
 
