@@ -6,7 +6,6 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Textarea } from '../components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Switch } from '../components/ui/switch';
 import { toast } from 'sonner';
@@ -16,8 +15,8 @@ import {
     Save,
     User,
     Award,
-    TrendingUp,
-    Calculator
+    Users,
+    Heart
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -65,6 +64,24 @@ const MHPS_GRADE_SCALE = [
     { min: 0, max: 39, grade: 'E', description: 'Poor' }
 ];
 
+// Social Skills Categories
+const SOCIAL_SKILLS = {
+    workEthics: [
+        'Completes Assignments',
+        'Follows Instructions',
+        'Punctuality',
+        'Deportment',
+        'Courteous in Speech and Action',
+        'Class Participation'
+    ],
+    respect: [
+        'Respect for Teacher',
+        'Respect for Peers'
+    ]
+};
+
+const SKILL_RATINGS = ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
+
 const getGradeColor = (grade) => {
     if (!grade) return 'text-muted-foreground';
     if (grade.startsWith('A')) return 'text-green-600';
@@ -107,13 +124,16 @@ export default function GradebookPage() {
     const [gradingScheme, setGradingScheme] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [savingSkills, setSavingSkills] = useState(false);
     
     const [selectedClass, setSelectedClass] = useState('');
     const [selectedStudent, setSelectedStudent] = useState('');
     const [selectedTerm, setSelectedTerm] = useState(TERMS[0]);
     const [selectedYear, setSelectedYear] = useState(ACADEMIC_YEARS[0]);
+    const [activeTab, setActiveTab] = useState('grades');
     
     const [grades, setGrades] = useState({});
+    const [socialSkills, setSocialSkills] = useState({});
     const [existingGradebook, setExistingGradebook] = useState(null);
     const [useMHPSMode, setUseMHPSMode] = useState(false);
     
@@ -124,7 +144,6 @@ export default function GradebookPage() {
     }, []);
 
     useEffect(() => {
-        // Auto-enable MHPS mode for MHPS school
         if (schoolCode === 'MHPS') {
             setUseMHPSMode(true);
             setSubjects(MHPS_SUBJECTS);
@@ -140,6 +159,7 @@ export default function GradebookPage() {
     useEffect(() => {
         if (selectedStudent && selectedTerm && selectedYear) {
             fetchExistingGrades();
+            fetchSocialSkills();
         }
     }, [selectedStudent, selectedTerm, selectedYear]);
 
@@ -180,7 +200,6 @@ export default function GradebookPage() {
                 const existing = response.data[0];
                 setExistingGradebook(existing);
                 
-                // Convert to grades state
                 const gradesObj = {};
                 existing.subjects.forEach(s => {
                     if (useMHPSMode) {
@@ -203,7 +222,6 @@ export default function GradebookPage() {
                 setGrades(gradesObj);
             } else {
                 setExistingGradebook(null);
-                // Initialize empty grades
                 const emptyGrades = {};
                 subjects.forEach(subj => {
                     if (useMHPSMode) {
@@ -222,6 +240,17 @@ export default function GradebookPage() {
         }
     };
 
+    const fetchSocialSkills = async () => {
+        try {
+            const response = await axios.get(
+                `${API}/social-skills/${selectedStudent}?term=${selectedTerm}&academic_year=${selectedYear}`
+            );
+            setSocialSkills(response.data.skills || {});
+        } catch (error) {
+            setSocialSkills({});
+        }
+    };
+
     const handleGradeChange = (subject, field, value) => {
         setGrades(prev => ({
             ...prev,
@@ -229,6 +258,13 @@ export default function GradebookPage() {
                 ...prev[subject],
                 [field]: value
             }
+        }));
+    };
+
+    const handleSkillChange = (skill, rating) => {
+        setSocialSkills(prev => ({
+            ...prev,
+            [skill]: rating
         }));
     };
 
@@ -277,6 +313,29 @@ export default function GradebookPage() {
             toast.error(error.response?.data?.detail || 'Failed to save grades');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleSaveSocialSkills = async () => {
+        if (!selectedStudent) {
+            toast.error('Please select a student');
+            return;
+        }
+
+        setSavingSkills(true);
+        try {
+            await axios.post(`${API}/social-skills`, {
+                student_id: selectedStudent,
+                term: selectedTerm,
+                academic_year: selectedYear,
+                skills: socialSkills
+            });
+
+            toast.success('Social skills saved successfully!');
+        } catch (error) {
+            toast.error(error.response?.data?.detail || 'Failed to save social skills');
+        } finally {
+            setSavingSkills(false);
         }
     };
 
@@ -423,133 +482,242 @@ export default function GradebookPage() {
                 </Card>
             )}
 
-            {/* Grades Entry */}
+            {/* Tabs for Grades and Social Skills */}
             {selectedStudent && (
-                <Card className="rounded-3xl border-border/50 shadow-sm">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <BookOpen className="w-5 h-5" />
-                            {useMHPSMode ? 'MHPS Assessment Entry' : 'Subject Grades'}
-                        </CardTitle>
-                        {useMHPSMode && (
-                            <p className="text-sm text-muted-foreground">
-                                Weights: HW 5% | GW 5% | Project 10% | Quiz 10% | Mid-Term 30% | End of Term 40%
-                            </p>
-                        )}
-                    </CardHeader>
-                    <CardContent>
-                        {useMHPSMode ? (
-                            /* MHPS Mode - Detailed Assessment Entry */
-                            <div className="space-y-4">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="border-b">
-                                                <th className="text-left p-2 w-32">Subject</th>
-                                                {MHPS_COMPONENTS.map(comp => (
-                                                    <th key={comp.key} className="text-center p-2 w-20">
-                                                        <div>{comp.label}</div>
-                                                        <div className="text-xs text-muted-foreground">({comp.weight}%)</div>
-                                                    </th>
-                                                ))}
-                                                <th className="text-center p-2 w-20 bg-primary/10">Weighted</th>
-                                                <th className="text-center p-2 w-16 bg-primary/10">Grade</th>
-                                                <th className="text-left p-2 w-40">Comment</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {subjects.map(subject => {
-                                                const gradeData = grades[subject] || {};
-                                                const weightedScore = calculateWeightedScore(gradeData);
-                                                const gradeInfo = getMHPSGrade(weightedScore);
-                                                
-                                                return (
-                                                    <tr key={subject} className="border-b hover:bg-muted/50">
-                                                        <td className="p-2 font-medium">{subject}</td>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 rounded-2xl h-12 max-w-md">
+                        <TabsTrigger value="grades" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                            <BookOpen className="w-4 h-4 mr-2" />
+                            Academic Grades
+                        </TabsTrigger>
+                        <TabsTrigger value="social-skills" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                            <Heart className="w-4 h-4 mr-2" />
+                            Social Skills
+                        </TabsTrigger>
+                    </TabsList>
+
+                    {/* Academic Grades Tab */}
+                    <TabsContent value="grades" className="mt-6">
+                        <Card className="rounded-3xl border-border/50 shadow-sm">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <BookOpen className="w-5 h-5" />
+                                    {useMHPSMode ? 'MHPS Assessment Entry' : 'Subject Grades'}
+                                </CardTitle>
+                                {useMHPSMode && (
+                                    <p className="text-sm text-muted-foreground">
+                                        Weights: HW 5% | GW 5% | Project 10% | Quiz 10% | Mid-Term 30% | End of Term 40%
+                                    </p>
+                                )}
+                            </CardHeader>
+                            <CardContent>
+                                {useMHPSMode ? (
+                                    <div className="space-y-4">
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm">
+                                                <thead>
+                                                    <tr className="border-b">
+                                                        <th className="text-left p-2 w-32">Subject</th>
                                                         {MHPS_COMPONENTS.map(comp => (
-                                                            <td key={comp.key} className="p-1">
-                                                                <Input
-                                                                    type="number"
-                                                                    min="0"
-                                                                    max="100"
-                                                                    value={gradeData[comp.key] ?? ''}
-                                                                    onChange={(e) => handleGradeChange(subject, comp.key, e.target.value)}
-                                                                    className="w-16 h-8 text-center rounded-lg text-sm"
-                                                                    placeholder="-"
-                                                                />
-                                                            </td>
+                                                            <th key={comp.key} className="text-center p-2 w-20">
+                                                                <div>{comp.label}</div>
+                                                                <div className="text-xs text-muted-foreground">({comp.weight}%)</div>
+                                                            </th>
                                                         ))}
-                                                        <td className="p-2 text-center font-bold bg-primary/5">
-                                                            {weightedScore > 0 ? weightedScore.toFixed(1) : '-'}
-                                                        </td>
-                                                        <td className={`p-2 text-center font-bold bg-primary/5 ${getGradeColor(gradeInfo.grade)}`}>
-                                                            {gradeInfo.grade}
-                                                        </td>
-                                                        <td className="p-1">
-                                                            <Input
-                                                                value={gradeData.comment || ''}
-                                                                onChange={(e) => handleGradeChange(subject, 'comment', e.target.value)}
-                                                                className="h-8 rounded-lg text-sm"
-                                                                placeholder="Comment..."
-                                                            />
-                                                        </td>
+                                                        <th className="text-center p-2 w-20 bg-primary/10">Weighted</th>
+                                                        <th className="text-center p-2 w-16 bg-primary/10">Grade</th>
+                                                        <th className="text-left p-2 w-40">Comment</th>
                                                     </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        ) : (
-                            /* Standard Mode - Simple Score Entry */
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {subjects.map(subject => (
-                                    <div key={subject} className="p-4 rounded-2xl bg-muted/30">
-                                        <Label className="font-medium">{subject}</Label>
-                                        <div className="grid grid-cols-3 gap-2 mt-2">
-                                            <div className="col-span-1">
-                                                <Input
-                                                    type="number"
-                                                    min="0"
-                                                    max="100"
-                                                    value={grades[subject]?.score ?? ''}
-                                                    onChange={(e) => handleGradeChange(subject, 'score', e.target.value)}
-                                                    className="rounded-xl"
-                                                    placeholder="Score"
-                                                />
-                                            </div>
-                                            <div className="col-span-2">
-                                                <Input
-                                                    value={grades[subject]?.comment || ''}
-                                                    onChange={(e) => handleGradeChange(subject, 'comment', e.target.value)}
-                                                    className="rounded-xl"
-                                                    placeholder="Comment"
-                                                />
-                                            </div>
+                                                </thead>
+                                                <tbody>
+                                                    {subjects.map(subject => {
+                                                        const gradeData = grades[subject] || {};
+                                                        const weightedScore = calculateWeightedScore(gradeData);
+                                                        const gradeInfo = getMHPSGrade(weightedScore);
+                                                        
+                                                        return (
+                                                            <tr key={subject} className="border-b hover:bg-muted/50">
+                                                                <td className="p-2 font-medium">{subject}</td>
+                                                                {MHPS_COMPONENTS.map(comp => (
+                                                                    <td key={comp.key} className="p-1">
+                                                                        <Input
+                                                                            type="number"
+                                                                            min="0"
+                                                                            max="100"
+                                                                            value={gradeData[comp.key] ?? ''}
+                                                                            onChange={(e) => handleGradeChange(subject, comp.key, e.target.value)}
+                                                                            className="w-16 h-8 text-center rounded-lg text-sm"
+                                                                            placeholder="-"
+                                                                        />
+                                                                    </td>
+                                                                ))}
+                                                                <td className="p-2 text-center font-bold bg-primary/5">
+                                                                    {weightedScore > 0 ? weightedScore.toFixed(1) : '-'}
+                                                                </td>
+                                                                <td className={`p-2 text-center font-bold bg-primary/5 ${getGradeColor(gradeInfo.grade)}`}>
+                                                                    {gradeInfo.grade}
+                                                                </td>
+                                                                <td className="p-1">
+                                                                    <Input
+                                                                        value={gradeData.comment || ''}
+                                                                        onChange={(e) => handleGradeChange(subject, 'comment', e.target.value)}
+                                                                        className="h-8 rounded-lg text-sm"
+                                                                        placeholder="Comment..."
+                                                                    />
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Save Button */}
-                        <div className="flex justify-end mt-6">
-                            <Button
-                                onClick={handleSave}
-                                disabled={saving || !selectedStudent}
-                                className="rounded-full px-8"
-                                data-testid="save-grades-btn"
-                            >
-                                {saving ? (
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                 ) : (
-                                    <Save className="w-4 h-4 mr-2" />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {subjects.map(subject => (
+                                            <div key={subject} className="p-4 rounded-2xl bg-muted/30">
+                                                <Label className="font-medium">{subject}</Label>
+                                                <div className="grid grid-cols-3 gap-2 mt-2">
+                                                    <div className="col-span-1">
+                                                        <Input
+                                                            type="number"
+                                                            min="0"
+                                                            max="100"
+                                                            value={grades[subject]?.score ?? ''}
+                                                            onChange={(e) => handleGradeChange(subject, 'score', e.target.value)}
+                                                            className="rounded-xl"
+                                                            placeholder="Score"
+                                                        />
+                                                    </div>
+                                                    <div className="col-span-2">
+                                                        <Input
+                                                            value={grades[subject]?.comment || ''}
+                                                            onChange={(e) => handleGradeChange(subject, 'comment', e.target.value)}
+                                                            className="rounded-xl"
+                                                            placeholder="Comment"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
-                                Save Grades
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
+
+                                <div className="flex justify-end mt-6">
+                                    <Button
+                                        onClick={handleSave}
+                                        disabled={saving || !selectedStudent}
+                                        className="rounded-full px-8"
+                                        data-testid="save-grades-btn"
+                                    >
+                                        {saving ? (
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        ) : (
+                                            <Save className="w-4 h-4 mr-2" />
+                                        )}
+                                        Save Grades
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* Social Skills Tab */}
+                    <TabsContent value="social-skills" className="mt-6">
+                        <Card className="rounded-3xl border-border/50 shadow-sm">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Heart className="w-5 h-5" />
+                                    Social Skills & Attitudes Assessment
+                                </CardTitle>
+                                <p className="text-sm text-muted-foreground">
+                                    Rate the student's social skills and attitudes
+                                </p>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Work and Personal Ethics */}
+                                    <div className="space-y-4">
+                                        <h4 className="font-bold flex items-center gap-2">
+                                            <Users className="w-4 h-4" />
+                                            Work and Personal Ethics
+                                        </h4>
+                                        {SOCIAL_SKILLS.workEthics.map(skill => (
+                                            <div key={skill} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+                                                <Label className="text-sm">{skill}</Label>
+                                                <Select
+                                                    value={socialSkills[skill] || ''}
+                                                    onValueChange={(value) => handleSkillChange(skill, value)}
+                                                >
+                                                    <SelectTrigger className="w-40 rounded-xl h-8">
+                                                        <SelectValue placeholder="Select..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {SKILL_RATINGS.map(rating => (
+                                                            <SelectItem key={rating} value={rating}>{rating}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Respect */}
+                                    <div className="space-y-4">
+                                        <h4 className="font-bold flex items-center gap-2">
+                                            <Heart className="w-4 h-4" />
+                                            Respect
+                                        </h4>
+                                        {SOCIAL_SKILLS.respect.map(skill => (
+                                            <div key={skill} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+                                                <Label className="text-sm">{skill}</Label>
+                                                <Select
+                                                    value={socialSkills[skill] || ''}
+                                                    onValueChange={(value) => handleSkillChange(skill, value)}
+                                                >
+                                                    <SelectTrigger className="w-40 rounded-xl h-8">
+                                                        <SelectValue placeholder="Select..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {SKILL_RATINGS.map(rating => (
+                                                            <SelectItem key={rating} value={rating}>{rating}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        ))}
+
+                                        <div className="mt-6 p-4 rounded-xl bg-primary/5 text-sm">
+                                            <h5 className="font-bold mb-2">Rating Key:</h5>
+                                            <ul className="space-y-1 text-muted-foreground">
+                                                <li><strong>Excellent</strong> - Consistently demonstrates exemplary behavior</li>
+                                                <li><strong>Good</strong> - Regularly demonstrates positive behavior</li>
+                                                <li><strong>Satisfactory</strong> - Generally meets expectations</li>
+                                                <li><strong>Needs Improvement</strong> - Requires support and guidance</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end mt-6">
+                                    <Button
+                                        onClick={handleSaveSocialSkills}
+                                        disabled={savingSkills || !selectedStudent}
+                                        className="rounded-full px-8"
+                                        data-testid="save-social-skills-btn"
+                                    >
+                                        {savingSkills ? (
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        ) : (
+                                            <Save className="w-4 h-4 mr-2" />
+                                        )}
+                                        Save Social Skills
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
             )}
 
             {/* Grading Key */}
