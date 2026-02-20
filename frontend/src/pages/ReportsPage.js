@@ -379,12 +379,28 @@ const MHPSReportCard = ({ data, classInfo, term, academicYear, totalStudents, si
             {/* Signatures */}
             <div className="grid grid-cols-2 gap-8 mt-6 pt-4">
                 <div className="text-center">
-                    <div className="border-b border-black h-8 mb-1"></div>
+                    {signatures?.teacher_signature ? (
+                        <img
+                            src={`${process.env.REACT_APP_BACKEND_URL}${signatures.teacher_signature}`}
+                            alt="Teacher Signature"
+                            className="h-10 mx-auto mb-1 object-contain"
+                        />
+                    ) : (
+                        <div className="border-b border-black h-8 mb-1"></div>
+                    )}
                     <p className="text-sm font-medium">Class Teacher's Signature</p>
                     <p className="text-xs text-gray-500">Date: _______________</p>
                 </div>
                 <div className="text-center">
-                    <div className="border-b border-black h-8 mb-1"></div>
+                    {signatures?.principal_signature ? (
+                        <img
+                            src={`${process.env.REACT_APP_BACKEND_URL}${signatures.principal_signature}`}
+                            alt="Principal Signature"
+                            className="h-10 mx-auto mb-1 object-contain"
+                        />
+                    ) : (
+                        <div className="border-b border-black h-8 mb-1"></div>
+                    )}
                     <p className="text-sm font-medium">Principal's Signature</p>
                     <p className="text-xs text-gray-500">Date: _______________</p>
                 </div>
