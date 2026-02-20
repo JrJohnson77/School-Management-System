@@ -12,7 +12,8 @@ import {
     Loader2,
     Printer,
     Users,
-    BookOpen
+    BookOpen,
+    Download
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
