@@ -129,7 +129,7 @@ const calculateWeightedGrade = (assessments) => {
 };
 
 // ==================== MHPS REPORT CARD TEMPLATE ====================
-const MHPSReportCard = ({ data, classInfo, term, academicYear, totalStudents }) => {
+const MHPSReportCard = ({ data, classInfo, term, academicYear, totalStudents, signatures }) => {
     const { student, grades, attendance_summary, position, social_skills } = data;
     
     // Process grades
