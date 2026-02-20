@@ -413,34 +413,33 @@ const ClassListReport = ({ students, classInfo }) => {
 };
 
 // ==================== GRADEBOOK REPORT ====================
-const GradebookReport = ({ students, grades, classInfo, term, academicYear }) => {
-    // Flatten grades from gradebook entries
+const GradebookReport = ({ students, grades, classInfo, term, academicYear, template }) => {
+    const tpl = template || {};
+    const subjects = (tpl.subjects || []).map(s => s.name);
+    const coreSubjects = (tpl.subjects || []).filter(s => s.is_core).map(s => s.name);
+    const gradeScale = tpl.grade_scale || [];
+
     const getStudentGrades = (studentId) => {
         const entry = grades.find(g => g.student_id === studentId);
         if (!entry || !entry.subjects) return {};
-        
         const gradeMap = {};
-        entry.subjects.forEach(s => {
-            gradeMap[s.subject] = s;
-        });
+        entry.subjects.forEach(s => { gradeMap[s.subject] = s; });
         return gradeMap;
     };
 
-    // Calculate weighted average for a student
     const calculateAverage = (studentId) => {
         const studentGradesMap = getStudentGrades(studentId);
-        const coreSubjectGrades = CORE_SUBJECTS.map(subj => studentGradesMap[subj]).filter(Boolean);
-        
-        if (coreSubjectGrades.length === 0) return '-';
-        
+        const coreGrades = coreSubjects.map(subj => studentGradesMap[subj]).filter(Boolean);
+        if (coreGrades.length === 0) return '-';
         let totalAvg = 0;
-        coreSubjectGrades.forEach(g => {
-            const midTerm = g.midTerm || 0;
-            const endOfTerm = g.endOfTerm || 0;
-            totalAvg += (midTerm + endOfTerm) / 2;
+        coreGrades.forEach(g => {
+            if (tpl.use_weighted_grading) {
+                totalAvg += (((g.midTerm || 0) + (g.endOfTerm || 0)) / 2);
+            } else {
+                totalAvg += (g.score || 0);
+            }
         });
-        
-        return (totalAvg / coreSubjectGrades.length).toFixed(1);
+        return (totalAvg / coreGrades.length).toFixed(1);
     };
 
     return (
@@ -457,12 +456,14 @@ const GradebookReport = ({ students, grades, classInfo, term, academicYear }) =>
                         <tr className="bg-gray-100">
                             <th className="border border-gray-300 p-1 text-left w-8">#</th>
                             <th className="border border-gray-300 p-1 text-left min-w-[150px]">Student Name</th>
-                            {MHPS_SUBJECTS.map(subject => (
+                            {subjects.map(subject => (
                                 <th key={subject} className="border border-gray-300 p-1 text-center" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', height: '80px' }}>
                                     {subject}
                                 </th>
                             ))}
-                            <th className="border border-gray-300 p-1 text-center font-bold bg-blue-100">Core Avg</th>
+                            {coreSubjects.length > 0 && (
+                                <th className="border border-gray-300 p-1 text-center font-bold bg-blue-100">Core Avg</th>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
@@ -471,10 +472,8 @@ const GradebookReport = ({ students, grades, classInfo, term, academicYear }) =>
                             return (
                                 <tr key={student.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                                     <td className="border border-gray-300 p-1">{index + 1}</td>
-                                    <td className="border border-gray-300 p-1 font-medium">
-                                        {student.first_name} {student.last_name}
-                                    </td>
-                                    {MHPS_SUBJECTS.map(subject => {
+                                    <td className="border border-gray-300 p-1 font-medium">{student.first_name} {student.last_name}</td>
+                                    {subjects.map(subject => {
                                         const subjData = studentGrades[subject];
                                         const score = subjData?.score || '-';
                                         return (
@@ -483,9 +482,11 @@ const GradebookReport = ({ students, grades, classInfo, term, academicYear }) =>
                                             </td>
                                         );
                                     })}
-                                    <td className="border border-gray-300 p-1 text-center font-bold bg-blue-50">
-                                        {calculateAverage(student.id)}
-                                    </td>
+                                    {coreSubjects.length > 0 && (
+                                        <td className="border border-gray-300 p-1 text-center font-bold bg-blue-50">
+                                            {calculateAverage(student.id)}
+                                        </td>
+                                    )}
                                 </tr>
                             );
                         })}
@@ -497,8 +498,8 @@ const GradebookReport = ({ students, grades, classInfo, term, academicYear }) =>
                 <div>
                     <h4 className="font-bold mb-2">Grading Key:</h4>
                     <div className="grid grid-cols-4 gap-1 text-xs">
-                        {MHPS_GRADE_SCALE.map(g => (
-                            <span key={g.grade}>{g.grade} ({g.min}-{g.max === 100 ? '100' : g.max})</span>
+                        {gradeScale.map(g => (
+                            <span key={g.grade}>{g.grade} ({g.min}-{g.max})</span>
                         ))}
                     </div>
                 </div>
