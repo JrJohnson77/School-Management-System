@@ -600,67 +600,42 @@ export default function GradebookPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Work and Personal Ethics */}
-                                    <div className="space-y-4">
-                                        <h4 className="font-bold flex items-center gap-2">
-                                            <Users className="w-4 h-4" />
-                                            Work and Personal Ethics
-                                        </h4>
-                                        {SOCIAL_SKILLS.workEthics.map(skill => (
-                                            <div key={skill} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
-                                                <Label className="text-sm">{skill}</Label>
-                                                <Select
-                                                    value={socialSkills[skill] || ''}
-                                                    onValueChange={(value) => handleSkillChange(skill, value)}
-                                                >
-                                                    <SelectTrigger className="w-40 rounded-xl h-8">
-                                                        <SelectValue placeholder="Select..." />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {SKILL_RATINGS.map(rating => (
-                                                            <SelectItem key={rating} value={rating}>{rating}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {/* Respect */}
-                                    <div className="space-y-4">
-                                        <h4 className="font-bold flex items-center gap-2">
-                                            <Heart className="w-4 h-4" />
-                                            Respect
-                                        </h4>
-                                        {SOCIAL_SKILLS.respect.map(skill => (
-                                            <div key={skill} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
-                                                <Label className="text-sm">{skill}</Label>
-                                                <Select
-                                                    value={socialSkills[skill] || ''}
-                                                    onValueChange={(value) => handleSkillChange(skill, value)}
-                                                >
-                                                    <SelectTrigger className="w-40 rounded-xl h-8">
-                                                        <SelectValue placeholder="Select..." />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {SKILL_RATINGS.map(rating => (
-                                                            <SelectItem key={rating} value={rating}>{rating}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                        ))}
-
-                                        <div className="mt-6 p-4 rounded-xl bg-primary/5 text-sm">
+                                    {tplSocialCategories.map((cat) => (
+                                        <div key={cat.category_name} className="space-y-4">
+                                            <h4 className="font-bold flex items-center gap-2">
+                                                <Heart className="w-4 h-4" />
+                                                {cat.category_name}
+                                            </h4>
+                                            {cat.skills.map(skill => (
+                                                <div key={skill} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+                                                    <Label className="text-sm">{skill}</Label>
+                                                    <Select
+                                                        value={socialSkills[skill] || ''}
+                                                        onValueChange={(value) => handleSkillChange(skill, value)}
+                                                    >
+                                                        <SelectTrigger className="w-40 rounded-xl h-8">
+                                                            <SelectValue placeholder="Select..." />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {tplSkillRatings.map(rating => (
+                                                                <SelectItem key={rating} value={rating}>{rating}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))}
+                                    {tplSocialCategories.length > 0 && (
+                                        <div className="mt-2 p-4 rounded-xl bg-primary/5 text-sm">
                                             <h5 className="font-bold mb-2">Rating Key:</h5>
                                             <ul className="space-y-1 text-muted-foreground">
-                                                <li><strong>Excellent</strong> - Consistently demonstrates exemplary behavior</li>
-                                                <li><strong>Good</strong> - Regularly demonstrates positive behavior</li>
-                                                <li><strong>Satisfactory</strong> - Generally meets expectations</li>
-                                                <li><strong>Needs Improvement</strong> - Requires support and guidance</li>
+                                                {tplSkillRatings.map(r => (
+                                                    <li key={r}><strong>{r}</strong></li>
+                                                ))}
                                             </ul>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
 
                                 <div className="flex justify-end mt-6">
