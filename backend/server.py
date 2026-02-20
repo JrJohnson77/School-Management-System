@@ -1318,6 +1318,246 @@ async def get_upload(filename: str):
     
     return FileResponse(file_path, media_type=content_type)
 
+# ==================== SOCIAL SKILLS ====================
+
+@api_router.post("/social-skills")
+async def save_social_skills(entry: SocialSkillsEntry, current_user: dict = Depends(require_permission("manage_grades"))):
+    """Save social skills assessment for a student"""
+    now = datetime.now(timezone.utc).isoformat()
+    
+    existing = await db.social_skills.find_one({
+        "student_id": entry.student_id,
+        "term": entry.term,
+        "academic_year": entry.academic_year,
+        "school_code": current_user["school_code"]
+    })
+    
+    if existing:
+        await db.social_skills.update_one(
+            {"_id": existing["_id"]},
+            {"$set": {"skills": entry.skills, "updated_at": now}}
+        )
+        return {"message": "Social skills updated", "id": existing["id"]}
+    else:
+        doc = {
+            "id": str(uuid.uuid4()),
+            "student_id": entry.student_id,
+            "term": entry.term,
+            "academic_year": entry.academic_year,
+            "school_code": current_user["school_code"],
+            "skills": entry.skills,
+            "created_at": now,
+            "updated_at": now
+        }
+        await db.social_skills.insert_one(doc)
+        return {"message": "Social skills saved", "id": doc["id"]}
+
+@api_router.get("/social-skills/{student_id}")
+async def get_social_skills(
+    student_id: str,
+    term: str,
+    academic_year: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get social skills for a student"""
+    entry = await db.social_skills.find_one({
+        "student_id": student_id,
+        "term": term,
+        "academic_year": academic_year,
+        "school_code": current_user["school_code"]
+    }, {"_id": 0})
+    
+    return entry or {"skills": {}}
+
+# ==================== SIGNATURES ====================
+
+@api_router.post("/signatures/upload")
+async def upload_signature(
+    signature_type: str,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(require_roles([UserRole.SUPERUSER, UserRole.ADMIN]))
+):
+    """Upload teacher or principal signature"""
+    if signature_type not in ["teacher", "principal"]:
+        raise HTTPException(status_code=400, detail="Invalid signature type")
+    
+    ext = Path(file.filename).suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Invalid file type")
+    
+    content = await file.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File too large")
+    
+    file_id = str(uuid.uuid4())
+    filename = f"signature_{signature_type}_{file_id}{ext}"
+    file_path = UPLOAD_DIR / filename
+    
+    with open(file_path, "wb") as f:
+        f.write(content)
+    
+    signature_url = f"/api/uploads/{filename}"
+    
+    # Update signatures collection
+    await db.signatures.update_one(
+        {"school_code": current_user["school_code"]},
+        {"$set": {f"{signature_type}_signature": signature_url, "updated_at": datetime.now(timezone.utc).isoformat()}},
+        upsert=True
+    )
+    
+    return {"signature_url": signature_url, "type": signature_type}
+
+@api_router.get("/signatures")
+async def get_signatures(current_user: dict = Depends(get_current_user)):
+    """Get school signatures"""
+    signatures = await db.signatures.find_one(
+        {"school_code": current_user["school_code"]},
+        {"_id": 0}
+    )
+    return signatures or {}
+
+# ==================== CSV IMPORT ====================
+
+@api_router.post("/import/students")
+async def import_students_csv(
+    class_id: str,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(require_roles([UserRole.SUPERUSER, UserRole.ADMIN]))
+):
+    """Import students from CSV file"""
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="File must be a CSV")
+    
+    content = await file.read()
+    decoded = content.decode('utf-8')
+    reader = csv.DictReader(io.StringIO(decoded))
+    
+    imported = 0
+    errors = []
+    now = datetime.now(timezone.utc).isoformat()
+    
+    for row_num, row in enumerate(reader, start=2):
+        try:
+            student_doc = {
+                "id": str(uuid.uuid4()),
+                "student_id": row.get("student_id", ""),
+                "first_name": row.get("first_name", ""),
+                "middle_name": row.get("middle_name", ""),
+                "last_name": row.get("last_name", ""),
+                "date_of_birth": row.get("date_of_birth", ""),
+                "gender": row.get("gender", ""),
+                "address": row.get("address", ""),
+                "house": row.get("house", ""),
+                "emergency_contact": row.get("emergency_contact", ""),
+                "class_id": class_id,
+                "school_code": current_user["school_code"],
+                "created_at": now,
+                "updated_at": now
+            }
+            
+            if not student_doc["first_name"] or not student_doc["last_name"]:
+                errors.append(f"Row {row_num}: Missing first_name or last_name")
+                continue
+            
+            await db.students.insert_one(student_doc)
+            imported += 1
+        except Exception as e:
+            errors.append(f"Row {row_num}: {str(e)}")
+    
+    return {
+        "imported": imported,
+        "errors": errors,
+        "message": f"Successfully imported {imported} students"
+    }
+
+@api_router.post("/import/teachers")
+async def import_teachers_csv(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(require_roles([UserRole.SUPERUSER, UserRole.ADMIN]))
+):
+    """Import teachers from CSV file"""
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="File must be a CSV")
+    
+    content = await file.read()
+    decoded = content.decode('utf-8')
+    reader = csv.DictReader(io.StringIO(decoded))
+    
+    imported = 0
+    errors = []
+    now = datetime.now(timezone.utc).isoformat()
+    default_permissions = ["manage_students", "manage_classes", "manage_attendance", "manage_grades", "view_reports", "generate_reports"]
+    
+    for row_num, row in enumerate(reader, start=2):
+        try:
+            username = row.get("username", "")
+            name = row.get("name", "")
+            password = row.get("password", "Teacher@123")
+            
+            if not username or not name:
+                errors.append(f"Row {row_num}: Missing username or name")
+                continue
+            
+            # Check if username exists
+            existing = await db.users.find_one({
+                "username": username,
+                "school_code": current_user["school_code"]
+            })
+            if existing:
+                errors.append(f"Row {row_num}: Username '{username}' already exists")
+                continue
+            
+            user_doc = {
+                "id": str(uuid.uuid4()),
+                "username": username,
+                "name": name,
+                "role": UserRole.TEACHER,
+                "school_code": current_user["school_code"],
+                "permissions": default_permissions,
+                "photo_url": "",
+                "password_hash": hash_password(password),
+                "created_at": now
+            }
+            
+            await db.users.insert_one(user_doc)
+            imported += 1
+        except Exception as e:
+            errors.append(f"Row {row_num}: {str(e)}")
+    
+    return {
+        "imported": imported,
+        "errors": errors,
+        "message": f"Successfully imported {imported} teachers"
+    }
+
+@api_router.get("/export/students-template")
+async def get_students_csv_template():
+    """Get CSV template for student import"""
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["student_id", "first_name", "middle_name", "last_name", "date_of_birth", "gender", "address", "house", "emergency_contact"])
+    writer.writerow(["STU001", "John", "Michael", "Doe", "2015-05-15", "Male", "123 Main St", "Red House", "555-1234"])
+    
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=students_template.csv"}
+    )
+
+@api_router.get("/export/teachers-template")
+async def get_teachers_csv_template():
+    """Get CSV template for teacher import"""
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["username", "name", "password"])
+    writer.writerow(["john.smith@school.edu", "John Smith", "Teacher@123"])
+    
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=teachers_template.csv"}
+    )
+
 # ==================== DASHBOARD STATS ====================
 
 @api_router.get("/stats/dashboard")
