@@ -1,106 +1,72 @@
 # Student Management System - PRD
 
 ## Original Problem Statement
-Build a multi-tenant student management system for primary schools with:
-- Student registration with first/middle/last name, DOB (system calculates age), address, house, class
-- Teacher can add students and enter grades
-- Only admin can create users
-- Gradebook with multiple subjects and grading scheme (A+ to U)
-- Generate final report cards for entire class
-- Multi-tenancy: Support multiple schools with data segregation by school_code
-- Superuser: Administrative role with access to all schools
-- Report Template Designer: Superuser can design and edit custom report templates per school
+Build a multi-tenant student management system for primary schools with student/class management, attendance, gradebook, report cards, and a WYSIWYG report template designer for superusers.
 
 ## Core Requirements
-- [x] JWT Authentication
-- [x] Multi-tenant architecture with school_code segregation
-- [x] Superuser can login to ANY school context
-- [x] Role-based access control
-- [x] Student CRUD with auto-calculated age, photo uploads
-- [x] Class/Grade management
+- [x] JWT Authentication & Multi-tenant architecture
+- [x] Superuser, Admin, Teacher, Parent roles
+- [x] Student CRUD with auto-age, photo uploads
+- [x] Class/Grade management with teacher permissions
 - [x] Attendance tracking
-- [x] Gradebook with weighted and non-weighted grading
+- [x] Gradebook with weighted/non-weighted grading
 - [x] Report card generation with dynamic templates
-- [x] **Report Template Designer (Superuser Only)** - NEW
+- [x] **WYSIWYG Report Template Designer** - Full visual editor with drag-and-drop
 - [x] Social skills assessment
 - [x] CSV bulk import (students & teachers)
-- [x] Signature management (teacher/principal)
+- [x] Signature management for report cards
 - [x] PDF export for report cards
-- [x] Grade display bug fix (decimal rounding)
 
-## What's Been Implemented
-
-### Report Template Designer (December 2025) - NEW
-- Superuser-only page accessible from Schools page "Template" button
-- Each school gets its own customizable report template
-- Auto-creates default template when school is created or first accessed
-- Configurable sections:
-  - School Branding (name, motto, logo, header/sub-header, paper size)
-  - Subjects (add/remove, mark as core for ranking averages)
-  - Grade Scale (customizable ranges, labels, descriptions)
-  - Assessment Weights (toggle weighted grading, configure component percentages)
-  - Report Sections (toggle social skills, attendance, comments, signatures, etc.)
-  - Social Skills Categories (custom categories with skills, custom ratings)
-  - Achievement Standards (custom bands with score ranges)
-- Template drives all report card rendering and gradebook entry dynamically
-- Replaced hardcoded MHPS constants with dynamic template data
-
-### Previous Features (all working)
-- Multi-tenancy architecture with school-code-based data segregation
-- Superuser role with full administrative access across schools
-- Student management with photo uploads and auto-age calculation
-- User management with password reset
-- Class management with teacher permissions
-- Attendance tracking
-- Gradebook with weighted assessments
-- MHPS-style report card generation
-- Import/Export page (CSV import, signature management)
-- PDF export for report cards
-- Social skills assessment
-
-## Credentials
-- **Superuser:** school_code=JTECH, username=jtech.innovations@outlook.com, password=Xekleidoma@1
-- **Test Admin (WPS):** school_code=WPS, username=wps.admin@school.com, password=Password@123
+## WYSIWYG Report Template Designer (December 2025)
+Full visual editor replacing the structured form. Features:
+- **Split-screen layout**: Block editor (left) + Live preview (right)
+- **Drag-and-drop**: Reorder any section via @dnd-kit
+- **Block types**: School Header, Student Info, Term Info, Grades Table, Grade Key, Weight Key, Achievement Standards, Social Skills, Comments, Signatures, Footer
+- **Custom blocks**: Text, Image, Spacer — add/delete freely
+- **Theme presets**: Classic Blue, Emerald Green, Royal Purple, Professional Gray, Warm Burgundy
+- **Per-block styling**: Background color, text color, font family overrides
+- **Global theme controls**: Header BG/text colors, accent, font family
+- **Paper size**: Legal, Letter, A4
+- **Backward compatible**: Flat fields auto-derived from blocks for report rendering
+- **Auto-migration**: Old templates converted to blocks format on load
 
 ## Architecture
 ```
 /app/
 ├── backend/
-│   ├── server.py              # FastAPI app, all API logic
+│   ├── server.py
 │   ├── requirements.txt
-│   ├── tests/
-│   │   └── test_report_templates.py
-│   └── .env
+│   └── tests/
 └── frontend/
-    ├── src/
-    │   ├── context/AuthContext.js
-    │   ├── components/Layout.js
-    │   ├── pages/
-    │   │   ├── LoginPage.js
-    │   │   ├── SchoolsPage.js          # Template button per school
-    │   │   ├── ReportTemplateDesigner.js # NEW - Template editor
-    │   │   ├── StudentsPage.js
-    │   │   ├── ClassesPage.js
-    │   │   ├── AttendancePage.js
-    │   │   ├── GradebookPage.js        # Dynamic template-driven
-    │   │   ├── ReportsPage.js          # Dynamic template-driven
-    │   │   ├── ImportExportPage.js
-    │   │   └── UsersPage.js
-    │   ├── App.js
-    │   └── index.css
-    └── .env
+    └── src/
+        ├── pages/
+        │   ├── ReportTemplateDesigner.js  # WYSIWYG builder
+        │   ├── ReportsPage.js             # Dynamic template-driven
+        │   ├── GradebookPage.js           # Dynamic template-driven
+        │   ├── ImportExportPage.js
+        │   ├── SchoolsPage.js             # Template button per school
+        │   └── ... (Login, Students, Classes, Attendance, Users)
+        └── components/
 ```
 
 ## Key DB Collections
-- schools, users, students, classes, attendance, gradebook
-- report_templates (NEW), social_skills, signatures
+schools, users, students, classes, attendance, gradebook, report_templates, social_skills, signatures
+
+## Credentials
+- **Superuser:** JTECH / jtech.innovations@outlook.com / Xekleidoma@1
+- **Test Admin (WPS):** WPS / wps.admin@school.com / Password@123
 
 ## Prioritized Backlog
-### P1 (Important)
+### P1
 - [ ] Email report cards to parents
 - [ ] Attendance analytics dashboard
 
-### P2 (Nice to have)
+### P2
 - [ ] Dark mode
 - [ ] Parent portal enhancements
 - [ ] Academic calendar
+
+## Tech Stack
+Frontend: React 19, Tailwind, Shadcn UI, @dnd-kit, html2canvas, jsPDF
+Backend: FastAPI, Motor (MongoDB), PyJWT, bcrypt, fpdf2
+Database: MongoDB
