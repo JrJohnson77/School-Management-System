@@ -1483,6 +1483,25 @@ async def upload_photo(
     
     return {"photo_url": photo_url, "filename": filename}
 
+@api_router.post("/upload/template-background")
+async def upload_template_background(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(require_superuser())
+):
+    """Upload a background image for report template (superuser only)"""
+    ext = Path(file.filename).suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail=f"Invalid file type. Allowed: {', '.join(ALLOWED_EXTENSIONS)}")
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large. Maximum size is 10MB")
+    file_id = str(uuid.uuid4())
+    filename = f"bg_{file_id}{ext}"
+    file_path = UPLOAD_DIR / filename
+    with open(file_path, "wb") as f:
+        f.write(content)
+    return {"background_url": f"/api/uploads/{filename}", "filename": filename}
+
 @api_router.get("/uploads/{filename}")
 async def get_upload(filename: str):
     """Serve uploaded files"""
