@@ -433,6 +433,104 @@ export default function ReportTemplateDesigner() {
         setSelectedId(newId);
     };
 
+    // ---- Snap to Grid ----
+    const snapToGrid = useCallback((value) => {
+        if (!snapEnabled) return value;
+        return Math.round(value / GRID_SIZE) * GRID_SIZE;
+    }, [snapEnabled]);
+
+    // ---- Calculate Alignment Guides ----
+    const calculateAlignmentGuides = useCallback((draggedId, newX, newY, width, height) => {
+        if (!snapEnabled) return { x: newX, y: newY, guides: { horizontal: [], vertical: [] } };
+
+        const horizontal = [];
+        const vertical = [];
+        let snappedX = newX;
+        let snappedY = newY;
+
+        // Calculate edges and center of dragged element
+        const draggedLeft = newX;
+        const draggedRight = newX + width;
+        const draggedCenterX = newX + width / 2;
+        const draggedTop = newY;
+        const draggedBottom = newY + height;
+        const draggedCenterY = newY + height / 2;
+
+        // Check alignment with other elements
+        elements.forEach(el => {
+            if (el.id === draggedId) return;
+
+            const elLeft = el.x;
+            const elRight = el.x + el.width;
+            const elCenterX = el.x + el.width / 2;
+            const elTop = el.y;
+            const elBottom = el.y + el.height;
+            const elCenterY = el.y + el.height / 2;
+
+            // Vertical alignments (X axis)
+            // Left to Left
+            if (Math.abs(draggedLeft - elLeft) < SNAP_THRESHOLD) {
+                snappedX = elLeft;
+                vertical.push({ x: elLeft, y1: Math.min(draggedTop, elTop), y2: Math.max(draggedBottom, elBottom) });
+            }
+            // Right to Right
+            if (Math.abs(draggedRight - elRight) < SNAP_THRESHOLD) {
+                snappedX = elRight - width;
+                vertical.push({ x: elRight, y1: Math.min(draggedTop, elTop), y2: Math.max(draggedBottom, elBottom) });
+            }
+            // Left to Right
+            if (Math.abs(draggedLeft - elRight) < SNAP_THRESHOLD) {
+                snappedX = elRight;
+                vertical.push({ x: elRight, y1: Math.min(draggedTop, elTop), y2: Math.max(draggedBottom, elBottom) });
+            }
+            // Right to Left
+            if (Math.abs(draggedRight - elLeft) < SNAP_THRESHOLD) {
+                snappedX = elLeft - width;
+                vertical.push({ x: elLeft, y1: Math.min(draggedTop, elTop), y2: Math.max(draggedBottom, elBottom) });
+            }
+            // Center to Center (X)
+            if (Math.abs(draggedCenterX - elCenterX) < SNAP_THRESHOLD) {
+                snappedX = elCenterX - width / 2;
+                vertical.push({ x: elCenterX, y1: Math.min(draggedTop, elTop), y2: Math.max(draggedBottom, elBottom) });
+            }
+
+            // Horizontal alignments (Y axis)
+            // Top to Top
+            if (Math.abs(draggedTop - elTop) < SNAP_THRESHOLD) {
+                snappedY = elTop;
+                horizontal.push({ y: elTop, x1: Math.min(draggedLeft, elLeft), x2: Math.max(draggedRight, elRight) });
+            }
+            // Bottom to Bottom
+            if (Math.abs(draggedBottom - elBottom) < SNAP_THRESHOLD) {
+                snappedY = elBottom - height;
+                horizontal.push({ y: elBottom, x1: Math.min(draggedLeft, elLeft), x2: Math.max(draggedRight, elRight) });
+            }
+            // Top to Bottom
+            if (Math.abs(draggedTop - elBottom) < SNAP_THRESHOLD) {
+                snappedY = elBottom;
+                horizontal.push({ y: elBottom, x1: Math.min(draggedLeft, elLeft), x2: Math.max(draggedRight, elRight) });
+            }
+            // Bottom to Top
+            if (Math.abs(draggedBottom - elTop) < SNAP_THRESHOLD) {
+                snappedY = elTop - height;
+                horizontal.push({ y: elTop, x1: Math.min(draggedLeft, elLeft), x2: Math.max(draggedRight, elRight) });
+            }
+            // Center to Center (Y)
+            if (Math.abs(draggedCenterY - elCenterY) < SNAP_THRESHOLD) {
+                snappedY = elCenterY - height / 2;
+                horizontal.push({ y: elCenterY, x1: Math.min(draggedLeft, elLeft), x2: Math.max(draggedRight, elRight) });
+            }
+        });
+
+        // If no alignment guides found, snap to grid
+        if (horizontal.length === 0 && vertical.length === 0) {
+            snappedX = snapToGrid(newX);
+            snappedY = snapToGrid(newY);
+        }
+
+        return { x: snappedX, y: snappedY, guides: { horizontal, vertical } };
+    }, [elements, snapEnabled, snapToGrid]);
+
     // ---- Drag logic ----
     const handleCanvasPointerDown = (e) => {
         if (e.target === canvasRef.current || e.target.dataset.canvas) {
