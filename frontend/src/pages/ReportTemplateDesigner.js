@@ -683,35 +683,48 @@ export default function ReportTemplateDesigner() {
                         backgroundImage: backgroundUrl ? `url(${backgroundUrl.startsWith('http') ? backgroundUrl : `${process.env.REACT_APP_BACKEND_URL}${backgroundUrl}`})` : 'none',
                         backgroundSize: 'cover', backgroundPosition: 'center',
                     }}>
-                        {/* Grid overlay */}
-                        <div style={{position:'absolute',inset:0,backgroundImage:'linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px)',backgroundSize:'20px 20px',pointerEvents:'none',zIndex:0}} />
-
-                        {/* Upload Template Overlay - shown when no background and no elements */}
-                        {!backgroundUrl && elements.length === 0 && (
-                            <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',zIndex:50}} data-testid="upload-template-overlay">
-                                <div style={{textAlign:'center',padding:40,backgroundColor:'rgba(255,255,255,0.95)',borderRadius:16,border:'2px dashed #3b82f6',maxWidth:420}}>
-                                    <Upload style={{width:48,height:48,color:'#3b82f6',margin:'0 auto 16px'}} />
-                                    <h3 style={{fontSize:18,fontWeight:'bold',marginBottom:8,color:'#1e293b'}}>Design Your Report Card</h3>
-                                    <p style={{fontSize:13,color:'#64748b',marginBottom:20,lineHeight:1.5}}>Upload your existing report card template as a background image, then drag data fields on top. Or start from scratch.</p>
-                                    <div style={{display:'flex',gap:12,justifyContent:'center'}}>
-                                        <button onClick={handleBgUpload} disabled={uploading} data-testid="overlay-upload-btn" style={{padding:'10px 24px',backgroundColor:'#3b82f6',color:'#fff',borderRadius:999,border:'none',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
-                                            <Upload style={{width:16,height:16}} />Upload Template Image
-                                        </button>
-                                        <button onClick={()=>setElements(buildDefaultElements(rawTemplate?.school_name||schoolCode))} data-testid="start-scratch-btn" style={{padding:'10px 24px',backgroundColor:'#fff',color:'#374151',borderRadius:999,border:'1px solid #d1d5db',fontSize:14,fontWeight:600,cursor:'pointer'}}>
-                                            Start from Scratch
-                                        </button>
-                                    </div>
-                                    <p style={{fontSize:11,color:'#94a3b8',marginTop:16}}>Supported: JPG, PNG, WebP (max 10MB)</p>
-                                </div>
-                            </div>
+                        {/* Visible Grid overlay */}
+                        {showGrid && (
+                            <div style={{
+                                position:'absolute',
+                                inset:0,
+                                backgroundImage:`
+                                    linear-gradient(rgba(59, 130, 246, 0.15) 1px, transparent 1px),
+                                    linear-gradient(90deg, rgba(59, 130, 246, 0.15) 1px, transparent 1px),
+                                    linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px),
+                                    linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px)
+                                `,
+                                backgroundSize:`${GRID_SIZE * 10}px ${GRID_SIZE * 10}px, ${GRID_SIZE * 10}px ${GRID_SIZE * 10}px, ${GRID_SIZE}px ${GRID_SIZE}px, ${GRID_SIZE}px ${GRID_SIZE}px`,
+                                pointerEvents:'none',
+                                zIndex:0
+                            }} data-testid="canvas-grid" />
                         )}
 
-                        {/* Upload prompt - subtle, when background exists but no data fields */}
-                        {backgroundUrl && elements.length === 0 && (
-                            <div style={{position:'absolute',top:16,left:'50%',transform:'translateX(-50%)',zIndex:50,backgroundColor:'rgba(59,130,246,0.9)',color:'#fff',padding:'8px 20px',borderRadius:999,fontSize:12,fontWeight:500}}>
-                                Template uploaded. Now add data fields from the left toolbar.
-                            </div>
-                        )}
+                        {/* Alignment Guide Lines */}
+                        {alignmentGuides.vertical.map((guide, i) => (
+                            <div key={`v-${i}`} data-testid={`alignment-guide-vertical-${i}`} style={{
+                                position: 'absolute',
+                                left: guide.x,
+                                top: guide.y1,
+                                width: 1,
+                                height: guide.y2 - guide.y1,
+                                backgroundColor: '#ef4444',
+                                zIndex: 1000,
+                                pointerEvents: 'none',
+                            }} />
+                        ))}
+                        {alignmentGuides.horizontal.map((guide, i) => (
+                            <div key={`h-${i}`} data-testid={`alignment-guide-horizontal-${i}`} style={{
+                                position: 'absolute',
+                                left: guide.x1,
+                                top: guide.y,
+                                width: guide.x2 - guide.x1,
+                                height: 1,
+                                backgroundColor: '#ef4444',
+                                zIndex: 1000,
+                                pointerEvents: 'none',
+                            }} />
+                        ))}
 
                         {/* Elements */}
                         {elements.map(el => (
