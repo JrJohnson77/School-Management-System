@@ -209,7 +209,7 @@ const DynamicReportCard = ({ data, classInfo, term, academicYear, totalStudents,
                             return (
                                 <tr key={subject} className={isCore ? 'bg-blue-50' : (idx % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
                                     <td className="border border-gray-400 p-1 font-medium">
-                                        {subject}{isCore && <span className="text-blue-600">*</span>}
+                                        {subject}{isCore && <span style={{ color: headerBg }}>*</span>}
                                     </td>
                                     {useWeighted ? (
                                         <>
@@ -290,7 +290,7 @@ const DynamicReportCard = ({ data, classInfo, term, academicYear, totalStudents,
             {/* Social Skills */}
             {sections.social_skills !== false && socialCategories.length > 0 && (
                 <div className="mb-4">
-                    <h3 className="text-sm font-bold bg-blue-800 text-white p-1 mb-0">PROGRESS IN SOCIAL SKILLS AND ATTITUDES</h3>
+                    <h3 className="text-sm font-bold p-1 mb-0" style={{ backgroundColor: headerBg, color: headerText }}>PROGRESS IN SOCIAL SKILLS AND ATTITUDES</h3>
                     <div className={`grid gap-4 text-xs border border-gray-300 p-2`} style={{ gridTemplateColumns: `repeat(${Math.min(socialCategories.length, 2)}, 1fr)` }}>
                         {socialCategories.map(cat => (
                             <div key={cat.category_name}>
@@ -325,7 +325,7 @@ const DynamicReportCard = ({ data, classInfo, term, academicYear, totalStudents,
             {/* Teacher Comments */}
             {sections.teacher_comments !== false && (
                 <div className="mb-4">
-                    <h3 className="text-sm font-bold bg-blue-800 text-white p-1 mb-0">CLASS TEACHER'S COMMENTS</h3>
+                    <h3 className="text-sm font-bold p-1 mb-0" style={{ backgroundColor: headerBg, color: headerText }}>CLASS TEACHER'S COMMENTS</h3>
                     <div className="border border-gray-300 p-2 min-h-16 text-sm">
                         {student.teacher_comment || 'No comments recorded.'}
                     </div>
