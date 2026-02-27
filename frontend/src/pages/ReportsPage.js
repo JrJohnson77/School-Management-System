@@ -1016,7 +1016,7 @@ export default function ReportsPage() {
                     {reportCards.length > 0 ? (
                         <div ref={printRef} className="print-content space-y-8">
                             {reportCards.map((data) => (
-                                <DynamicReportCard
+                                <ReportCardRenderer
                                     key={data.student.id}
                                     data={{...data, total_students: totalStudentsInClass}}
                                     classInfo={selectedClassInfo}
