@@ -337,6 +337,10 @@ class ReportTemplateCreate(BaseModel):
     # WYSIWYG builder fields
     blocks: Optional[List[Dict]] = None
     theme: Optional[Dict] = None
+    # Canvas designer fields
+    design_mode: Optional[str] = "canvas"
+    canvas_elements: Optional[List[Dict]] = None
+    background_url: Optional[str] = None
 
 DEFAULT_SUBJECTS = [
     {"name": "English Language", "is_core": True},
