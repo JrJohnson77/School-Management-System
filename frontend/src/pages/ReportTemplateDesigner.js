@@ -560,7 +560,16 @@ export default function ReportTemplateDesigner() {
             if (dragging) {
                 const dx = (e.clientX - dragging.startX) / zoom;
                 const dy = (e.clientY - dragging.startY) / zoom;
-                updateElement(dragging.id, { x: Math.max(0, Math.round(dragging.origX + dx)), y: Math.max(0, Math.round(dragging.origY + dy)) });
+                const newX = Math.max(0, dragging.origX + dx);
+                const newY = Math.max(0, dragging.origY + dy);
+                const el = elements.find(el => el.id === dragging.id);
+                if (el) {
+                    const { x: snappedX, y: snappedY, guides } = calculateAlignmentGuides(
+                        dragging.id, newX, newY, el.width, el.height
+                    );
+                    setAlignmentGuides(guides);
+                    updateElement(dragging.id, { x: Math.round(snappedX), y: Math.round(snappedY) });
+                }
             }
             if (resizing) {
                 const dx = (e.clientX - resizing.startX) / zoom;
@@ -571,16 +580,27 @@ export default function ReportTemplateDesigner() {
                 if (c.includes('b')) newH = Math.max(10, Math.round(resizing.origH + dy));
                 if (c.includes('l')) { newX = Math.max(0, Math.round(resizing.origX + dx)); newW = Math.max(20, Math.round(resizing.origW - dx)); }
                 if (c.includes('t')) { newY = Math.max(0, Math.round(resizing.origY + dy)); newH = Math.max(10, Math.round(resizing.origH - dy)); }
-                updateElement(resizing.id, { x: newX, y: newY, width: newW, height: newH });
+                // Snap dimensions to grid
+                if (snapEnabled) {
+                    newW = Math.round(newW / GRID_SIZE) * GRID_SIZE;
+                    newH = Math.round(newH / GRID_SIZE) * GRID_SIZE;
+                    if (c.includes('l')) newX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
+                    if (c.includes('t')) newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
+                }
+                updateElement(resizing.id, { x: newX, y: newY, width: Math.max(20, newW), height: Math.max(10, newH) });
             }
         };
-        const handleUp = () => { setDragging(null); setResizing(null); };
+        const handleUp = () => { 
+            setDragging(null); 
+            setResizing(null); 
+            setAlignmentGuides({ horizontal: [], vertical: [] }); // Clear guides on release
+        };
         if (dragging || resizing) {
             window.addEventListener('pointermove', handleMove);
             window.addEventListener('pointerup', handleUp);
             return () => { window.removeEventListener('pointermove', handleMove); window.removeEventListener('pointerup', handleUp); };
         }
-    }, [dragging, resizing, zoom, updateElement]);
+    }, [dragging, resizing, zoom, updateElement, elements, calculateAlignmentGuides, snapEnabled]);
 
     // ---- Keyboard shortcuts ----
     useEffect(() => {
