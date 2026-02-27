@@ -306,6 +306,9 @@ export default function ReportTemplateDesigner() {
     const [dragging, setDragging] = useState(null);
     const [resizing, setResizing] = useState(null);
     const [rawTemplate, setRawTemplate] = useState(null);
+    const [showGrid, setShowGrid] = useState(true);
+    const [snapEnabled, setSnapEnabled] = useState(true);
+    const [alignmentGuides, setAlignmentGuides] = useState({ horizontal: [], vertical: [] });
     const canvasRef = useRef(null);
 
     const paper = PAPER[paperSize] || PAPER.legal;
