@@ -79,6 +79,13 @@ const DynamicReportCard = ({ data, classInfo, term, academicYear, totalStudents,
     const socialCategories = tpl.social_skills_categories || [];
     const skillRatings = tpl.skill_ratings || ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
     const paperHeight = tpl.paper_size === 'letter' ? '11in' : tpl.paper_size === 'a4' ? '297mm' : '14in';
+    const theme = tpl.theme || {};
+    const headerBg = theme.headerBg || '#1e40af';
+    const headerText = theme.headerText || '#ffffff';
+    const fontFamily = theme.fontFamily || 'Arial, sans-serif';
+
+    // Determine block order if blocks exist
+    const blockOrder = tpl.blocks?.filter(b => b.visible).map(b => b.type) || null;
 
     const calculateCoreAverage = () => {
         const coreGrades = subjectGrades.filter(g => coreSubjectNames.includes(g.subject));
