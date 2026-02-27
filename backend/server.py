@@ -334,6 +334,9 @@ class ReportTemplateCreate(BaseModel):
     skill_ratings: List[str] = ["Excellent", "Good", "Satisfactory", "Needs Improvement"]
     achievement_standards: List[ReportTemplateAchievement] = []
     paper_size: str = "legal"
+    # WYSIWYG builder fields
+    blocks: Optional[List[Dict]] = None
+    theme: Optional[Dict] = None
 
 DEFAULT_SUBJECTS = [
     {"name": "English Language", "is_core": True},
