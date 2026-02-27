@@ -503,10 +503,10 @@ export default function ReportTemplateDesigner() {
                     <div><h1 className="text-sm font-bold leading-tight">Template Designer</h1><p className="text-[10px] text-muted-foreground">{rawTemplate?.school_name || schoolCode}</p></div>
                 </div>
                 <div className="flex items-center gap-1.5">
-                    <Button variant="outline" size="sm" onClick={handleBgUpload} disabled={uploading} className="h-7 text-xs rounded-lg" data-testid="upload-bg-btn">
-                        {uploading ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Upload className="w-3 h-3 mr-1" />}Background
+                    <Button variant="outline" size="sm" onClick={handleBgUpload} disabled={uploading} className="h-7 text-xs rounded-lg border-primary text-primary hover:bg-primary/10" data-testid="upload-template-btn">
+                        {uploading ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Upload className="w-3 h-3 mr-1" />}Upload Template
                     </Button>
-                    {backgroundUrl && <Button variant="ghost" size="sm" onClick={()=>setBackgroundUrl('')} className="h-7 text-xs rounded-lg text-destructive">Clear BG</Button>}
+                    {backgroundUrl && <Button variant="ghost" size="sm" onClick={()=>setBackgroundUrl('')} className="h-7 text-xs rounded-lg text-destructive">Remove</Button>}
                     <Select value={paperSize} onValueChange={setPaperSize}>
                         <SelectTrigger className="h-7 w-28 text-xs rounded-lg" data-testid="paper-size-select"><SelectValue/></SelectTrigger>
                         <SelectContent>{Object.entries(PAPER).map(([k,v])=><SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
