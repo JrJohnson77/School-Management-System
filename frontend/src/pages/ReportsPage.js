@@ -165,7 +165,7 @@ const DynamicReportCard = ({ data, classInfo, term, academicYear, totalStudents,
 
             {/* Academic Performance */}
             <div className="mb-4">
-                <h3 className="text-sm font-bold bg-blue-800 text-white p-1 mb-0">ACADEMIC PERFORMANCE</h3>
+                <h3 className="text-sm font-bold p-1 mb-0" style={{ backgroundColor: headerBg, color: headerText }}>ACADEMIC PERFORMANCE</h3>
                 <table className="w-full border-collapse text-xs">
                     <thead>
                         <tr className="bg-gray-200">
