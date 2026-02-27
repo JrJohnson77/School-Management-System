@@ -111,18 +111,18 @@ const DynamicReportCard = ({ data, classInfo, term, academicYear, totalStudents,
                 width: '8.5in',
                 minHeight: paperHeight,
                 padding: '0.5in',
-                fontFamily: 'Arial, sans-serif',
+                fontFamily: fontFamily,
                 fontSize: '10pt',
                 lineHeight: '1.3'
             }}
         >
             {/* Header */}
-            <div className="text-center border-b-2 border-black pb-3 mb-4">
+            <div className="text-center pb-3 mb-4" style={{ borderBottom: `2px solid ${headerBg}` }}>
                 <div className="flex justify-center items-center gap-4 mb-2">
                     {tpl.logo_url ? (
                         <img src={tpl.logo_url.startsWith('http') ? tpl.logo_url : `${process.env.REACT_APP_BACKEND_URL}${tpl.logo_url}`} alt="Logo" className="w-16 h-16 object-contain" />
                     ) : (
-                        <div className="w-16 h-16 bg-blue-800 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        <div className="w-16 h-16 rounded-full flex items-center justify-center font-bold text-sm" style={{ backgroundColor: headerBg, color: headerText }}>
                             {tpl.school_code || '?'}
                         </div>
                     )}
