@@ -63,7 +63,154 @@ const calcWeightedFromTemplate = (assessments, weights) => {
     );
 };
 
-// ==================== DYNAMIC REPORT CARD TEMPLATE ====================
+// ==================== CANVAS REPORT CARD RENDERER ====================
+const resolveField = (field, data, classInfo, term, academicYear) => {
+    const { student, attendance_summary, position } = data;
+    const map = {
+        'student.first_name': student?.first_name, 'student.last_name': student?.last_name,
+        'student.middle_name': student?.middle_name, 'student.dob': student?.date_of_birth,
+        'student.age': student?.age ? `${student.age} yrs` : '', 'student.gender': student?.gender,
+        'student.house': student?.house, 'student.student_id': student?.student_id,
+        'class.name': classInfo?.name, 'class.grade_level': classInfo?.grade_level,
+        'term': term, 'academic_year': academicYear,
+        'position': position, 'total_students': data.total_students,
+        'attendance.total_days': attendance_summary?.total_days,
+        'attendance.present': attendance_summary?.present,
+        'attendance.absent': attendance_summary?.absent,
+        'teacher_comment': student?.teacher_comment || '',
+    };
+    return map[field] ?? `{{${field}}}`;
+};
+
+const CanvasReportCard = ({ data, classInfo, term, academicYear, totalStudents, signatures, template }) => {
+    const tpl = template || {};
+    const els = tpl.canvas_elements || [];
+    const paperSize = tpl.paper_size || 'legal';
+    const paperH = paperSize === 'letter' ? '11in' : paperSize === 'a4' ? '297mm' : '14in';
+    const bgUrl = tpl.background_url;
+    const subjectGrades = data.grades?.subjects || [];
+
+    const renderElement = (el) => {
+        const s = el.styles || {};
+        const cfg = el.config || {};
+        const base = { fontSize: s.fontSize||10, fontFamily: s.fontFamily||'Arial,sans-serif', fontWeight: s.fontWeight||'normal', fontStyle: s.fontStyle||'normal', textDecoration: s.textDecoration||'none', color: s.color||'#000', textAlign: s.textAlign||'left', backgroundColor: s.backgroundColor||'transparent', border: s.border||'none', padding: s.padding||0, overflow:'hidden', width:'100%', height:'100%', boxSizing:'border-box' };
+
+        switch (el.type) {
+            case 'text': {
+                let content = cfg.content || '';
+                content = content.replace('{{date}}', new Date().toLocaleDateString());
+                return <div style={base}>{content}</div>;
+            }
+            case 'data-field': {
+                const val = resolveField(cfg.field, data, classInfo, term, academicYear);
+                return <div style={base}>{val}</div>;
+            }
+            case 'image':
+                return cfg.src ? <img src={cfg.src.startsWith('http')?cfg.src:`${process.env.REACT_APP_BACKEND_URL}${cfg.src}`} alt="" style={{width:'100%',height:'100%',objectFit:'contain'}} /> : null;
+            case 'line':
+                return <div style={{width:'100%',height:'100%',backgroundColor:s.backgroundColor||'#000'}} />;
+            case 'rectangle':
+                return <div style={{width:'100%',height:'100%',backgroundColor:s.backgroundColor||'#eee',border:s.border||'none'}} />;
+            case 'signature': {
+                const sigUrl = signatures?.[`${cfg.type}_signature`];
+                return (
+                    <div style={{...base,textAlign:'center',display:'flex',flexDirection:'column',justifyContent:'flex-end'}}>
+                        {sigUrl ? <img src={`${process.env.REACT_APP_BACKEND_URL}${sigUrl}`} alt="" style={{height:'60%',objectFit:'contain',marginBottom:3}} /> : <div style={{borderBottom:'1px solid #000',marginBottom:3,height:'60%'}} />}
+                        <div style={{fontSize:s.fontSize||9,fontWeight:'bold'}}>{cfg.label}</div>
+                        <div style={{fontSize:7,color:'#666'}}>Date: ___________</div>
+                    </div>
+                );
+            }
+            case 'grades-table': {
+                const subjects = cfg.subjects || [];
+                const gradeScale = cfg.grade_scale || [];
+                const hBg = cfg.headerBg || '#1e40af';
+                const hTxt = cfg.headerText || '#fff';
+                return (
+                    <div style={{...base,overflow:'visible'}}>
+                        <div style={{backgroundColor:hBg,color:hTxt,padding:'2px 4px',fontWeight:'bold'}}>ACADEMIC PERFORMANCE</div>
+                        <table style={{width:'100%',borderCollapse:'collapse',fontSize:s.fontSize||9}}>
+                            <thead><tr style={{backgroundColor:'#e5e7eb'}}>
+                                <th style={{border:'1px solid #999',padding:2,textAlign:'left'}}>Subject</th>
+                                {cfg.use_weighted && <><th style={{border:'1px solid #999',padding:1}}>HW</th><th style={{border:'1px solid #999',padding:1}}>GW</th><th style={{border:'1px solid #999',padding:1}}>Proj</th><th style={{border:'1px solid #999',padding:1}}>Quiz</th><th style={{border:'1px solid #999',padding:1}}>Mid</th><th style={{border:'1px solid #999',padding:1}}>End</th></>}
+                                <th style={{border:'1px solid #999',padding:1}}>Score</th>
+                                <th style={{border:'1px solid #999',padding:1}}>Grade</th>
+                            </tr></thead>
+                            <tbody>{subjects.map((sub,i)=>{
+                                const sg = subjectGrades.find(g=>g.subject===sub.name)||{};
+                                const score = sg.score||0;
+                                const rounded = Math.round(score);
+                                let grade = '-';
+                                for(const g of gradeScale){ if(rounded>=g.min && rounded<=g.max){ grade=g.grade; break; } }
+                                return (
+                                    <tr key={i} style={{backgroundColor:sub.is_core?'#eff6ff':i%2===0?'#fff':'#f9fafb'}}>
+                                        <td style={{border:'1px solid #ccc',padding:2}}>{sub.name}{sub.is_core?'*':''}</td>
+                                        {cfg.use_weighted && <><td style={{border:'1px solid #ccc',padding:1,textAlign:'center'}}>{sg.homework??'-'}</td><td style={{border:'1px solid #ccc',padding:1,textAlign:'center'}}>{sg.groupWork??'-'}</td><td style={{border:'1px solid #ccc',padding:1,textAlign:'center'}}>{sg.project??'-'}</td><td style={{border:'1px solid #ccc',padding:1,textAlign:'center'}}>{sg.quiz??'-'}</td><td style={{border:'1px solid #ccc',padding:1,textAlign:'center'}}>{sg.midTerm??'-'}</td><td style={{border:'1px solid #ccc',padding:1,textAlign:'center'}}>{sg.endOfTerm??'-'}</td></>}
+                                        <td style={{border:'1px solid #ccc',padding:1,textAlign:'center',fontWeight:'bold'}}>{score>0?score.toFixed(1):'-'}</td>
+                                        <td style={{border:'1px solid #ccc',padding:1,textAlign:'center',fontWeight:'bold'}}>{grade}</td>
+                                    </tr>
+                                );
+                            })}</tbody>
+                        </table>
+                    </div>
+                );
+            }
+            case 'social-skills': {
+                const cats = cfg.categories || [];
+                const ratings = cfg.ratings || [];
+                const hBg = cfg.headerBg || '#1e40af';
+                const hTxt = cfg.headerText || '#fff';
+                return (
+                    <div style={{...base,overflow:'visible'}}>
+                        <div style={{backgroundColor:hBg,color:hTxt,padding:'2px 4px',fontWeight:'bold'}}>SOCIAL SKILLS AND ATTITUDES</div>
+                        <div style={{display:'grid',gridTemplateColumns:`repeat(${Math.min(cats.length,2)},1fr)`,gap:6,border:'1px solid #ccc',padding:4}}>
+                            {cats.map(cat=>(
+                                <div key={cat.category_name}>
+                                    <div style={{fontWeight:'bold',marginBottom:2}}>{cat.category_name}</div>
+                                    {cat.skills.map(sk=>(
+                                        <div key={sk} style={{display:'flex',justifyContent:'space-between',marginBottom:1}}>
+                                            <span>{sk}</span>
+                                            <span>{ratings.map(r=>{
+                                                const checked = data.social_skills?.[sk]===r;
+                                                return <span key={r} style={{display:'inline-block',width:12,height:12,border:'1px solid #999',marginLeft:2,textAlign:'center',fontSize:8,lineHeight:'12px'}}>{checked?'✓':''}</span>;
+                                            })}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            }
+            default: return null;
+        }
+    };
+
+    return (
+        <div className="mhps-report-card bg-white mx-auto mb-8 print:mb-0 print:page-break-after-always" style={{
+            width: '8.5in', minHeight: paperH, position: 'relative', fontFamily: 'Arial, sans-serif', fontSize: '10pt',
+            backgroundImage: bgUrl ? `url(${bgUrl.startsWith('http') ? bgUrl : `${process.env.REACT_APP_BACKEND_URL}${bgUrl}`})` : 'none',
+            backgroundSize: 'cover', backgroundPosition: 'center',
+        }}>
+            {els.map(el => (
+                <div key={el.id} style={{ position:'absolute', left: el.x * (8.5/816) + 'in', top: el.y * (14/1344) + 'in', width: el.width * (8.5/816) + 'in', height: el.height === 'auto' ? 'auto' : el.height * (14/1344) + 'in' }}>
+                    {renderElement(el)}
+                </div>
+            ))}
+        </div>
+    );
+};
+
+// ==================== DYNAMIC REPORT CARD (dispatch) ====================
+const ReportCardRenderer = (props) => {
+    const { template } = props;
+    if (template?.design_mode === 'canvas' && template?.canvas_elements?.length) {
+        return <CanvasReportCard {...props} />;
+    }
+    return <DynamicReportCard {...props} />;
+};
+
+// ==================== BLOCK-BASED REPORT CARD TEMPLATE ====================
 const DynamicReportCard = ({ data, classInfo, term, academicYear, totalStudents, signatures, template }) => {
     const { student, grades, attendance_summary, position, social_skills } = data;
     const subjectGrades = grades?.subjects || [];
