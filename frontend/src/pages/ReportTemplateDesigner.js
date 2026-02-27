@@ -650,11 +650,6 @@ export default function ReportTemplateDesigner() {
             <div className="flex flex-1 overflow-hidden">
                 {/* Left Toolbar */}
                 <div className="w-16 border-r flex flex-col items-center py-2 gap-1 bg-muted/10 flex-shrink-0 overflow-y-auto">
-                    {/* Upload Template shortcut */}
-                    <Button variant="ghost" size="sm" onClick={handleBgUpload} disabled={uploading} className="h-10 w-12 flex-col gap-0 p-0.5 rounded-lg border border-dashed border-primary/40 hover:border-primary hover:bg-primary/5" title="Upload Report Card Template" data-testid="toolbar-upload-template-btn">
-                        <Upload className="w-4 h-4 text-primary"/><span className="text-[6px] text-primary font-bold leading-tight">Upload{'\n'}Template</span>
-                    </Button>
-                    <div className="w-8 h-px bg-border my-0.5"/>
                     <p className="text-[8px] font-bold text-muted-foreground mb-1">ADD</p>
                     {[['text','Text',Type],['data-field','Field',Move],['grades-table','Grades',Table],['social-skills','Skills',Heart],['image','Image',Image],['line','Line',Minus],['rectangle','Rect',Square],['signature','Sign',PenTool]].map(([t,l,Icon])=>(
                         <Button key={t} variant="ghost" size="sm" onClick={()=>addElement(t)} className="h-10 w-12 flex-col gap-0 p-0.5 rounded-lg" title={`Add ${l}`} data-testid={`add-${t}-btn`}>
