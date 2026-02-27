@@ -11,8 +11,12 @@ import { toast } from 'sonner';
 import {
     Save, Loader2, ArrowLeft, Plus, Trash2, Type, Image, Minus, Move,
     Table, PenTool, Square, Heart, Upload, ZoomIn, ZoomOut, Copy,
-    AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline, Lock, Unlock
+    AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline, Lock, Unlock, Grid
 } from 'lucide-react';
+
+// ==================== GRID & SNAP SETTINGS ====================
+const GRID_SIZE = 10; // pixels
+const SNAP_THRESHOLD = 5; // pixels - how close before snapping
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
