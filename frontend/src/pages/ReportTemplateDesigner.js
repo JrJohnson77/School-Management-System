@@ -728,6 +728,16 @@ export default function ReportTemplateDesigner() {
                     </Button>
                     {backgroundUrl && <Button variant="ghost" size="sm" onClick={()=>setBackgroundUrl('')} className="h-7 text-xs rounded-lg text-destructive">Remove</Button>}
                     <div className="w-px h-5 bg-border mx-0.5"/>
+                    <Button variant="outline" size="sm" onClick={handleUndo} disabled={undoHistory.length === 0} className="h-7 text-xs rounded-lg px-2" title="Undo (Ctrl+Z)" data-testid="undo-btn">
+                        <Undo className="w-3 h-3 mr-1" />Undo
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleCopy} disabled={!selectedId} className="h-7 text-xs rounded-lg px-2" title="Copy (Ctrl+C)" data-testid="copy-btn">
+                        <Copy className="w-3 h-3" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handlePaste} disabled={!clipboard} className="h-7 text-xs rounded-lg px-2" title="Paste (Ctrl+V)" data-testid="paste-btn">
+                        <Clipboard className="w-3 h-3" />
+                    </Button>
+                    <div className="w-px h-5 bg-border mx-0.5"/>
                     <Button variant={showGrid ? 'default' : 'outline'} size="sm" onClick={()=>setShowGrid(!showGrid)} className="h-7 text-xs rounded-lg px-2" title="Toggle Grid" data-testid="toggle-grid-btn">
                         <Grid className="w-3 h-3 mr-1" />Grid
                     </Button>
