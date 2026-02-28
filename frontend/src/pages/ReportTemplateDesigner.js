@@ -438,9 +438,70 @@ export default function ReportTemplateDesigner() {
         const el = elements.find(e => e.id === id);
         if (!el) return;
         const newId = `el-${Date.now()}`;
+        saveUndoState();
         setElements(prev => [...prev, { ...JSON.parse(JSON.stringify(el)), id: newId, x: el.x + 20, y: el.y + 20 }]);
         setSelectedId(newId);
     };
+
+    // ---- Undo/Redo History ----
+    const saveUndoState = useCallback(() => {
+        if (isUndoingRef.current) return; // Don't save during undo operation
+        setUndoHistory(prev => {
+            const newHistory = [...prev, JSON.stringify(elements)];
+            // Keep only last MAX_UNDO_HISTORY states
+            if (newHistory.length > MAX_UNDO_HISTORY) {
+                return newHistory.slice(-MAX_UNDO_HISTORY);
+            }
+            return newHistory;
+        });
+    }, [elements]);
+
+    const handleUndo = useCallback(() => {
+        if (undoHistory.length === 0) {
+            toast.info('Nothing to undo');
+            return;
+        }
+        isUndoingRef.current = true;
+        const previousState = undoHistory[undoHistory.length - 1];
+        setUndoHistory(prev => prev.slice(0, -1));
+        setElements(JSON.parse(previousState));
+        setSelectedId(null);
+        toast.success('Undo successful');
+        // Reset flag after state update
+        setTimeout(() => { isUndoingRef.current = false; }, 0);
+    }, [undoHistory]);
+
+    // ---- Copy/Paste ----
+    const handleCopy = useCallback(() => {
+        if (!selectedId) {
+            toast.info('Select an element to copy');
+            return;
+        }
+        const el = elements.find(e => e.id === selectedId);
+        if (el) {
+            setClipboard(JSON.stringify(el));
+            toast.success('Element copied');
+        }
+    }, [selectedId, elements]);
+
+    const handlePaste = useCallback(() => {
+        if (!clipboard) {
+            toast.info('Nothing to paste');
+            return;
+        }
+        saveUndoState();
+        const el = JSON.parse(clipboard);
+        const newId = `el-${Date.now()}`;
+        const pastedElement = {
+            ...el,
+            id: newId,
+            x: el.x + 30, // Offset to make it visible
+            y: el.y + 30,
+        };
+        setElements(prev => [...prev, pastedElement]);
+        setSelectedId(newId);
+        toast.success('Element pasted');
+    }, [clipboard, saveUndoState]);
 
     // ---- Snap to Grid ----
     const snapToGrid = useCallback((value) => {
