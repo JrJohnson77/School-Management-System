@@ -917,8 +917,11 @@ export default function ReportTemplateDesigner() {
                             <p className="text-[10px] text-muted-foreground">Drag to move, corners to resize</p>
                             <div className="text-[9px] text-left space-y-1 p-2 rounded bg-muted/30 mt-4">
                                 <p className="font-bold">Keyboard shortcuts:</p>
-                                <p>Delete — Remove element</p>
+                                <p>Ctrl+C — Copy element</p>
+                                <p>Ctrl+V — Paste element</p>
+                                <p>Ctrl+Z — Undo</p>
                                 <p>Ctrl+D — Duplicate element</p>
+                                <p>Delete — Remove element</p>
                             </div>
                         </div>
                     )}
