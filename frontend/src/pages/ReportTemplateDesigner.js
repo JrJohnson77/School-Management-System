@@ -311,7 +311,10 @@ export default function ReportTemplateDesigner() {
     const [showGrid, setShowGrid] = useState(true);
     const [snapEnabled, setSnapEnabled] = useState(true);
     const [alignmentGuides, setAlignmentGuides] = useState({ horizontal: [], vertical: [] });
+    const [undoHistory, setUndoHistory] = useState([]);
+    const [clipboard, setClipboard] = useState(null);
     const canvasRef = useRef(null);
+    const isUndoingRef = useRef(false); // Prevent recording undo during undo operation
 
     const paper = PAPER[paperSize] || PAPER.legal;
     const selected = useMemo(() => elements.find(e => e.id === selectedId), [elements, selectedId]);
