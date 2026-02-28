@@ -328,11 +328,15 @@ export default function ReportTemplateDesigner() {
             setRawTemplate(tpl);
             setPaperSize(tpl.paper_size || 'legal');
             setBackgroundUrl(tpl.background_url || '');
-            if (tpl.canvas_elements?.length) {
-                setElements(tpl.canvas_elements);
-            } else {
-                setElements(buildDefaultElements(tpl.school_name));
-            }
+            // Clear any existing elements and set fresh from server
+            // This ensures no duplicate/stale elements persist
+            const newElements = tpl.canvas_elements?.length 
+                ? tpl.canvas_elements 
+                : buildDefaultElements(tpl.school_name);
+            setElements(newElements);
+            // Clear undo history on fresh load
+            setUndoHistory([]);
+            setClipboard(null);
         } catch (error) {
             toast.error('Failed to load template');
         } finally {
