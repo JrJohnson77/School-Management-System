@@ -413,6 +413,7 @@ export default function ReportTemplateDesigner() {
     }, []);
 
     const addElement = (type) => {
+        saveUndoState();
         const id = `el-${Date.now()}`;
         const defaults = {
             text:   { config:{content:'New Text'}, styles:{fontSize:12,fontFamily:'Arial'}, width:200, height:24 },
@@ -430,6 +431,7 @@ export default function ReportTemplateDesigner() {
     };
 
     const deleteElement = (id) => {
+        saveUndoState();
         setElements(prev => prev.filter(e => e.id !== id));
         if (selectedId === id) setSelectedId(null);
     };
