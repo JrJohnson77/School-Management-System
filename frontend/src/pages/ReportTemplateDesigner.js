@@ -18,6 +18,7 @@ import {
 // ==================== GRID & SNAP SETTINGS ====================
 const GRID_SIZE = 10; // pixels
 const SNAP_THRESHOLD = 5; // pixels - how close before snapping
+const MAX_UNDO_HISTORY = 50; // maximum undo steps
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
