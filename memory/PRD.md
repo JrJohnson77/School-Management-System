@@ -22,6 +22,9 @@ Multi-tenant student management system for primary schools with a canvas-based W
 - **[NEW] Visible Grid**: Toggle-able blue grid lines (10px intervals) for alignment reference
 - **[NEW] Snap-to-Grid**: Elements snap to 10px grid positions when dragging
 - **[NEW] Alignment Guides**: Red lines appear when elements align with other elements (edges/center within 5px threshold)
+- **[NEW] Undo (Ctrl+Z)**: Undo last action (up to 50 steps)
+- **[NEW] Copy/Paste (Ctrl+C/Ctrl+V)**: Copy and paste elements with 30px offset
+- **[NEW] Clean Template Loading**: Templates load cleanly without duplicate/stale elements
 
 ## Credentials
 - Superuser: JTECH / jtech.innovations@outlook.com / Xekleidoma@1
@@ -33,4 +36,5 @@ Multi-tenant student management system for primary schools with a canvas-based W
 - [ ] P2: Dark mode, Parent portal, Academic calendar
 
 ## Changelog
-- **Dec 2025**: Added snap-to-grid and alignment guides to canvas editor. Removed prominent "Upload Template" buttons, replaced with simpler "Background" button. Added Grid and Snap toggle buttons.
+- **Dec 2025 (Session 2)**: Added Ctrl+C (Copy), Ctrl+V (Paste), Ctrl+Z (Undo) functionality. Fixed template persistence to ensure clean loading without duplicate elements. Added Undo/Copy/Paste buttons to toolbar.
+- **Dec 2025 (Session 1)**: Added snap-to-grid and alignment guides to canvas editor. Removed prominent "Upload Template" buttons, replaced with simpler "Background" button. Added Grid and Snap toggle buttons.
