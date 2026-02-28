@@ -678,12 +678,35 @@ export default function ReportTemplateDesigner() {
     useEffect(() => {
         const handleKey = (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-            if (e.key === 'Delete' || e.key === 'Backspace') { if (selectedId) deleteElement(selectedId); }
-            if (e.key === 'd' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); if (selectedId) duplicateElement(selectedId); }
+            
+            // Delete element
+            if (e.key === 'Delete' || e.key === 'Backspace') { 
+                if (selectedId) deleteElement(selectedId); 
+            }
+            // Ctrl+D: Duplicate
+            if (e.key === 'd' && (e.ctrlKey || e.metaKey)) { 
+                e.preventDefault(); 
+                if (selectedId) duplicateElement(selectedId); 
+            }
+            // Ctrl+C: Copy
+            if (e.key === 'c' && (e.ctrlKey || e.metaKey)) { 
+                e.preventDefault(); 
+                handleCopy(); 
+            }
+            // Ctrl+V: Paste
+            if (e.key === 'v' && (e.ctrlKey || e.metaKey)) { 
+                e.preventDefault(); 
+                handlePaste(); 
+            }
+            // Ctrl+Z: Undo
+            if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey) { 
+                e.preventDefault(); 
+                handleUndo(); 
+            }
         };
         window.addEventListener('keydown', handleKey);
         return () => window.removeEventListener('keydown', handleKey);
-    }, [selectedId]);
+    }, [selectedId, handleCopy, handlePaste, handleUndo]);
 
     if (!isSuperuser) return <div className="flex items-center justify-center min-h-[60vh]"><p className="text-muted-foreground">Superuser access required.</p></div>;
     if (!schoolCode) return <div className="flex items-center justify-center min-h-[60vh]"><p className="text-muted-foreground">No school specified.</p></div>;
