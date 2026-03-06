@@ -129,6 +129,8 @@ const ElementPreview = ({ el }) => {
             return cfg.src ? <img src={cfg.src.startsWith('http')?cfg.src:`${process.env.REACT_APP_BACKEND_URL}${cfg.src}`} alt={cfg.alt||''} style={{width:'100%',height:'100%',objectFit:'contain'}} /> : <div style={{...base,border:'1px dashed #aaa',display:'flex',alignItems:'center',justifyContent:'center',color:'#999',fontSize:8}}>Image</div>;
         case 'line':
             return <div style={{width:'100%',height:'100%',backgroundColor:s.backgroundColor||'#000'}} />;
+        case 'vertical-line':
+            return <div style={{width:'100%',height:'100%',backgroundColor:s.backgroundColor||'#000'}} />;
         case 'rectangle':
             return <div style={{width:'100%',height:'100%',backgroundColor:s.backgroundColor||'#eee',border:s.border||'none',borderRadius:s.borderRadius||0}} />;
         case 'signature':
