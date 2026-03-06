@@ -12,7 +12,7 @@ import {
     Save, Loader2, ArrowLeft, Plus, Trash2, Type, Image, Minus, Move,
     Table, PenTool, Square, Heart, Upload, ZoomIn, ZoomOut, Copy,
     AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline, Lock, Unlock, Grid,
-    Undo, Clipboard
+    Undo, Clipboard, GripVertical
 } from 'lucide-react';
 
 // ==================== GRID & SNAP SETTINGS ====================
