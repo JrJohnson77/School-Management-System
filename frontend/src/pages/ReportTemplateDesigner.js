@@ -767,7 +767,7 @@ export default function ReportTemplateDesigner() {
                 {/* Left Toolbar */}
                 <div className="w-16 border-r flex flex-col items-center py-2 gap-1 bg-muted/10 flex-shrink-0 overflow-y-auto">
                     <p className="text-[8px] font-bold text-muted-foreground mb-1">ADD</p>
-                    {[['text','Text',Type],['data-field','Field',Move],['grades-table','Grades',Table],['social-skills','Skills',Heart],['image','Image',Image],['line','Line',Minus],['rectangle','Rect',Square],['signature','Sign',PenTool]].map(([t,l,Icon])=>(
+                    {[['text','Text',Type],['data-field','Field',Move],['grades-table','Grades',Table],['social-skills','Skills',Heart],['image','Image',Image],['line','H-Line',Minus],['vertical-line','V-Line',GripVertical],['rectangle','Rect',Square],['signature','Sign',PenTool]].map(([t,l,Icon])=>(
                         <Button key={t} variant="ghost" size="sm" onClick={()=>addElement(t)} className="h-10 w-12 flex-col gap-0 p-0.5 rounded-lg" title={`Add ${l}`} data-testid={`add-${t}-btn`}>
                             <Icon className="w-4 h-4"/><span className="text-[7px]">{l}</span>
                         </Button>
