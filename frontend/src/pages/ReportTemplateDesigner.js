@@ -813,7 +813,11 @@ export default function ReportTemplateDesigner() {
                 </div>
 
                 {/* Canvas Area */}
-                <div className="flex-1 overflow-auto bg-gray-200 flex justify-center py-6 px-4" onPointerDown={handleCanvasPointerDown}>
+                <div 
+                    className="flex-1 overflow-auto bg-gray-200 flex justify-center py-6 px-4" 
+                    onPointerDown={handleCanvasPointerDown}
+                    onWheel={handleWheelZoom}
+                >
                     <div ref={canvasRef} data-canvas="true" data-testid="template-canvas" style={{
                         width: paper.w, height: paper.h,
                         transform: `scale(${zoom})`, transformOrigin: 'top center',
