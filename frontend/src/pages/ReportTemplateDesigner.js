@@ -677,6 +677,15 @@ export default function ReportTemplateDesigner() {
         }
     }, [dragging, resizing, zoom, updateElement, elements, calculateAlignmentGuides, snapEnabled]);
 
+    // ---- Mouse wheel zoom ----
+    const handleWheelZoom = useCallback((e) => {
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.05 : 0.05;
+            setZoom(z => Math.max(0.25, Math.min(4, z + delta)));
+        }
+    }, []);
+
     // ---- Keyboard shortcuts ----
     useEffect(() => {
         const handleKey = (e) => {
