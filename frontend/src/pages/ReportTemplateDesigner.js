@@ -752,10 +752,32 @@ export default function ReportTemplateDesigner() {
                         <SelectTrigger className="h-7 w-28 text-xs rounded-lg" data-testid="paper-size-select"><SelectValue/></SelectTrigger>
                         <SelectContent>{Object.entries(PAPER).map(([k,v])=><SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
                     </Select>
-                    <div className="flex items-center gap-0.5 border rounded-lg px-1">
-                        <Button variant="ghost" size="sm" onClick={()=>setZoom(z=>Math.max(0.3,z-0.1))} className="h-6 w-6 p-0"><ZoomOut className="w-3 h-3"/></Button>
-                        <span className="text-[10px] w-8 text-center">{Math.round(zoom*100)}%</span>
-                        <Button variant="ghost" size="sm" onClick={()=>setZoom(z=>Math.min(1.5,z+0.1))} className="h-6 w-6 p-0"><ZoomIn className="w-3 h-3"/></Button>
+                    <div className="flex items-center gap-1 border rounded-lg px-1.5 py-0.5">
+                        <Button variant="ghost" size="sm" onClick={()=>setZoom(z=>Math.max(0.25,z-0.1))} className="h-6 w-6 p-0" title="Zoom Out"><ZoomOut className="w-3 h-3"/></Button>
+                        <input 
+                            type="range" 
+                            min="25" 
+                            max="400" 
+                            value={Math.round(zoom*100)} 
+                            onChange={(e)=>setZoom(parseInt(e.target.value)/100)}
+                            className="w-20 h-1.5 accent-primary cursor-pointer"
+                            title={`Zoom: ${Math.round(zoom*100)}%`}
+                            data-testid="zoom-slider"
+                        />
+                        <Button variant="ghost" size="sm" onClick={()=>setZoom(z=>Math.min(4,z+0.1))} className="h-6 w-6 p-0" title="Zoom In"><ZoomIn className="w-3 h-3"/></Button>
+                        <input 
+                            type="number" 
+                            min="25" 
+                            max="400" 
+                            value={Math.round(zoom*100)} 
+                            onChange={(e)=>{
+                                const val = parseInt(e.target.value) || 100;
+                                setZoom(Math.max(0.25, Math.min(4, val/100)));
+                            }}
+                            className="w-12 h-6 text-[10px] text-center border rounded px-1"
+                            data-testid="zoom-input"
+                        />
+                        <span className="text-[10px]">%</span>
                     </div>
                     <Button onClick={handleSave} disabled={saving} className="rounded-full h-7 px-4 text-xs" data-testid="save-template-btn">
                         {saving ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}Save
