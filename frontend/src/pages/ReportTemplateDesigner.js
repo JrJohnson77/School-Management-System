@@ -769,7 +769,7 @@ export default function ReportTemplateDesigner() {
                             max="400" 
                             value={Math.round(zoom*100)} 
                             onChange={(e)=>setZoom(parseInt(e.target.value)/100)}
-                            className="w-20 h-1.5 accent-primary cursor-pointer"
+                            className="w-16 h-1.5 accent-primary cursor-pointer"
                             title={`Zoom: ${Math.round(zoom*100)}%`}
                             data-testid="zoom-slider"
                         />
@@ -783,10 +783,14 @@ export default function ReportTemplateDesigner() {
                                 const val = parseInt(e.target.value) || 100;
                                 setZoom(Math.max(0.25, Math.min(4, val/100)));
                             }}
-                            className="w-12 h-6 text-[10px] text-center border rounded px-1"
+                            className="w-10 h-6 text-[10px] text-center border rounded px-0.5"
                             data-testid="zoom-input"
                         />
                         <span className="text-[10px]">%</span>
+                        <div className="w-px h-4 bg-border mx-0.5"/>
+                        <Button variant="ghost" size="sm" onClick={()=>setZoom(0.5)} className={`h-5 px-1.5 text-[9px] ${zoom === 0.5 ? 'bg-muted' : ''}`} title="50%">50</Button>
+                        <Button variant="ghost" size="sm" onClick={()=>setZoom(1)} className={`h-5 px-1.5 text-[9px] ${zoom === 1 ? 'bg-muted' : ''}`} title="100%">100</Button>
+                        <Button variant="ghost" size="sm" onClick={()=>setZoom(2)} className={`h-5 px-1.5 text-[9px] ${zoom === 2 ? 'bg-muted' : ''}`} title="200%">200</Button>
                     </div>
                     <Button onClick={handleSave} disabled={saving} className="rounded-full h-7 px-4 text-xs" data-testid="save-template-btn">
                         {saving ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}Save
