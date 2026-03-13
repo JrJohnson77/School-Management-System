@@ -16,7 +16,12 @@ import {
     User,
     Award,
     Users,
-    Heart
+    Heart,
+    Settings,
+    Plus,
+    Trash2,
+    ChevronDown,
+    ChevronRight
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
