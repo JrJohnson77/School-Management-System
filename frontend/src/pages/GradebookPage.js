@@ -457,6 +457,60 @@ export default function GradebookPage() {
         setTemplate({ ...template, skill_ratings: newRatings });
     };
 
+    // Achievement standards (grade scale) management
+    const addAchievementStandard = () => {
+        const newScale = [...(template?.grade_scale || DEFAULT_ACHIEVEMENT_STANDARDS)];
+        newScale.push({ min: 0, max: 0, grade: '', description: '' });
+        setTemplate({ ...template, grade_scale: newScale });
+    };
+
+    const removeAchievementStandard = (index) => {
+        const newScale = [...(template?.grade_scale || [])].filter((_, i) => i !== index);
+        setTemplate({ ...template, grade_scale: newScale });
+    };
+
+    const updateAchievementStandard = (index, field, value) => {
+        const newScale = [...(template?.grade_scale || DEFAULT_ACHIEVEMENT_STANDARDS)];
+        newScale[index] = { ...newScale[index], [field]: field === 'min' || field === 'max' ? parseInt(value) || 0 : value };
+        setTemplate({ ...template, grade_scale: newScale });
+    };
+
+    // Social skills categories management
+    const addSkillCategory = () => {
+        const newCategories = [...(template?.social_skills_categories || [])];
+        newCategories.push({ category_name: 'New Category', skills: [''] });
+        setTemplate({ ...template, social_skills_categories: newCategories });
+    };
+
+    const removeSkillCategory = (index) => {
+        const newCategories = [...(template?.social_skills_categories || [])].filter((_, i) => i !== index);
+        setTemplate({ ...template, social_skills_categories: newCategories });
+    };
+
+    const updateCategoryName = (index, name) => {
+        const newCategories = [...(template?.social_skills_categories || [])];
+        newCategories[index] = { ...newCategories[index], category_name: name };
+        setTemplate({ ...template, social_skills_categories: newCategories });
+    };
+
+    const addSkillToCategory = (categoryIndex) => {
+        const newCategories = [...(template?.social_skills_categories || [])];
+        newCategories[categoryIndex].skills = [...newCategories[categoryIndex].skills, ''];
+        setTemplate({ ...template, social_skills_categories: newCategories });
+    };
+
+    const removeSkillFromCategory = (categoryIndex, skillIndex) => {
+        const newCategories = [...(template?.social_skills_categories || [])];
+        newCategories[categoryIndex].skills = newCategories[categoryIndex].skills.filter((_, i) => i !== skillIndex);
+        setTemplate({ ...template, social_skills_categories: newCategories });
+    };
+
+    const updateSkillInCategory = (categoryIndex, skillIndex, value) => {
+        const newCategories = [...(template?.social_skills_categories || [])];
+        newCategories[categoryIndex].skills[skillIndex] = value;
+        setTemplate({ ...template, social_skills_categories: newCategories });
+    };
+
     const selectedStudentData = students.find(s => s.id === selectedStudent);
 
     if (loading) {
