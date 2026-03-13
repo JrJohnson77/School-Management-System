@@ -95,15 +95,39 @@ export default function GradebookPage() {
     
     const { isAdmin, isTeacher, isParent, schoolCode, isSuperuser } = useAuth();
 
-    // Derive template-based values
-    const tplSubjects = template?.subjects?.map(s => s.name) || [];
+    // Default configuration constants
+    const DEFAULT_WEIGHTS = { homework: 5, groupWork: 5, project: 10, quiz: 10, midTerm: 30, endOfTerm: 40 };
+    
+    const DEFAULT_SUBJECTS = [
+        'English Language',
+        'Mathematics',
+        'Science',
+        'Social Studies',
+        'Religious Education',
+        'Physical Education',
+        'Creative Arts',
+        'Music',
+        'ICT',
+        'French'
+    ];
+
+    // Derive template-based values with defaults
+    const tplSubjects = template?.subjects?.length > 0 
+        ? template.subjects.map(s => s.name) 
+        : DEFAULT_SUBJECTS;
     const tplGradeScale = template?.grade_scale || [];
-    const tplWeights = template?.assessment_weights || {};
-    const tplComponents = template?.use_weighted_grading
-        ? Object.entries(tplWeights).map(([key, weight]) => ({
-            key, label: key.replace(/([A-Z])/g, ' $1').trim(), weight
-        }))
-        : [];
+    const tplWeights = template?.assessment_weights && Object.keys(template.assessment_weights).length > 0
+        ? template.assessment_weights
+        : DEFAULT_WEIGHTS;
+    const tplComponents = Object.entries(tplWeights).map(([key, weight]) => ({
+        key, 
+        label: key === 'homework' ? 'HW' : 
+               key === 'groupWork' ? 'GW' : 
+               key === 'midTerm' ? 'Mid-Term' :
+               key === 'endOfTerm' ? 'End of Term' :
+               key.charAt(0).toUpperCase() + key.slice(1), 
+        weight
+    }));
     const tplSocialCategories = template?.social_skills_categories || [];
     const tplSkillRatings = template?.skill_ratings || [
         { code: 'EX', label: 'Excellent' },
