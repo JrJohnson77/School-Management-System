@@ -346,11 +346,30 @@ export default function GradebookPage() {
     // Default configuration constants
     const DEFAULT_WEIGHTS = { homework: 5, groupWork: 5, project: 10, quiz: 10, midTerm: 30, endOfTerm: 40 };
     
+    const DEFAULT_SUBJECTS = [
+        'English Language',
+        'Mathematics',
+        'Science',
+        'Social Studies',
+        'Religious Education',
+        'Physical Education',
+        'Creative Arts',
+        'Music',
+        'ICT',
+        'French'
+    ];
+    
     const DEFAULT_CORE_SUBJECTS = [
+        { name: 'English Language', is_core: true, weights: DEFAULT_WEIGHTS },
         { name: 'Mathematics', is_core: true, weights: DEFAULT_WEIGHTS },
-        { name: 'Language Arts', is_core: true, weights: DEFAULT_WEIGHTS },
         { name: 'Science', is_core: true, weights: DEFAULT_WEIGHTS },
-        { name: 'Social Studies', is_core: true, weights: DEFAULT_WEIGHTS }
+        { name: 'Social Studies', is_core: true, weights: DEFAULT_WEIGHTS },
+        { name: 'Religious Education', is_core: false, weights: DEFAULT_WEIGHTS },
+        { name: 'Physical Education', is_core: false, weights: DEFAULT_WEIGHTS },
+        { name: 'Creative Arts', is_core: false, weights: DEFAULT_WEIGHTS },
+        { name: 'Music', is_core: false, weights: DEFAULT_WEIGHTS },
+        { name: 'ICT', is_core: false, weights: DEFAULT_WEIGHTS },
+        { name: 'French', is_core: false, weights: DEFAULT_WEIGHTS }
     ];
 
     const DEFAULT_ACHIEVEMENT_STANDARDS = [
