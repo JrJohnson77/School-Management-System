@@ -869,7 +869,20 @@ export default function GradebookPage() {
 
                     {/* Settings Tab - Admin/Superuser only */}
                     {(isAdmin || isSuperuser) && (
-                        <TabsContent value="settings" className="mt-6">
+                        <TabsContent value="settings" className="mt-6 space-y-6">
+                            {/* Quick Setup Button */}
+                            <div className="flex items-center justify-between p-4 rounded-2xl bg-primary/5 border">
+                                <div>
+                                    <h3 className="font-bold">Quick Setup</h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        Apply default configuration (Core subjects, weights, achievement standards, social skills)
+                                    </p>
+                                </div>
+                                <Button onClick={applyDefaultConfig} variant="outline" className="rounded-full">
+                                    Apply Defaults
+                                </Button>
+                            </div>
+
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 {/* Subjects & Grade Weights */}
                                 <Card className="rounded-3xl border-border/50 shadow-sm">
@@ -880,19 +893,19 @@ export default function GradebookPage() {
                                                 Subjects & Grade Weights
                                             </div>
                                             <Button variant="outline" size="sm" onClick={addSubject} className="rounded-full">
-                                                <Plus className="w-4 h-4 mr-1" /> Add Subject
+                                                <Plus className="w-4 h-4 mr-1" /> Add
                                             </Button>
                                         </CardTitle>
                                         <p className="text-sm text-muted-foreground">
-                                            Configure subjects and their individual grade weights
+                                            Core subjects (Maths, Language Arts, Science, Social Studies) are used for class average & ranking
                                         </p>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         {/* Weighted Grading Toggle */}
-                                        <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
+                                        <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
                                             <div>
-                                                <Label className="font-medium">Use Weighted Grading</Label>
-                                                <p className="text-xs text-muted-foreground">Enable component-based grade calculation</p>
+                                                <Label className="font-medium">Weighted Grading</Label>
+                                                <p className="text-xs text-muted-foreground">HW 5% | GW 5% | Project 10% | Quiz 10% | Mid 30% | Final 40%</p>
                                             </div>
                                             <Switch 
                                                 checked={template?.use_weighted_grading || false}
@@ -901,27 +914,28 @@ export default function GradebookPage() {
                                         </div>
 
                                         {/* Subjects List */}
-                                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                                        <div className="space-y-2 max-h-64 overflow-y-auto">
                                             {(template?.subjects || []).map((subject, index) => (
-                                                <div key={index} className="border rounded-xl p-3 space-y-2">
+                                                <div key={index} className="border rounded-xl p-2 space-y-2">
                                                     <div className="flex items-center gap-2">
                                                         <Input 
                                                             value={subject.name}
                                                             onChange={(e) => updateSubjectName(index, e.target.value)}
-                                                            className="flex-1 rounded-lg"
+                                                            className="flex-1 h-8 rounded-lg text-sm"
                                                             placeholder="Subject name"
                                                         />
-                                                        <div className="flex items-center gap-1">
+                                                        <div className="flex items-center gap-1 px-2 py-1 rounded bg-muted/50">
                                                             <Switch 
                                                                 checked={subject.is_core}
                                                                 onCheckedChange={(v) => updateSubjectCore(index, v)}
                                                             />
-                                                            <span className="text-xs">Core</span>
+                                                            <span className="text-xs font-medium">Core</span>
                                                         </div>
                                                         <Button 
                                                             variant="ghost" 
                                                             size="sm"
                                                             onClick={() => setExpandedSubject(expandedSubject === index ? null : index)}
+                                                            className="h-8 w-8 p-0"
                                                         >
                                                             {expandedSubject === index ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                                                         </Button>
@@ -929,7 +943,7 @@ export default function GradebookPage() {
                                                             variant="ghost" 
                                                             size="sm"
                                                             onClick={() => removeSubject(index)}
-                                                            className="text-destructive hover:text-destructive"
+                                                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </Button>
@@ -937,32 +951,92 @@ export default function GradebookPage() {
                                                     
                                                     {/* Expanded Weights */}
                                                     {expandedSubject === index && template?.use_weighted_grading && (
-                                                        <div className="pl-4 pt-2 border-t space-y-2">
-                                                            <p className="text-xs font-semibold text-muted-foreground">Grade Weights for {subject.name}:</p>
-                                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                                                {Object.entries(subject.weights || { homework: 5, groupWork: 5, project: 10, quiz: 10, midTerm: 30, endOfTerm: 40 }).map(([key, value]) => (
+                                                        <div className="pl-2 pt-2 border-t space-y-1">
+                                                            <div className="grid grid-cols-3 gap-1">
+                                                                {Object.entries(subject.weights || DEFAULT_WEIGHTS).map(([key, value]) => (
                                                                     <div key={key} className="flex items-center gap-1">
-                                                                        <Label className="text-xs w-20 capitalize">{key.replace(/([A-Z])/g, ' $1')}</Label>
+                                                                        <Label className="text-[10px] w-14 capitalize">{key.replace(/([A-Z])/g, ' $1')}</Label>
                                                                         <Input 
                                                                             type="number"
                                                                             value={value}
                                                                             onChange={(e) => updateSubjectWeights(index, key, e.target.value)}
-                                                                            className="w-16 h-7 text-xs rounded text-center"
+                                                                            className="w-12 h-6 text-xs rounded text-center"
                                                                         />
-                                                                        <span className="text-xs">%</span>
+                                                                        <span className="text-[10px]">%</span>
                                                                     </div>
                                                                 ))}
                                                             </div>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                Total: {Object.values(subject.weights || { homework: 5, groupWork: 5, project: 10, quiz: 10, midTerm: 30, endOfTerm: 40 }).reduce((a, b) => a + b, 0)}%
+                                                            <p className="text-[10px] text-muted-foreground">
+                                                                Total: {Object.values(subject.weights || DEFAULT_WEIGHTS).reduce((a, b) => a + b, 0)}%
                                                             </p>
                                                         </div>
                                                     )}
                                                 </div>
                                             ))}
                                             {(!template?.subjects || template.subjects.length === 0) && (
-                                                <p className="text-sm text-muted-foreground text-center py-4">No subjects configured. Click "Add Subject" to create one.</p>
+                                                <p className="text-sm text-muted-foreground text-center py-4">No subjects. Click "Apply Defaults" or "Add".</p>
                                             )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Achievement Standards */}
+                                <Card className="rounded-3xl border-border/50 shadow-sm">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Award className="w-5 h-5" />
+                                                Achievement Standards
+                                            </div>
+                                            <Button variant="outline" size="sm" onClick={addAchievementStandard} className="rounded-full">
+                                                <Plus className="w-4 h-4 mr-1" /> Add
+                                            </Button>
+                                        </CardTitle>
+                                        <p className="text-sm text-muted-foreground">
+                                            Based on final exam score - determines proficiency level
+                                        </p>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2">
+                                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                                            {(template?.grade_scale || DEFAULT_ACHIEVEMENT_STANDARDS).map((standard, index) => (
+                                                <div key={index} className="flex items-center gap-2 p-2 rounded-xl bg-muted/30">
+                                                    <Input 
+                                                        type="number"
+                                                        value={standard.min}
+                                                        onChange={(e) => updateAchievementStandard(index, 'min', e.target.value)}
+                                                        className="w-14 h-8 text-center rounded-lg text-sm"
+                                                        placeholder="Min"
+                                                    />
+                                                    <span className="text-muted-foreground">-</span>
+                                                    <Input 
+                                                        type="number"
+                                                        value={standard.max}
+                                                        onChange={(e) => updateAchievementStandard(index, 'max', e.target.value)}
+                                                        className="w-14 h-8 text-center rounded-lg text-sm"
+                                                        placeholder="Max"
+                                                    />
+                                                    <Input 
+                                                        value={standard.grade}
+                                                        onChange={(e) => updateAchievementStandard(index, 'grade', e.target.value)}
+                                                        className="w-14 h-8 text-center font-bold rounded-lg text-sm"
+                                                        placeholder="Code"
+                                                    />
+                                                    <Input 
+                                                        value={standard.description}
+                                                        onChange={(e) => updateAchievementStandard(index, 'description', e.target.value)}
+                                                        className="flex-1 h-8 rounded-lg text-sm"
+                                                        placeholder="Description"
+                                                    />
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="sm"
+                                                        onClick={() => removeAchievementStandard(index)}
+                                                        className="h-8 w-8 p-0 text-destructive"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            ))}
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -973,62 +1047,120 @@ export default function GradebookPage() {
                                         <CardTitle className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <Heart className="w-5 h-5" />
-                                                Social Skills Rating Scale
+                                                Rating Scale
                                             </div>
                                             <Button variant="outline" size="sm" onClick={addRating} className="rounded-full">
-                                                <Plus className="w-4 h-4 mr-1" /> Add Rating
+                                                <Plus className="w-4 h-4 mr-1" /> Add
                                             </Button>
                                         </CardTitle>
                                         <p className="text-sm text-muted-foreground">
-                                            Define the rating codes and labels for social skills assessment
+                                            EX=Excellent, VG=Very Good, G=Good, NI=Needs Improvement
                                         </p>
                                     </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <div className="space-y-2">
-                                            {(template?.skill_ratings || normalizedRatings).map((rating, index) => (
-                                                <div key={index} className="flex items-center gap-2 p-2 rounded-xl bg-muted/30">
+                                    <CardContent className="space-y-2">
+                                        {(template?.skill_ratings || DEFAULT_SKILL_RATINGS).map((rating, index) => (
+                                            <div key={index} className="flex items-center gap-2 p-2 rounded-xl bg-muted/30">
+                                                <Input 
+                                                    value={typeof rating === 'string' ? rating : rating.code}
+                                                    onChange={(e) => updateRating(index, 'code', e.target.value)}
+                                                    className="w-16 h-8 text-center font-bold rounded-lg"
+                                                    placeholder="Code"
+                                                />
+                                                <span className="text-muted-foreground">=</span>
+                                                <Input 
+                                                    value={typeof rating === 'string' ? rating : rating.label}
+                                                    onChange={(e) => updateRating(index, 'label', e.target.value)}
+                                                    className="flex-1 h-8 rounded-lg"
+                                                    placeholder="Description"
+                                                />
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm"
+                                                    onClick={() => removeRating(index)}
+                                                    className="h-8 w-8 p-0 text-destructive"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </CardContent>
+                                </Card>
+
+                                {/* Social Skills Categories */}
+                                <Card className="rounded-3xl border-border/50 shadow-sm">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Users className="w-5 h-5" />
+                                                Social Skills to Assess
+                                            </div>
+                                            <Button variant="outline" size="sm" onClick={addSkillCategory} className="rounded-full">
+                                                <Plus className="w-4 h-4 mr-1" /> Add Category
+                                            </Button>
+                                        </CardTitle>
+                                        <p className="text-sm text-muted-foreground">
+                                            Skills assessed for each student
+                                        </p>
+                                    </CardHeader>
+                                    <CardContent className="space-y-3 max-h-64 overflow-y-auto">
+                                        {(template?.social_skills_categories || DEFAULT_SOCIAL_SKILLS).map((cat, catIndex) => (
+                                            <div key={catIndex} className="border rounded-xl p-3 space-y-2">
+                                                <div className="flex items-center gap-2">
                                                     <Input 
-                                                        value={typeof rating === 'string' ? rating : rating.code}
-                                                        onChange={(e) => updateRating(index, 'code', e.target.value)}
-                                                        className="w-20 h-8 text-center font-bold rounded-lg"
-                                                        placeholder="Code"
-                                                    />
-                                                    <span className="text-muted-foreground">=</span>
-                                                    <Input 
-                                                        value={typeof rating === 'string' ? rating : rating.label}
-                                                        onChange={(e) => updateRating(index, 'label', e.target.value)}
-                                                        className="flex-1 h-8 rounded-lg"
-                                                        placeholder="Description"
+                                                        value={cat.category_name}
+                                                        onChange={(e) => updateCategoryName(catIndex, e.target.value)}
+                                                        className="flex-1 h-8 rounded-lg font-medium"
+                                                        placeholder="Category name"
                                                     />
                                                     <Button 
                                                         variant="ghost" 
                                                         size="sm"
-                                                        onClick={() => removeRating(index)}
-                                                        className="text-destructive hover:text-destructive"
+                                                        onClick={() => addSkillToCategory(catIndex)}
+                                                        className="h-8"
+                                                    >
+                                                        <Plus className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="sm"
+                                                        onClick={() => removeSkillCategory(catIndex)}
+                                                        className="h-8 text-destructive"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </Button>
                                                 </div>
-                                            ))}
-                                        </div>
-
-                                        {/* Preview */}
-                                        <div className="p-4 rounded-xl bg-primary/5">
-                                            <h5 className="font-bold mb-2 text-sm">Preview - Rating Key:</h5>
-                                            <div className="flex flex-wrap gap-2">
-                                                {(template?.skill_ratings || normalizedRatings).map((r, i) => (
-                                                    <div key={i} className="px-3 py-1 rounded-full bg-background text-xs">
-                                                        <strong>{typeof r === 'string' ? r : r.code}</strong> = {typeof r === 'string' ? r : r.label}
-                                                    </div>
-                                                ))}
+                                                <div className="pl-3 space-y-1">
+                                                    {cat.skills.map((skill, skillIndex) => (
+                                                        <div key={skillIndex} className="flex items-center gap-1">
+                                                            <span className="text-xs text-muted-foreground">•</span>
+                                                            <Input 
+                                                                value={skill}
+                                                                onChange={(e) => updateSkillInCategory(catIndex, skillIndex, e.target.value)}
+                                                                className="flex-1 h-7 text-sm rounded"
+                                                                placeholder="Skill name"
+                                                            />
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="sm"
+                                                                onClick={() => removeSkillFromCategory(catIndex, skillIndex)}
+                                                                className="h-6 w-6 p-0 text-destructive"
+                                                            >
+                                                                <Trash2 className="w-3 h-3" />
+                                                            </Button>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
+                                        ))}
+                                        {(!template?.social_skills_categories || template.social_skills_categories.length === 0) && (
+                                            <p className="text-sm text-muted-foreground text-center py-4">No skills configured. Click "Apply Defaults".</p>
+                                        )}
                                     </CardContent>
                                 </Card>
                             </div>
 
                             {/* Save Settings Button */}
-                            <div className="flex justify-end mt-6">
+                            <div className="flex justify-end">
                                 <Button
                                     onClick={handleSaveSettings}
                                     disabled={savingSettings}
@@ -1040,7 +1172,7 @@ export default function GradebookPage() {
                                     ) : (
                                         <Save className="w-4 h-4 mr-2" />
                                     )}
-                                    Save Settings
+                                    Save All Settings
                                 </Button>
                             </div>
                         </TabsContent>
