@@ -400,7 +400,7 @@ export default function GradebookPage() {
     const updateSubjectWeights = (subjectIndex, weightKey, value) => {
         const newSubjects = [...(template?.subjects || [])];
         if (!newSubjects[subjectIndex].weights) {
-            newSubjects[subjectIndex].weights = { homework: 5, groupWork: 5, project: 10, quiz: 10, midTerm: 30, endOfTerm: 40 };
+            newSubjects[subjectIndex].weights = { ...DEFAULT_WEIGHTS };
         }
         newSubjects[subjectIndex].weights[weightKey] = parseFloat(value) || 0;
         setTemplate({ ...template, subjects: newSubjects });
@@ -412,7 +412,7 @@ export default function GradebookPage() {
         newSubjects.push({
             name: 'New Subject',
             is_core: false,
-            weights: { homework: 5, groupWork: 5, project: 10, quiz: 10, midTerm: 30, endOfTerm: 40 }
+            weights: { ...DEFAULT_WEIGHTS }
         });
         setTemplate({ ...template, subjects: newSubjects });
     };
