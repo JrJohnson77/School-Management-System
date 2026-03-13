@@ -40,10 +40,15 @@ Multi-tenant student management system for primary schools with a canvas-based W
   - AP (60-74) = Approaching Proficiency
   - D (50-59) = Developing
   - B (0-49) = Beginning
-- **Social Skills Rating Scale**: EX=Excellent, VG=Very Good, G=Good, NI=Needs Improvement
-- **Social Skills Categories**:
-  - Work Habits & Attitude: Completes Assignments, Follows Instructions, Punctuality
-  - Social Behavior: Deportment, Courteous in Speech and Action, Respect for Teacher, Respect for Peers
+- **Social Skills Tab**: Direct assessment of student skills:
+  - Completes Assignments
+  - Follows Instructions
+  - Punctuality
+  - Deportment
+  - Courteous in Speech and Action
+  - Respect for Teacher
+  - Respect for Peers
+- **Rating Options**: EX (Excellent), VG (Very Good), G (Good), NI (Needs Improvement)
 
 ## Credentials
 - Superuser: JTECH / jtech.innovations@outlook.com / Xekleidoma@1
