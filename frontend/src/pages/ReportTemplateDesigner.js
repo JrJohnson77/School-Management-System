@@ -125,8 +125,26 @@ const ElementPreview = ({ el }) => {
             return <div style={base}>{cfg.content || ''}</div>;
         case 'data-field':
             return <div style={{...base, color: s.color||'#0066cc'}}>{cfg.showLabel!==false ? `${DATA_FIELDS.flatMap(c=>c.fields).find(f=>f.key===cfg.field)?.label||cfg.field}: ` : ''}<span style={{textDecoration:'underline dotted'}}>{`{{${cfg.field||'field'}}}`}</span></div>;
-        case 'image':
-            return cfg.src ? <img src={cfg.src.startsWith('http')?cfg.src:`${process.env.REACT_APP_BACKEND_URL}${cfg.src}`} alt={cfg.alt||''} style={{width:'100%',height:'100%',objectFit:'contain'}} /> : <div style={{...base,border:'1px dashed #aaa',display:'flex',alignItems:'center',justifyContent:'center',color:'#999',fontSize:8}}>Image</div>;
+        case 'image': {
+            const objectFit = cfg.objectFit || 'fill';
+            const opacity = (cfg.opacity ?? 100) / 100;
+            const rotation = cfg.rotation || 0;
+            return cfg.src ? (
+                <img 
+                    src={cfg.src.startsWith('http')?cfg.src:`${process.env.REACT_APP_BACKEND_URL}${cfg.src}`} 
+                    alt={cfg.alt||''} 
+                    style={{
+                        width:'100%',
+                        height:'100%',
+                        objectFit: objectFit,
+                        opacity: opacity,
+                        transform: rotation ? `rotate(${rotation}deg)` : 'none'
+                    }} 
+                />
+            ) : (
+                <div style={{...base,border:'1px dashed #aaa',display:'flex',alignItems:'center',justifyContent:'center',color:'#999',fontSize:8}}>Image</div>
+            );
+        }
         case 'line':
         case 'vertical-line':
             return <div style={{width:'100%',height:'100%',backgroundColor:s.backgroundColor||'#000'}} />;
