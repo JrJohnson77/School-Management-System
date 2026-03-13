@@ -717,76 +717,73 @@ export default function GradebookPage() {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <BookOpen className="w-5 h-5" />
-                                    {useMHPSMode ? 'MHPS Assessment Entry' : 'Subject Grades'}
+                                    MHPS Assessment Entry
                                 </CardTitle>
-                                {useMHPSMode && (
-                                    <p className="text-sm text-muted-foreground">
-                                        Weights: HW 5% | GW 5% | Project 10% | Quiz 10% | Mid-Term 30% | End of Term 40%
-                                    </p>
-                                )}
+                                <p className="text-sm text-muted-foreground">
+                                    Weights: HW 5% | GW 5% | Project 10% | Quiz 10% | Mid-Term 30% | End of Term 40%
+                                </p>
                             </CardHeader>
                             <CardContent>
-                                {useMHPSMode ? (
-                                    <div className="space-y-4">
-                                        <div className="overflow-x-auto">
-                                            <table className="w-full text-sm">
-                                                <thead>
-                                                    <tr className="border-b">
-                                                        <th className="text-left p-2 w-32">Subject</th>
-                                                        {tplComponents.map(comp => (
-                                                            <th key={comp.key} className="text-center p-2 w-20">
-                                                                <div>{comp.label}</div>
-                                                                <div className="text-xs text-muted-foreground">({comp.weight}%)</div>
-                                                            </th>
-                                                        ))}
-                                                        <th className="text-center p-2 w-20 bg-primary/10">Weighted</th>
-                                                        <th className="text-center p-2 w-16 bg-primary/10">Grade</th>
-                                                        <th className="text-left p-2 w-40">Comment</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {subjects.map(subject => {
-                                                        const gradeData = grades[subject] || {};
-                                                        const weightedScore = calcWeightedFromWeights(gradeData, tplWeights);
-                                                        const gradeInfo = getGradeFromScale(weightedScore, tplGradeScale);
-                                                        
-                                                        return (
-                                                            <tr key={subject} className="border-b hover:bg-muted/50">
-                                                                <td className="p-2 font-medium">{subject}</td>
-                                                                {tplComponents.map(comp => (
-                                                                    <td key={comp.key} className="p-1">
-                                                                        <Input
-                                                                            type="number"
-                                                                            min="0"
-                                                                            max="100"
-                                                                            value={gradeData[comp.key] ?? ''}
-                                                                            onChange={(e) => handleGradeChange(subject, comp.key, e.target.value)}
-                                                                            className="w-16 h-8 text-center rounded-lg text-sm"
-                                                                            placeholder="-"
-                                                                        />
-                                                                    </td>
-                                                                ))}
-                                                                <td className="p-2 text-center font-bold bg-primary/5">
-                                                                    {weightedScore > 0 ? weightedScore.toFixed(1) : '-'}
-                                                                </td>
-                                                                <td className={`p-2 text-center font-bold bg-primary/5 ${getGradeColor(gradeInfo.grade)}`}>
-                                                                    {gradeInfo.grade}
-                                                                </td>
-                                                                <td className="p-1">
+                                <div className="space-y-4">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b bg-muted/30">
+                                                    <th className="text-left p-2 w-40 font-semibold">Subject</th>
+                                                    {tplComponents.map(comp => (
+                                                        <th key={comp.key} className="text-center p-2 w-16">
+                                                            <div className="font-semibold">{comp.label}</div>
+                                                            <div className="text-[10px] text-muted-foreground font-normal">({comp.weight}%)</div>
+                                                        </th>
+                                                    ))}
+                                                    <th className="text-center p-2 w-20 bg-primary/10 font-semibold">Weighted</th>
+                                                    <th className="text-center p-2 w-16 bg-primary/10 font-semibold">Grade</th>
+                                                    <th className="text-left p-2 font-semibold">Comment</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {subjects.map(subject => {
+                                                    const gradeData = grades[subject] || {};
+                                                    const weightedScore = calcWeightedFromWeights(gradeData, tplWeights);
+                                                    const gradeInfo = getGradeFromScale(weightedScore, tplGradeScale);
+                                                    
+                                                    return (
+                                                        <tr key={subject} className="border-b hover:bg-muted/30">
+                                                            <td className="p-2 font-medium">{subject}</td>
+                                                            {tplComponents.map(comp => (
+                                                                <td key={comp.key} className="p-1">
                                                                     <Input
-                                                                        value={gradeData.comment || ''}
-                                                                        onChange={(e) => handleGradeChange(subject, 'comment', e.target.value)}
-                                                                        className="h-8 rounded-lg text-sm"
-                                                                        placeholder="Comment..."
+                                                                        type="number"
+                                                                        min="0"
+                                                                        max="100"
+                                                                        value={gradeData[comp.key] ?? ''}
+                                                                        onChange={(e) => handleGradeChange(subject, comp.key, e.target.value)}
+                                                                        className="w-14 h-8 text-center rounded-lg text-sm"
+                                                                        placeholder="-"
                                                                     />
                                                                 </td>
-                                                            </tr>
-                                                        );
-                                                    })}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                                            ))}
+                                                            <td className="p-2 text-center font-bold bg-primary/5">
+                                                                {weightedScore > 0 ? weightedScore.toFixed(1) : '-'}
+                                                            </td>
+                                                            <td className={`p-2 text-center font-bold bg-primary/5 ${getGradeColor(gradeInfo.grade)}`}>
+                                                                {gradeInfo.grade || 'U'}
+                                                            </td>
+                                                            <td className="p-1">
+                                                                <Input
+                                                                    value={gradeData.comment || ''}
+                                                                    onChange={(e) => handleGradeChange(subject, 'comment', e.target.value)}
+                                                                    className="h-8 rounded-lg text-sm"
+                                                                    placeholder="Comment..."
+                                                                />
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
                                     </div>
+                                </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {subjects.map(subject => (
