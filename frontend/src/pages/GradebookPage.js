@@ -319,6 +319,90 @@ export default function GradebookPage() {
         }
     };
 
+    // Save gradebook settings (weights, ratings, subjects)
+    const handleSaveSettings = async () => {
+        setSavingSettings(true);
+        try {
+            // Get current template and update it
+            const updatedTemplate = {
+                ...template,
+                subjects: template?.subjects || [],
+                assessment_weights: template?.assessment_weights || {},
+                use_weighted_grading: template?.use_weighted_grading || false,
+                skill_ratings: template?.skill_ratings || [],
+                social_skills_categories: template?.social_skills_categories || []
+            };
+            
+            await axios.put(`${API}/report-templates/${schoolCode}`, updatedTemplate);
+            toast.success('Gradebook settings saved successfully!');
+        } catch (error) {
+            toast.error(error.response?.data?.detail || 'Failed to save settings');
+        } finally {
+            setSavingSettings(false);
+        }
+    };
+
+    // Update subject weights
+    const updateSubjectWeights = (subjectIndex, weightKey, value) => {
+        const newSubjects = [...(template?.subjects || [])];
+        if (!newSubjects[subjectIndex].weights) {
+            newSubjects[subjectIndex].weights = { homework: 5, groupWork: 5, project: 10, quiz: 10, midTerm: 30, endOfTerm: 40 };
+        }
+        newSubjects[subjectIndex].weights[weightKey] = parseFloat(value) || 0;
+        setTemplate({ ...template, subjects: newSubjects });
+    };
+
+    // Add new subject
+    const addSubject = () => {
+        const newSubjects = [...(template?.subjects || [])];
+        newSubjects.push({
+            name: 'New Subject',
+            is_core: false,
+            weights: { homework: 5, groupWork: 5, project: 10, quiz: 10, midTerm: 30, endOfTerm: 40 }
+        });
+        setTemplate({ ...template, subjects: newSubjects });
+    };
+
+    // Remove subject
+    const removeSubject = (index) => {
+        const newSubjects = [...(template?.subjects || [])].filter((_, i) => i !== index);
+        setTemplate({ ...template, subjects: newSubjects });
+    };
+
+    // Update subject name
+    const updateSubjectName = (index, name) => {
+        const newSubjects = [...(template?.subjects || [])];
+        newSubjects[index] = { ...newSubjects[index], name };
+        setTemplate({ ...template, subjects: newSubjects });
+    };
+
+    // Update subject is_core
+    const updateSubjectCore = (index, is_core) => {
+        const newSubjects = [...(template?.subjects || [])];
+        newSubjects[index] = { ...newSubjects[index], is_core };
+        setTemplate({ ...template, subjects: newSubjects });
+    };
+
+    // Add rating
+    const addRating = () => {
+        const newRatings = [...(template?.skill_ratings || normalizedRatings)];
+        newRatings.push({ code: '', label: '' });
+        setTemplate({ ...template, skill_ratings: newRatings });
+    };
+
+    // Remove rating
+    const removeRating = (index) => {
+        const newRatings = [...(template?.skill_ratings || normalizedRatings)].filter((_, i) => i !== index);
+        setTemplate({ ...template, skill_ratings: newRatings });
+    };
+
+    // Update rating
+    const updateRating = (index, field, value) => {
+        const newRatings = [...(template?.skill_ratings || normalizedRatings)];
+        newRatings[index] = { ...newRatings[index], [field]: value };
+        setTemplate({ ...template, skill_ratings: newRatings });
+    };
+
     const selectedStudentData = students.find(s => s.id === selectedStudent);
 
     if (loading) {
