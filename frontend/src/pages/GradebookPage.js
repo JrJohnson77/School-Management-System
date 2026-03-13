@@ -146,8 +146,16 @@ export default function GradebookPage() {
 
     useEffect(() => {
         if (template) {
-            setUseMHPSMode(!!template.use_weighted_grading);
-            setSubjects(tplSubjects);
+            setUseMHPSMode(true); // Always use weighted mode
+            if (template.subjects?.length > 0) {
+                setSubjects(template.subjects.map(s => s.name));
+            } else {
+                setSubjects(DEFAULT_SUBJECTS);
+            }
+        } else {
+            // Use defaults when no template
+            setUseMHPSMode(true);
+            setSubjects(DEFAULT_SUBJECTS);
         }
     }, [template]);
 
