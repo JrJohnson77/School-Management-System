@@ -109,6 +109,8 @@ const CanvasReportCard = ({ data, classInfo, term, academicYear, totalStudents, 
                 return cfg.src ? <img src={cfg.src.startsWith('http')?cfg.src:`${process.env.REACT_APP_BACKEND_URL}${cfg.src}`} alt="" style={{width:'100%',height:'100%',objectFit:'contain'}} /> : null;
             case 'line':
                 return <div style={{width:'100%',height:'100%',backgroundColor:s.backgroundColor||'#000'}} />;
+            case 'vertical-line':
+                return <div style={{width:'100%',height:'100%',backgroundColor:s.backgroundColor||'#000'}} />;
             case 'rectangle':
                 return <div style={{width:'100%',height:'100%',backgroundColor:s.backgroundColor||'#eee',border:s.border||'none'}} />;
             case 'signature': {
