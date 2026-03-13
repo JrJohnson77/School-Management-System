@@ -784,36 +784,6 @@ export default function GradebookPage() {
                                         </table>
                                     </div>
                                 </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {subjects.map(subject => (
-                                            <div key={subject} className="p-4 rounded-2xl bg-muted/30">
-                                                <Label className="font-medium">{subject}</Label>
-                                                <div className="grid grid-cols-3 gap-2 mt-2">
-                                                    <div className="col-span-1">
-                                                        <Input
-                                                            type="number"
-                                                            min="0"
-                                                            max="100"
-                                                            value={grades[subject]?.score ?? ''}
-                                                            onChange={(e) => handleGradeChange(subject, 'score', e.target.value)}
-                                                            className="rounded-xl"
-                                                            placeholder="Score"
-                                                        />
-                                                    </div>
-                                                    <div className="col-span-2">
-                                                        <Input
-                                                            value={grades[subject]?.comment || ''}
-                                                            onChange={(e) => handleGradeChange(subject, 'comment', e.target.value)}
-                                                            className="rounded-xl"
-                                                            placeholder="Comment"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
 
                                 <div className="flex justify-end mt-6">
                                     <Button
