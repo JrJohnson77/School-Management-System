@@ -681,13 +681,54 @@ export default function ReportTemplateDesigner() {
         }
     }, [dragging, resizing, zoom, updateElement, elements, calculateAlignmentGuides, snapEnabled]);
 
-    // ---- Mouse wheel zoom ----
+    // ---- Mouse wheel zoom (zoom towards pointer) ----
     const handleWheelZoom = useCallback((e) => {
         if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
-            const delta = e.deltaY > 0 ? -0.05 : 0.05;
-            setZoom(z => Math.max(0.25, Math.min(4, z + delta)));
+            const container = canvasContainerRef.current;
+            if (!container) return;
+            
+            const rect = container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            const newZoom = Math.max(0.25, Math.min(4, zoom + delta));
+            const zoomRatio = newZoom / zoom;
+            
+            // Adjust pan to zoom towards mouse position
+            setPan(p => ({
+                x: mouseX - (mouseX - p.x) * zoomRatio,
+                y: mouseY - (mouseY - p.y) * zoomRatio
+            }));
+            setZoom(newZoom);
         }
+    }, [zoom]);
+
+    // ---- Pan handlers (middle mouse or space+drag) ----
+    const handlePanStart = useCallback((e) => {
+        // Middle mouse button or space key held
+        if (e.button === 1 || (e.button === 0 && e.altKey)) {
+            e.preventDefault();
+            setIsPanning(true);
+            setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+        }
+    }, [pan]);
+
+    const handlePanMove = useCallback((e) => {
+        if (isPanning) {
+            setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+        }
+    }, [isPanning, panStart]);
+
+    const handlePanEnd = useCallback(() => {
+        setIsPanning(false);
+    }, []);
+
+    // Reset pan when zoom changes significantly or on double-click
+    const handleResetView = useCallback(() => {
+        setPan({ x: 0, y: 0 });
+        setZoom(0.65);
     }, []);
 
     // ---- Keyboard shortcuts ----
