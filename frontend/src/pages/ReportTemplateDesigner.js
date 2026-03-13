@@ -1016,6 +1016,30 @@ export default function ReportTemplateDesigner() {
                                     }}>
                                         <Upload className="w-3 h-3 mr-1"/>Upload Image
                                     </Button>
+                                    <div className="flex gap-1.5 mt-2">
+                                        <div className="flex-1">
+                                            <Label className="text-[10px]">Fit Mode</Label>
+                                            <Select value={selected.config?.objectFit||'fill'} onValueChange={v=>updateElement(selected.id,{config:{...selected.config,objectFit:v}})}>
+                                                <SelectTrigger className="h-7 text-xs rounded-lg"><SelectValue/></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="fill">Fill (stretch)</SelectItem>
+                                                    <SelectItem value="contain">Contain (fit)</SelectItem>
+                                                    <SelectItem value="cover">Cover (crop)</SelectItem>
+                                                    <SelectItem value="none">None (original)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-1.5">
+                                        <div className="flex-1">
+                                            <Label className="text-[10px]">Opacity</Label>
+                                            <Input type="number" min="0" max="100" value={selected.config?.opacity ?? 100} onChange={e=>updateElement(selected.id,{config:{...selected.config,opacity:parseInt(e.target.value)||100}})} className="h-7 text-xs rounded-lg" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <Label className="text-[10px]">Rotation</Label>
+                                            <Input type="number" min="-360" max="360" value={selected.config?.rotation ?? 0} onChange={e=>updateElement(selected.id,{config:{...selected.config,rotation:parseInt(e.target.value)||0}})} className="h-7 text-xs rounded-lg" />
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                             {selected.type === 'signature' && (
