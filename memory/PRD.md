@@ -29,12 +29,12 @@ Multi-tenant student management system for primary schools with a canvas-based W
 - **[NEW] Clean Template Loading**: Templates load cleanly without duplicate/stale elements
 
 ## Gradebook & Grading
-- **Settings Tab** (Admin/Superuser only): Configure all grading settings from the Gradebook page
-- **Quick Setup**: One-click "Apply Defaults" button to configure standard setup
-- **Core Subjects**: Maths, Language Arts, Science, Social Studies (used for class average & ranking)
-- **Grade Weights**: Homework 5%, Group Work 5%, Project 10%, Quiz 10%, Mid Term 30%, End of Term 40%
-- **Per-subject customization**: Each subject can have its own weight configuration
-- **Achievement Standards** (based on final exam score):
+- **MHPS Assessment Entry Table**: Full weighted entry with columns for each component
+- **Subjects**: English Language, Mathematics, Science, Social Studies, Religious Education, Physical Education, Creative Arts, Music, ICT, French
+- **Grade Weights**: HW 5% | GW 5% | Project 10% | Quiz 10% | Mid-Term 30% | End of Term 40%
+- **Auto-calculation**: Weighted score and grade letter calculated automatically from entered scores
+- **Core Subjects** (for average/ranking): English Language, Mathematics, Science, Social Studies
+- **Achievement Standards** (based on final exam):
   - HP (86-100) = Highly Proficient
   - P (75-85) = Proficient
   - AP (60-74) = Approaching Proficiency
@@ -49,6 +49,7 @@ Multi-tenant student management system for primary schools with a canvas-based W
   - Respect for Teacher
   - Respect for Peers
 - **Rating Options**: EX (Excellent), VG (Very Good), G (Good), NI (Needs Improvement)
+- **Settings Tab** (Admin/Superuser only): Configure all grading settings from the Gradebook page
 
 ## Credentials
 - Superuser: JTECH / jtech.innovations@outlook.com / Xekleidoma@1
