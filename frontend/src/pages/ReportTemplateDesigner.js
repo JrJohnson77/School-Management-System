@@ -863,18 +863,33 @@ export default function ReportTemplateDesigner() {
 
                 {/* Canvas Area */}
                 <div 
-                    className="flex-1 overflow-auto bg-gray-200 flex justify-center py-6 px-4" 
-                    onPointerDown={handleCanvasPointerDown}
+                    ref={canvasContainerRef}
+                    className="flex-1 overflow-hidden bg-gray-200 relative" 
+                    onPointerDown={(e) => {
+                        handleCanvasPointerDown(e);
+                        handlePanStart(e);
+                    }}
+                    onPointerMove={handlePanMove}
+                    onPointerUp={handlePanEnd}
+                    onPointerLeave={handlePanEnd}
                     onWheel={handleWheelZoom}
+                    onDoubleClick={handleResetView}
+                    style={{ cursor: isPanning ? 'grabbing' : 'default' }}
                 >
-                    <div ref={canvasRef} data-canvas="true" data-testid="template-canvas" style={{
-                        width: paper.w, height: paper.h,
-                        transform: `scale(${zoom})`, transformOrigin: 'top center',
-                        backgroundColor: '#ffffff', position: 'relative',
-                        boxShadow: '0 4px 30px rgba(0,0,0,0.15)', flexShrink: 0,
-                        backgroundImage: backgroundUrl ? `url(${backgroundUrl.startsWith('http') ? backgroundUrl : `${process.env.REACT_APP_BACKEND_URL}${backgroundUrl}`})` : 'none',
-                        backgroundSize: 'cover', backgroundPosition: 'center',
+                    <div style={{
+                        position: 'absolute',
+                        left: '50%',
+                        top: '24px',
+                        transform: `translate(calc(-50% + ${pan.x}px), ${pan.y}px)`,
                     }}>
+                        <div ref={canvasRef} data-canvas="true" data-testid="template-canvas" style={{
+                            width: paper.w, height: paper.h,
+                            transform: `scale(${zoom})`, transformOrigin: 'top left',
+                            backgroundColor: '#ffffff', position: 'relative',
+                            boxShadow: '0 4px 30px rgba(0,0,0,0.15)', flexShrink: 0,
+                            backgroundImage: backgroundUrl ? `url(${backgroundUrl.startsWith('http') ? backgroundUrl : `${process.env.REACT_APP_BACKEND_URL}${backgroundUrl}`})` : 'none',
+                            backgroundSize: 'cover', backgroundPosition: 'center',
+                        }}>
                         {/* Visible Grid overlay */}
                         {showGrid && (
                             <div style={{
