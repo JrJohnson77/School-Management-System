@@ -61,6 +61,7 @@ Multi-tenant student management system for primary schools with a canvas-based W
 - [ ] P2: Dark mode, Parent portal, Academic calendar
 
 ## Changelog
+- **Dec 2025 (Session 12)**: Updated Academic Grades tab to MHPS Assessment Entry format with columns for each weighted component (HW 5%, GW 5%, Project 10%, Quiz 10%, Mid-Term 30%, End of Term 40%). Added all 10 subjects with auto-calculated weighted scores and grades.
 - **Dec 2025 (Session 11)**: Simplified Social Skills tab to show 7 specific skills (Completes Assignments, Follows Instructions, Punctuality, Deportment, Courteous in Speech and Action, Respect for Teacher, Respect for Peers) with EX/VG/G/NI rating dropdowns.
 - **Dec 2025 (Session 10)**: Complete overhaul of Gradebook Settings tab with Quick Setup, Achievement Standards, Social Skills Categories configuration. Added defaults: Core subjects (Maths, Language Arts, Science, Social Studies), weights (HW 5%, GW 5%, Project 10%, Quiz 10%, Mid 30%, Final 40%), achievement bands (HP/P/AP/D/B), and social skills (Completes Assignments, Follows Instructions, Punctuality, Deportment, Courteous in Speech and Action, Respect for Teacher, Respect for Peers).
 - **Dec 2025 (Session 9)**: Added Settings tab to Gradebook page for Admin/Superuser to configure subjects, per-subject grade weights, and social skills rating scale directly from Gradebook.
