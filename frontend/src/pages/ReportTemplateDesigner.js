@@ -307,6 +307,9 @@ export default function ReportTemplateDesigner() {
     const [backgroundUrl, setBackgroundUrl] = useState('');
     const [uploading, setUploading] = useState(false);
     const [zoom, setZoom] = useState(0.65);
+    const [pan, setPan] = useState({ x: 0, y: 0 });
+    const [isPanning, setIsPanning] = useState(false);
+    const [panStart, setPanStart] = useState({ x: 0, y: 0 });
     const [dragging, setDragging] = useState(null);
     const [resizing, setResizing] = useState(null);
     const [rawTemplate, setRawTemplate] = useState(null);
@@ -316,6 +319,7 @@ export default function ReportTemplateDesigner() {
     const [undoHistory, setUndoHistory] = useState([]);
     const [clipboard, setClipboard] = useState(null);
     const canvasRef = useRef(null);
+    const canvasContainerRef = useRef(null);
     const isUndoingRef = useRef(false); // Prevent recording undo during undo operation
 
     const paper = PAPER[paperSize] || PAPER.legal;
