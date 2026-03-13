@@ -118,7 +118,7 @@ const buildDefaultElements = (schoolName) => [
 const ElementPreview = ({ el }) => {
     const s = el.styles || {};
     const cfg = el.config || {};
-    const base = { fontSize: s.fontSize||10, fontFamily: s.fontFamily||'Arial', fontWeight: s.fontWeight||'normal', fontStyle: s.fontStyle||'normal', textDecoration: s.textDecoration||'none', color: s.color||'#000', textAlign: s.textAlign||'left', backgroundColor: s.backgroundColor||'transparent', border: s.border||'none', borderRadius: s.borderRadius||0, padding: s.padding||0, overflow:'hidden', width:'100%', height:'100%', boxSizing:'border-box' };
+    const base = { fontSize: s.fontSize||10, fontFamily: s.fontFamily||'Arial', fontWeight: s.fontWeight||'normal', fontStyle: s.fontStyle||'normal', textDecoration: s.textDecoration||'none', color: s.color||'#000', textAlign: s.textAlign||'left', backgroundColor: s.backgroundColor||'transparent', border: s.border||'none', borderRadius: s.borderRadius||0, padding: s.padding||0, lineHeight: s.lineHeight||'normal', overflow:'hidden', width:'100%', height:'100%', boxSizing:'border-box' };
 
     switch (el.type) {
         case 'text':
@@ -128,7 +128,6 @@ const ElementPreview = ({ el }) => {
         case 'image':
             return cfg.src ? <img src={cfg.src.startsWith('http')?cfg.src:`${process.env.REACT_APP_BACKEND_URL}${cfg.src}`} alt={cfg.alt||''} style={{width:'100%',height:'100%',objectFit:'contain'}} /> : <div style={{...base,border:'1px dashed #aaa',display:'flex',alignItems:'center',justifyContent:'center',color:'#999',fontSize:8}}>Image</div>;
         case 'line':
-            return <div style={{width:'100%',height:'100%',backgroundColor:s.backgroundColor||'#000'}} />;
         case 'vertical-line':
             return <div style={{width:'100%',height:'100%',backgroundColor:s.backgroundColor||'#000'}} />;
         case 'rectangle':
