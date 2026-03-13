@@ -18,7 +18,7 @@ Multi-tenant student management system for primary schools with a canvas-based W
 - **Element types**: Text, Data Field, Image, H-Line (horizontal), V-Line (vertical), Rectangle, Signature, Grades Table, Social Skills
 - **Properties panel**: Position/Size, Content, Typography, Colors, Border, Padding
 - **Data field placeholders**: Auto-filled with real student data when rendering
-- **[NEW] Free Zoom**: Slider (25%-400%), direct input, preset buttons (50/100/200%), Ctrl+scroll wheel zoom
+- **[NEW] Pan & Zoom**: Ctrl+scroll to zoom towards pointer, Alt+drag to pan, double-click to reset, presets (50/100/200/Reset), slider (25%-400%)
 - **[NEW] Visible Grid**: Toggle-able blue grid lines (10px intervals) for alignment reference
 - **[NEW] Snap-to-Grid**: Elements snap to 10px grid positions when dragging
 - **[NEW] Alignment Guides**: Red lines appear when elements align with other elements (edges/center within 5px threshold)
