@@ -86,14 +86,36 @@ const CanvasReportCard = ({ data, classInfo, term, academicYear, totalStudents, 
     const tpl = template || {};
     const els = tpl.canvas_elements || [];
     const paperSize = tpl.paper_size || 'legal';
-    const paperH = paperSize === 'letter' ? '11in' : paperSize === 'a4' ? '297mm' : '14in';
+    // Paper dimensions at 96 DPI (matching designer)
+    const paperDims = {
+        legal: { w: 816, h: 1344 },
+        letter: { w: 816, h: 1056 },
+        a4: { w: 794, h: 1123 }
+    };
+    const paper = paperDims[paperSize] || paperDims.legal;
     const bgUrl = tpl.background_url;
     const subjectGrades = data.grades?.subjects || [];
 
     const renderElement = (el) => {
         const s = el.styles || {};
         const cfg = el.config || {};
-        const base = { fontSize: s.fontSize||10, fontFamily: s.fontFamily||'Arial,sans-serif', fontWeight: s.fontWeight||'normal', fontStyle: s.fontStyle||'normal', textDecoration: s.textDecoration||'none', color: s.color||'#000', textAlign: s.textAlign||'left', backgroundColor: s.backgroundColor||'transparent', border: s.border||'none', padding: s.padding||0, overflow:'hidden', width:'100%', height:'100%', boxSizing:'border-box' };
+        const base = { 
+            fontSize: s.fontSize||10, 
+            fontFamily: s.fontFamily||'Arial,sans-serif', 
+            fontWeight: s.fontWeight||'normal', 
+            fontStyle: s.fontStyle||'normal', 
+            textDecoration: s.textDecoration||'none', 
+            color: s.color||'#000', 
+            textAlign: s.textAlign||'left', 
+            backgroundColor: s.backgroundColor||'transparent', 
+            border: s.border||'none', 
+            padding: s.padding||0, 
+            lineHeight: s.lineHeight || 'normal',
+            overflow:'hidden', 
+            width:'100%', 
+            height:'100%', 
+            boxSizing:'border-box' 
+        };
 
         switch (el.type) {
             case 'text': {
@@ -108,7 +130,6 @@ const CanvasReportCard = ({ data, classInfo, term, academicYear, totalStudents, 
             case 'image':
                 return cfg.src ? <img src={cfg.src.startsWith('http')?cfg.src:`${process.env.REACT_APP_BACKEND_URL}${cfg.src}`} alt="" style={{width:'100%',height:'100%',objectFit:'contain'}} /> : null;
             case 'line':
-                return <div style={{width:'100%',height:'100%',backgroundColor:s.backgroundColor||'#000'}} />;
             case 'vertical-line':
                 return <div style={{width:'100%',height:'100%',backgroundColor:s.backgroundColor||'#000'}} />;
             case 'rectangle':
