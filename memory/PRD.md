@@ -45,6 +45,7 @@ Multi-tenant student management system for primary schools with a canvas-based W
 - [ ] P2: Dark mode, Parent portal, Academic calendar
 
 ## Changelog
+- **Dec 2025 (Session 9)**: Added Settings tab to Gradebook page for Admin/Superuser to configure subjects, per-subject grade weights, and social skills rating scale directly from Gradebook.
 - **Dec 2025 (Session 8)**: Added per-subject customizable grade weights with settings icon. Added customizable social skills rating scale (code/label format: EX=Excellent, VG=Very Good, G=Good, NI=Needs Improvement).
 - **Dec 2025 (Session 7)**: Added free image adjustment - Fit Mode (fill/contain/cover/none), Opacity (0-100%), and Rotation (-360 to 360°) controls for image elements.
 - **Dec 2025 (Session 6)**: Added Line Height control for text elements. Removed PDF download button from Reports. Fixed WYSIWYG rendering to use exact pixel positions. Fixed vertical lines appearing in report generation.
