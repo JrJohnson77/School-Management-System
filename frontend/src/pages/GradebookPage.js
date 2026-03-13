@@ -90,8 +90,10 @@ export default function GradebookPage() {
     const [existingGradebook, setExistingGradebook] = useState(null);
     const [useMHPSMode, setUseMHPSMode] = useState(false);
     const [template, setTemplate] = useState(null);
+    const [savingSettings, setSavingSettings] = useState(false);
+    const [expandedSubject, setExpandedSubject] = useState(null);
     
-    const { isAdmin, isTeacher, isParent, schoolCode } = useAuth();
+    const { isAdmin, isTeacher, isParent, schoolCode, isSuperuser } = useAuth();
 
     // Derive template-based values
     const tplSubjects = template?.subjects?.map(s => s.name) || [];
