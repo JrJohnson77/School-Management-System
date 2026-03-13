@@ -29,6 +29,7 @@ Multi-tenant student management system for primary schools with a canvas-based W
 - **[NEW] Clean Template Loading**: Templates load cleanly without duplicate/stale elements
 
 ## Gradebook & Grading
+- **Settings Tab** (Admin/Superuser only): Configure subjects, weights, and rating scales from the Gradebook page
 - **Per-subject grade weights**: Each subject can have its own customizable weights (Homework, Group Work, Project, Quiz, Mid-Term, End of Term)
 - **School-level default weights**: Set default weights that apply to new subjects
 - **Weighted grading toggle**: Enable/disable weighted grading per school
