@@ -807,45 +807,54 @@ export default function GradebookPage() {
                                 </p>
                             </CardHeader>
                             <CardContent>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {tplSocialCategories.map((cat) => (
-                                        <div key={cat.category_name} className="space-y-4">
-                                            <h4 className="font-bold flex items-center gap-2">
-                                                <Heart className="w-4 h-4" />
-                                                {cat.category_name}
-                                            </h4>
-                                            {cat.skills.map(skill => (
-                                                <div key={skill} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
-                                                    <Label className="text-sm">{skill}</Label>
-                                                    <Select
-                                                        value={socialSkills[skill] || ''}
-                                                        onValueChange={(value) => handleSkillChange(skill, value)}
-                                                    >
-                                                        <SelectTrigger className="w-40 rounded-xl h-8">
-                                                            <SelectValue placeholder="Select..." />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {normalizedRatings.map(rating => (
-                                                                <SelectItem key={rating.code} value={rating.code}>
-                                                                    {rating.code} - {rating.label}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                            ))}
+                                {/* Default skills list - always show these */}
+                                <div className="space-y-3">
+                                    {[
+                                        'Completes Assignments',
+                                        'Follows Instructions',
+                                        'Punctuality',
+                                        'Deportment',
+                                        'Courteous in Speech and Action',
+                                        'Respect for Teacher',
+                                        'Respect for Peers'
+                                    ].map(skill => (
+                                        <div key={skill} className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
+                                            <Label className="text-sm font-medium">{skill}</Label>
+                                            <Select
+                                                value={socialSkills[skill] || ''}
+                                                onValueChange={(value) => handleSkillChange(skill, value)}
+                                            >
+                                                <SelectTrigger className="w-48 rounded-xl h-9">
+                                                    <SelectValue placeholder="Select rating..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="EX">EX - Excellent</SelectItem>
+                                                    <SelectItem value="VG">VG - Very Good</SelectItem>
+                                                    <SelectItem value="G">G - Good</SelectItem>
+                                                    <SelectItem value="NI">NI - Needs Improvement</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                     ))}
-                                    {tplSocialCategories.length > 0 && (
-                                        <div className="mt-2 p-4 rounded-xl bg-primary/5 text-sm">
-                                            <h5 className="font-bold mb-2">Rating Key:</h5>
-                                            <ul className="space-y-1 text-muted-foreground">
-                                                {normalizedRatings.map(r => (
-                                                    <li key={r.code}><strong>{r.code}</strong> = {r.label}</li>
-                                                ))}
-                                            </ul>
+                                </div>
+
+                                {/* Rating Key */}
+                                <div className="mt-6 p-4 rounded-xl bg-primary/5">
+                                    <h5 className="font-bold mb-2 text-sm">Rating Key:</h5>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                        <div className="px-3 py-1.5 rounded-lg bg-background text-sm">
+                                            <strong>EX</strong> = Excellent
                                         </div>
-                                    )}
+                                        <div className="px-3 py-1.5 rounded-lg bg-background text-sm">
+                                            <strong>VG</strong> = Very Good
+                                        </div>
+                                        <div className="px-3 py-1.5 rounded-lg bg-background text-sm">
+                                            <strong>G</strong> = Good
+                                        </div>
+                                        <div className="px-3 py-1.5 rounded-lg bg-background text-sm">
+                                            <strong>NI</strong> = Needs Improvement
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="flex justify-end mt-6">
