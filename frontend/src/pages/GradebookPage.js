@@ -98,7 +98,16 @@ export default function GradebookPage() {
         }))
         : [];
     const tplSocialCategories = template?.social_skills_categories || [];
-    const tplSkillRatings = template?.skill_ratings || ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'];
+    const tplSkillRatings = template?.skill_ratings || [
+        { code: 'EX', label: 'Excellent' },
+        { code: 'VG', label: 'Very Good' },
+        { code: 'G', label: 'Good' },
+        { code: 'NI', label: 'Needs Improvement' }
+    ];
+    // Handle legacy format (array of strings) and new format (array of objects)
+    const normalizedRatings = tplSkillRatings.map(r => 
+        typeof r === 'string' ? { code: r, label: r } : r
+    );
 
     useEffect(() => {
         fetchInitialData();
