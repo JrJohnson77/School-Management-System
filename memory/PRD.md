@@ -29,11 +29,21 @@ Multi-tenant student management system for primary schools with a canvas-based W
 - **[NEW] Clean Template Loading**: Templates load cleanly without duplicate/stale elements
 
 ## Gradebook & Grading
-- **Settings Tab** (Admin/Superuser only): Configure subjects, weights, and rating scales from the Gradebook page
-- **Per-subject grade weights**: Each subject can have its own customizable weights (Homework, Group Work, Project, Quiz, Mid-Term, End of Term)
-- **School-level default weights**: Set default weights that apply to new subjects
-- **Weighted grading toggle**: Enable/disable weighted grading per school
-- **Social skills rating scale**: Customizable code/label pairs (default: EX=Excellent, VG=Very Good, G=Good, NI=Needs Improvement)
+- **Settings Tab** (Admin/Superuser only): Configure all grading settings from the Gradebook page
+- **Quick Setup**: One-click "Apply Defaults" button to configure standard setup
+- **Core Subjects**: Maths, Language Arts, Science, Social Studies (used for class average & ranking)
+- **Grade Weights**: Homework 5%, Group Work 5%, Project 10%, Quiz 10%, Mid Term 30%, End of Term 40%
+- **Per-subject customization**: Each subject can have its own weight configuration
+- **Achievement Standards** (based on final exam score):
+  - HP (86-100) = Highly Proficient
+  - P (75-85) = Proficient
+  - AP (60-74) = Approaching Proficiency
+  - D (50-59) = Developing
+  - B (0-49) = Beginning
+- **Social Skills Rating Scale**: EX=Excellent, VG=Very Good, G=Good, NI=Needs Improvement
+- **Social Skills Categories**:
+  - Work Habits & Attitude: Completes Assignments, Follows Instructions, Punctuality
+  - Social Behavior: Deportment, Courteous in Speech and Action, Respect for Teacher, Respect for Peers
 
 ## Credentials
 - Superuser: JTECH / jtech.innovations@outlook.com / Xekleidoma@1
