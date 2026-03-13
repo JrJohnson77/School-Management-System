@@ -540,10 +540,10 @@ export default function GradebookPage() {
                 </Card>
             )}
 
-            {/* Tabs for Grades and Social Skills */}
+            {/* Tabs for Grades, Social Skills, and Settings */}
             {selectedStudent && (
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 rounded-2xl h-12 max-w-md">
+                    <TabsList className={`grid w-full rounded-2xl h-12 ${(isAdmin || isSuperuser) ? 'grid-cols-3 max-w-xl' : 'grid-cols-2 max-w-md'}`}>
                         <TabsTrigger value="grades" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                             <BookOpen className="w-4 h-4 mr-2" />
                             Academic Grades
@@ -552,6 +552,12 @@ export default function GradebookPage() {
                             <Heart className="w-4 h-4 mr-2" />
                             Social Skills
                         </TabsTrigger>
+                        {(isAdmin || isSuperuser) && (
+                            <TabsTrigger value="settings" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                                <Settings className="w-4 h-4 mr-2" />
+                                Settings
+                            </TabsTrigger>
+                        )}
                     </TabsList>
 
                     {/* Academic Grades Tab */}
