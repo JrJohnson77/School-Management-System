@@ -213,6 +213,24 @@ const TypographyEditor = ({ styles, onChange }) => (
                 </Select>
             </div>
         </div>
+        <div className="flex gap-1.5">
+            <div className="flex-1"><Label className="text-[10px]">Line Height</Label>
+                <Select value={styles.lineHeight||'normal'} onValueChange={v=>onChange({...styles,lineHeight:v})}>
+                    <SelectTrigger className="h-7 text-xs rounded-lg"><SelectValue/></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="1">1.0</SelectItem>
+                        <SelectItem value="1.2">1.2</SelectItem>
+                        <SelectItem value="1.4">1.4</SelectItem>
+                        <SelectItem value="1.5">1.5</SelectItem>
+                        <SelectItem value="1.6">1.6</SelectItem>
+                        <SelectItem value="1.8">1.8</SelectItem>
+                        <SelectItem value="2">2.0</SelectItem>
+                        <SelectItem value="2.5">2.5</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
         <div className="flex gap-1">
             {[['bold','Bold',Bold,'fontWeight','bold','normal'],['italic','Italic',Italic,'fontStyle','italic','normal'],['underline','Underline',Underline,'textDecoration','underline','none']].map(([k,t,Icon,prop,on,off])=>(
                 <Button key={k} variant={styles[prop]===on?'default':'outline'} size="sm" className="h-7 w-7 p-0" onClick={()=>onChange({...styles,[prop]:styles[prop]===on?off:on})} title={t}><Icon className="w-3 h-3"/></Button>
