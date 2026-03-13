@@ -327,10 +327,11 @@ export default function GradebookPage() {
             const updatedTemplate = {
                 ...template,
                 subjects: template?.subjects || [],
-                assessment_weights: template?.assessment_weights || {},
+                assessment_weights: template?.assessment_weights || DEFAULT_WEIGHTS,
                 use_weighted_grading: template?.use_weighted_grading || false,
                 skill_ratings: template?.skill_ratings || [],
-                social_skills_categories: template?.social_skills_categories || []
+                social_skills_categories: template?.social_skills_categories || [],
+                grade_scale: template?.grade_scale || []
             };
             
             await axios.put(`${API}/report-templates/${schoolCode}`, updatedTemplate);
@@ -340,6 +341,59 @@ export default function GradebookPage() {
         } finally {
             setSavingSettings(false);
         }
+    };
+
+    // Default configuration constants
+    const DEFAULT_WEIGHTS = { homework: 5, groupWork: 5, project: 10, quiz: 10, midTerm: 30, endOfTerm: 40 };
+    
+    const DEFAULT_CORE_SUBJECTS = [
+        { name: 'Mathematics', is_core: true, weights: DEFAULT_WEIGHTS },
+        { name: 'Language Arts', is_core: true, weights: DEFAULT_WEIGHTS },
+        { name: 'Science', is_core: true, weights: DEFAULT_WEIGHTS },
+        { name: 'Social Studies', is_core: true, weights: DEFAULT_WEIGHTS }
+    ];
+
+    const DEFAULT_ACHIEVEMENT_STANDARDS = [
+        { min: 86, max: 100, grade: 'HP', description: 'Highly Proficient' },
+        { min: 75, max: 85, grade: 'P', description: 'Proficient' },
+        { min: 60, max: 74, grade: 'AP', description: 'Approaching Proficiency' },
+        { min: 50, max: 59, grade: 'D', description: 'Developing' },
+        { min: 0, max: 49, grade: 'B', description: 'Beginning' }
+    ];
+
+    const DEFAULT_SKILL_RATINGS = [
+        { code: 'EX', label: 'Excellent' },
+        { code: 'VG', label: 'Very Good' },
+        { code: 'G', label: 'Good' },
+        { code: 'NI', label: 'Needs Improvement' }
+    ];
+
+    const DEFAULT_SOCIAL_SKILLS = [
+        { category_name: 'Work Habits & Attitude', skills: [
+            'Completes Assignments',
+            'Follows Instructions',
+            'Punctuality'
+        ]},
+        { category_name: 'Social Behavior', skills: [
+            'Deportment',
+            'Courteous in Speech and Action',
+            'Respect for Teacher',
+            'Respect for Peers'
+        ]}
+    ];
+
+    // Apply default configuration
+    const applyDefaultConfig = () => {
+        setTemplate({
+            ...template,
+            subjects: DEFAULT_CORE_SUBJECTS,
+            assessment_weights: DEFAULT_WEIGHTS,
+            use_weighted_grading: true,
+            grade_scale: DEFAULT_ACHIEVEMENT_STANDARDS,
+            skill_ratings: DEFAULT_SKILL_RATINGS,
+            social_skills_categories: DEFAULT_SOCIAL_SKILLS
+        });
+        toast.success('Default configuration applied! Click Save to persist.');
     };
 
     // Update subject weights
