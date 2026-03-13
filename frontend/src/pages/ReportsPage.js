@@ -211,12 +211,19 @@ const CanvasReportCard = ({ data, classInfo, term, academicYear, totalStudents, 
 
     return (
         <div className="mhps-report-card bg-white mx-auto mb-8 print:mb-0 print:page-break-after-always" style={{
-            width: '8.5in', minHeight: paperH, position: 'relative', fontFamily: 'Arial, sans-serif', fontSize: '10pt',
+            width: paper.w, height: paper.h, position: 'relative', fontFamily: 'Arial, sans-serif', fontSize: '10pt',
             backgroundImage: bgUrl ? `url(${bgUrl.startsWith('http') ? bgUrl : `${process.env.REACT_APP_BACKEND_URL}${bgUrl}`})` : 'none',
             backgroundSize: 'cover', backgroundPosition: 'center',
+            transform: 'scale(1)', transformOrigin: 'top center',
         }}>
             {els.map(el => (
-                <div key={el.id} style={{ position:'absolute', left: el.x * (8.5/816) + 'in', top: el.y * (14/1344) + 'in', width: el.width * (8.5/816) + 'in', height: el.height === 'auto' ? 'auto' : el.height * (14/1344) + 'in' }}>
+                <div key={el.id} style={{ 
+                    position:'absolute', 
+                    left: el.x, 
+                    top: el.y, 
+                    width: el.width, 
+                    height: el.height === 'auto' ? 'auto' : el.height 
+                }}>
                     {renderElement(el)}
                 </div>
             ))}
