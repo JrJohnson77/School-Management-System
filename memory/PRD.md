@@ -15,7 +15,7 @@ Multi-tenant student management system for primary schools with a canvas-based W
 - **Background Upload**: Upload existing report card design as background image via "Background" button
 - **Free positioning**: Drag elements anywhere on paper-sized canvas
 - **Resize handles**: Corner handles for precise element sizing
-- **Element types**: Text, Data Field, Image, H-Line (horizontal), V-Line (vertical), Rectangle, Signature, Grades Table, Social Skills
+- **Element types**: Text, Data Field, Image (with fit mode, opacity, rotation), H-Line, V-Line, Rectangle, Signature, Grades Table, Social Skills
 - **Properties panel**: Position/Size, Content, Typography (incl. Line Height), Colors, Border, Padding
 - **Data field placeholders**: Auto-filled with real student data when rendering
 - **[NEW] Line Height**: Adjustable line spacing for text elements (Normal, 1.0, 1.2, 1.4, 1.5, 1.6, 1.8, 2.0, 2.5)
