@@ -127,8 +127,24 @@ const CanvasReportCard = ({ data, classInfo, term, academicYear, totalStudents, 
                 const val = resolveField(cfg.field, data, classInfo, term, academicYear);
                 return <div style={base}>{val}</div>;
             }
-            case 'image':
-                return cfg.src ? <img src={cfg.src.startsWith('http')?cfg.src:`${process.env.REACT_APP_BACKEND_URL}${cfg.src}`} alt="" style={{width:'100%',height:'100%',objectFit:'contain'}} /> : null;
+            case 'image': {
+                const objectFit = cfg.objectFit || 'fill';
+                const opacity = (cfg.opacity ?? 100) / 100;
+                const rotation = cfg.rotation || 0;
+                return cfg.src ? (
+                    <img 
+                        src={cfg.src.startsWith('http')?cfg.src:`${process.env.REACT_APP_BACKEND_URL}${cfg.src}`} 
+                        alt="" 
+                        style={{
+                            width:'100%',
+                            height:'100%',
+                            objectFit: objectFit,
+                            opacity: opacity,
+                            transform: rotation ? `rotate(${rotation}deg)` : 'none'
+                        }} 
+                    />
+                ) : null;
+            }
             case 'line':
             case 'vertical-line':
                 return <div style={{width:'100%',height:'100%',backgroundColor:s.backgroundColor||'#000'}} />;
