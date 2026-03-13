@@ -36,6 +36,7 @@ Multi-tenant student management system for primary schools with a canvas-based W
 - [ ] P2: Dark mode, Parent portal, Academic calendar
 
 ## Changelog
+- **Dec 2025 (Session 5)**: Improved zoom to pan-and-zoom (Ctrl+scroll zooms to pointer, Alt+drag pans, double-click resets). Fixed vertical lines not appearing in report generation.
 - **Dec 2025 (Session 4)**: Added free zoom with slider (25%-400%), direct input, preset buttons (50/100/200%), and Ctrl+scroll wheel zoom.
 - **Dec 2025 (Session 3)**: Added vertical line (V-Line) element type to canvas editor. Renamed "Line" to "H-Line" for clarity.
 - **Dec 2025 (Session 2)**: Added Ctrl+C (Copy), Ctrl+V (Paste), Ctrl+Z (Undo) functionality. Fixed template persistence to ensure clean loading without duplicate elements. Added Undo/Copy/Paste buttons to toolbar.
