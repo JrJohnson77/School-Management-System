@@ -353,21 +353,71 @@ const GradesTablePropEditor = ({ config, onChange }) => {
 };
 
 const SocialSkillsPropEditor = ({ config, onChange }) => {
+    const defaultRatings = [
+        { code: 'EX', label: 'Excellent' },
+        { code: 'VG', label: 'Very Good' },
+        { code: 'G', label: 'Good' },
+        { code: 'NI', label: 'Needs Improvement' }
+    ];
     const addCat = () => onChange({...config, categories:[...config.categories,{category_name:'New',skills:['']}]});
     const rmCat = (i) => onChange({...config, categories:config.categories.filter((_,idx)=>idx!==i)});
+    const addRating = () => onChange({...config, ratings:[...(config.ratings||defaultRatings),{code:'',label:''}]});
+    const rmRating = (i) => onChange({...config, ratings:(config.ratings||defaultRatings).filter((_,idx)=>idx!==i)});
+    const updRating = (i,f,v) => { const r=[...(config.ratings||defaultRatings)]; r[i]={...r[i],[f]:v}; onChange({...config,ratings:r}); };
+    
+    // Initialize ratings if not present
+    if (!config.ratings) {
+        setTimeout(() => onChange({...config, ratings: defaultRatings}), 0);
+    }
+    
     return (
         <div className="space-y-2">
-            <div className="flex items-center justify-between"><Label className="text-[10px] font-semibold">Categories</Label><Button variant="ghost" size="sm" onClick={addCat} className="h-5 text-[10px] px-1"><Plus className="w-3 h-3"/></Button></div>
-            {config.categories.map((cat,ci)=>(
-                <div key={ci} className="p-1.5 rounded border space-y-0.5">
-                    <div className="flex items-center gap-1"><Input value={cat.category_name} onChange={e=>{const c=[...config.categories];c[ci]={...c[ci],category_name:e.target.value};onChange({...config,categories:c});}} className="h-6 text-[10px] rounded flex-1 font-medium"/><button onClick={()=>rmCat(ci)} className="text-destructive"><Trash2 className="w-3 h-3"/></button></div>
-                    {cat.skills.map((sk,si)=>(
-                        <div key={si} className="flex items-center gap-0.5 pl-2"><Input value={sk} onChange={e=>{const c=[...config.categories];const ss=[...c[ci].skills];ss[si]=e.target.value;c[ci]={...c[ci],skills:ss};onChange({...config,categories:c});}} className="h-5 text-[8px] rounded flex-1"/>
-                        <button onClick={()=>{const c=[...config.categories];c[ci]={...c[ci],skills:c[ci].skills.filter((_,i)=>i!==si)};onChange({...config,categories:c});}} className="text-destructive"><Trash2 className="w-2.5 h-2.5"/></button></div>
-                    ))}
-                    <Button variant="ghost" size="sm" onClick={()=>{const c=[...config.categories];c[ci]={...c[ci],skills:[...c[ci].skills,'']};onChange({...config,categories:c});}} className="h-4 text-[8px] px-1 ml-2"><Plus className="w-2.5 h-2.5"/>Skill</Button>
+            {/* Rating Scale Section */}
+            <div className="p-1.5 rounded border bg-muted/20 space-y-1">
+                <div className="flex items-center justify-between">
+                    <Label className="text-[10px] font-semibold">Rating Scale</Label>
+                    <Button variant="ghost" size="sm" onClick={addRating} className="h-4 text-[8px] px-1"><Plus className="w-2.5 h-2.5"/></Button>
                 </div>
-            ))}
+                <div className="space-y-0.5">
+                    {(config.ratings || defaultRatings).map((r, i) => (
+                        <div key={i} className="flex items-center gap-1">
+                            <Input value={r.code} onChange={e=>updRating(i,'code',e.target.value)} className="w-10 h-5 text-[9px] rounded text-center font-bold" placeholder="Code"/>
+                            <span className="text-[8px]">=</span>
+                            <Input value={r.label} onChange={e=>updRating(i,'label',e.target.value)} className="h-5 text-[9px] rounded flex-1" placeholder="Description"/>
+                            <button onClick={()=>rmRating(i)} className="text-destructive"><Trash2 className="w-2.5 h-2.5"/></button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            
+            {/* Categories Section */}
+            <div className="flex items-center justify-between">
+                <Label className="text-[10px] font-semibold">Skill Categories</Label>
+                <Button variant="ghost" size="sm" onClick={addCat} className="h-5 text-[10px] px-1"><Plus className="w-3 h-3"/></Button>
+            </div>
+            <div className="max-h-40 overflow-y-auto space-y-1">
+                {config.categories.map((cat,ci)=>(
+                    <div key={ci} className="p-1.5 rounded border space-y-0.5">
+                        <div className="flex items-center gap-1">
+                            <Input value={cat.category_name} onChange={e=>{const c=[...config.categories];c[ci]={...c[ci],category_name:e.target.value};onChange({...config,categories:c});}} className="h-6 text-[10px] rounded flex-1 font-medium"/>
+                            <button onClick={()=>rmCat(ci)} className="text-destructive"><Trash2 className="w-3 h-3"/></button>
+                        </div>
+                        {cat.skills.map((sk,si)=>(
+                            <div key={si} className="flex items-center gap-0.5 pl-2">
+                                <Input value={sk} onChange={e=>{const c=[...config.categories];const ss=[...c[ci].skills];ss[si]=e.target.value;c[ci]={...c[ci],skills:ss};onChange({...config,categories:c});}} className="h-5 text-[8px] rounded flex-1"/>
+                                <button onClick={()=>{const c=[...config.categories];c[ci]={...c[ci],skills:c[ci].skills.filter((_,i)=>i!==si)};onChange({...config,categories:c});}} className="text-destructive"><Trash2 className="w-2.5 h-2.5"/></button>
+                            </div>
+                        ))}
+                        <Button variant="ghost" size="sm" onClick={()=>{const c=[...config.categories];c[ci]={...c[ci],skills:[...c[ci].skills,'']};onChange({...config,categories:c});}} className="h-4 text-[8px] px-1 ml-2"><Plus className="w-2.5 h-2.5"/>Skill</Button>
+                    </div>
+                ))}
+            </div>
+            
+            {/* Header Colors */}
+            <div className="flex gap-1.5">
+                <div className="flex items-center gap-1 flex-1"><Label className="text-[10px]">Header</Label><input type="color" value={config.headerBg||'#1e40af'} onChange={e=>onChange({...config,headerBg:e.target.value})} className="w-5 h-5 rounded border cursor-pointer"/></div>
+                <div className="flex items-center gap-1 flex-1"><Label className="text-[10px]">Text</Label><input type="color" value={config.headerText||'#ffffff'} onChange={e=>onChange({...config,headerText:e.target.value})} className="w-5 h-5 rounded border cursor-pointer"/></div>
+            </div>
         </div>
     );
 };
