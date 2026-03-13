@@ -836,6 +836,7 @@ export default function ReportTemplateDesigner() {
                         <Button variant="ghost" size="sm" onClick={()=>setZoom(0.5)} className={`h-5 px-1.5 text-[9px] ${zoom === 0.5 ? 'bg-muted' : ''}`} title="50%">50</Button>
                         <Button variant="ghost" size="sm" onClick={()=>setZoom(1)} className={`h-5 px-1.5 text-[9px] ${zoom === 1 ? 'bg-muted' : ''}`} title="100%">100</Button>
                         <Button variant="ghost" size="sm" onClick={()=>setZoom(2)} className={`h-5 px-1.5 text-[9px] ${zoom === 2 ? 'bg-muted' : ''}`} title="200%">200</Button>
+                        <Button variant="ghost" size="sm" onClick={handleResetView} className="h-5 px-1.5 text-[9px]" title="Reset View">Reset</Button>
                     </div>
                     <Button onClick={handleSave} disabled={saving} className="rounded-full h-7 px-4 text-xs" data-testid="save-template-btn">
                         {saving ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}Save
