@@ -282,27 +282,72 @@ const DataFieldPicker = ({ field, onChange }) => (
 );
 
 const GradesTablePropEditor = ({ config, onChange }) => {
-    const addSubj = () => onChange({...config, subjects:[...config.subjects,{name:'',is_core:false}]});
+    const defaultWeights = { homework: 5, groupWork: 5, project: 10, quiz: 10, midTerm: 30, endOfTerm: 40 };
+    const addSubj = () => onChange({...config, subjects:[...config.subjects,{name:'',is_core:false, weights: {...defaultWeights}}]});
     const rmSubj = (i) => onChange({...config, subjects:config.subjects.filter((_,idx)=>idx!==i)});
     const updSubj = (i,f,v) => { const s=[...config.subjects]; s[i]={...s[i],[f]:v}; onChange({...config,subjects:s}); };
+    const updSubjWeight = (i, wKey, wVal) => {
+        const s = [...config.subjects];
+        s[i] = {...s[i], weights: {...(s[i].weights || defaultWeights), [wKey]: parseFloat(wVal) || 0}};
+        onChange({...config, subjects: s});
+    };
+    const [expandedSubj, setExpandedSubj] = useState(null);
+    
     return (
         <div className="space-y-2">
-            <div className="flex items-center justify-between"><Label className="text-[10px] font-semibold">Subjects</Label><Button variant="ghost" size="sm" onClick={addSubj} className="h-5 text-[10px] px-1"><Plus className="w-3 h-3"/></Button></div>
-            <div className="max-h-32 overflow-y-auto space-y-0.5">
+            <div className="flex items-center justify-between">
+                <Label className="text-[10px] font-semibold">Subjects</Label>
+                <Button variant="ghost" size="sm" onClick={addSubj} className="h-5 text-[10px] px-1"><Plus className="w-3 h-3"/></Button>
+            </div>
+            <div className="max-h-48 overflow-y-auto space-y-1">
                 {config.subjects.map((s,i)=>(
-                    <div key={i} className="flex items-center gap-1">
-                        <Input value={s.name} onChange={e=>updSubj(i,'name',e.target.value)} className="h-6 text-[10px] rounded flex-1"/>
-                        <Switch checked={s.is_core} onCheckedChange={v=>updSubj(i,'is_core',v)} /><span className="text-[8px]">Core</span>
-                        <button onClick={()=>rmSubj(i)} className="text-destructive"><Trash2 className="w-3 h-3"/></button>
+                    <div key={i} className="border rounded p-1.5 space-y-1">
+                        <div className="flex items-center gap-1">
+                            <Input value={s.name} onChange={e=>updSubj(i,'name',e.target.value)} className="h-6 text-[10px] rounded flex-1" placeholder="Subject name"/>
+                            <Switch checked={s.is_core} onCheckedChange={v=>updSubj(i,'is_core',v)} /><span className="text-[8px]">Core</span>
+                            <button onClick={()=>setExpandedSubj(expandedSubj===i?null:i)} className="text-muted-foreground hover:text-primary"><Settings className="w-3 h-3"/></button>
+                            <button onClick={()=>rmSubj(i)} className="text-destructive"><Trash2 className="w-3 h-3"/></button>
+                        </div>
+                        {expandedSubj === i && (
+                            <div className="pl-2 pt-1 border-t space-y-0.5">
+                                <p className="text-[8px] font-semibold text-muted-foreground">Subject Weights:</p>
+                                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+                                    {Object.entries(s.weights || defaultWeights).map(([k,v])=>(
+                                        <div key={k} className="flex items-center gap-0.5">
+                                            <Label className="text-[7px] w-12 capitalize">{k.replace(/([A-Z])/g,' $1')}</Label>
+                                            <Input type="number" value={v} onChange={e=>updSubjWeight(i,k,e.target.value)} className="w-10 h-4 text-[9px] rounded text-center p-0"/>
+                                            <span className="text-[7px]">%</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <p className="text-[7px] text-muted-foreground">Total: {Object.values(s.weights || defaultWeights).reduce((a,b)=>a+b,0)}%</p>
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>
-            <div className="flex items-center justify-between p-1.5 rounded bg-muted/30"><Label className="text-[10px]">Weighted</Label><Switch checked={config.use_weighted} onCheckedChange={v=>onChange({...config,use_weighted:v})}/></div>
-            {config.use_weighted && <div className="space-y-0.5">{Object.entries(config.weights||{}).map(([k,v])=>(
-                <div key={k} className="flex items-center gap-1"><Label className="text-[8px] w-16 capitalize">{k.replace(/([A-Z])/g,' $1')}</Label><Input type="number" value={v} onChange={e=>onChange({...config,weights:{...config.weights,[k]:parseFloat(e.target.value)||0}})} className="w-12 h-5 text-[10px] rounded text-center"/><span className="text-[8px]">%</span></div>
-            ))}</div>}
-            <div className="flex gap-1.5"><div className="flex items-center gap-1 flex-1"><Label className="text-[10px]">Header</Label><input type="color" value={config.headerBg||'#1e40af'} onChange={e=>onChange({...config,headerBg:e.target.value})} className="w-5 h-5 rounded border cursor-pointer"/></div>
-            <div className="flex items-center gap-1 flex-1"><Label className="text-[10px]">Text</Label><input type="color" value={config.headerText||'#ffffff'} onChange={e=>onChange({...config,headerText:e.target.value})} className="w-5 h-5 rounded border cursor-pointer"/></div></div>
+            <div className="flex items-center justify-between p-1.5 rounded bg-muted/30">
+                <Label className="text-[10px]">Use Weighted Grading</Label>
+                <Switch checked={config.use_weighted} onCheckedChange={v=>onChange({...config,use_weighted:v})}/>
+            </div>
+            {config.use_weighted && (
+                <div className="p-1.5 rounded bg-muted/20 space-y-1">
+                    <p className="text-[8px] font-semibold text-muted-foreground">Default Weights (for new subjects):</p>
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+                        {Object.entries(config.weights||defaultWeights).map(([k,v])=>(
+                            <div key={k} className="flex items-center gap-0.5">
+                                <Label className="text-[7px] w-12 capitalize">{k.replace(/([A-Z])/g,' $1')}</Label>
+                                <Input type="number" value={v} onChange={e=>onChange({...config,weights:{...config.weights,[k]:parseFloat(e.target.value)||0}})} className="w-10 h-4 text-[9px] rounded text-center p-0"/>
+                                <span className="text-[7px]">%</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+            <div className="flex gap-1.5">
+                <div className="flex items-center gap-1 flex-1"><Label className="text-[10px]">Header</Label><input type="color" value={config.headerBg||'#1e40af'} onChange={e=>onChange({...config,headerBg:e.target.value})} className="w-5 h-5 rounded border cursor-pointer"/></div>
+                <div className="flex items-center gap-1 flex-1"><Label className="text-[10px]">Text</Label><input type="color" value={config.headerText||'#ffffff'} onChange={e=>onChange({...config,headerText:e.target.value})} className="w-5 h-5 rounded border cursor-pointer"/></div>
+            </div>
         </div>
     );
 };
