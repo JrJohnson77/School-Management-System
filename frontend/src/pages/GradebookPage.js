@@ -758,6 +758,185 @@ export default function GradebookPage() {
                             </CardContent>
                         </Card>
                     </TabsContent>
+
+                    {/* Settings Tab - Admin/Superuser only */}
+                    {(isAdmin || isSuperuser) && (
+                        <TabsContent value="settings" className="mt-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {/* Subjects & Grade Weights */}
+                                <Card className="rounded-3xl border-border/50 shadow-sm">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <BookOpen className="w-5 h-5" />
+                                                Subjects & Grade Weights
+                                            </div>
+                                            <Button variant="outline" size="sm" onClick={addSubject} className="rounded-full">
+                                                <Plus className="w-4 h-4 mr-1" /> Add Subject
+                                            </Button>
+                                        </CardTitle>
+                                        <p className="text-sm text-muted-foreground">
+                                            Configure subjects and their individual grade weights
+                                        </p>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        {/* Weighted Grading Toggle */}
+                                        <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
+                                            <div>
+                                                <Label className="font-medium">Use Weighted Grading</Label>
+                                                <p className="text-xs text-muted-foreground">Enable component-based grade calculation</p>
+                                            </div>
+                                            <Switch 
+                                                checked={template?.use_weighted_grading || false}
+                                                onCheckedChange={(v) => setTemplate({...template, use_weighted_grading: v})}
+                                            />
+                                        </div>
+
+                                        {/* Subjects List */}
+                                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                                            {(template?.subjects || []).map((subject, index) => (
+                                                <div key={index} className="border rounded-xl p-3 space-y-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <Input 
+                                                            value={subject.name}
+                                                            onChange={(e) => updateSubjectName(index, e.target.value)}
+                                                            className="flex-1 rounded-lg"
+                                                            placeholder="Subject name"
+                                                        />
+                                                        <div className="flex items-center gap-1">
+                                                            <Switch 
+                                                                checked={subject.is_core}
+                                                                onCheckedChange={(v) => updateSubjectCore(index, v)}
+                                                            />
+                                                            <span className="text-xs">Core</span>
+                                                        </div>
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="sm"
+                                                            onClick={() => setExpandedSubject(expandedSubject === index ? null : index)}
+                                                        >
+                                                            {expandedSubject === index ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                                        </Button>
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="sm"
+                                                            onClick={() => removeSubject(index)}
+                                                            className="text-destructive hover:text-destructive"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+                                                    
+                                                    {/* Expanded Weights */}
+                                                    {expandedSubject === index && template?.use_weighted_grading && (
+                                                        <div className="pl-4 pt-2 border-t space-y-2">
+                                                            <p className="text-xs font-semibold text-muted-foreground">Grade Weights for {subject.name}:</p>
+                                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                                                {Object.entries(subject.weights || { homework: 5, groupWork: 5, project: 10, quiz: 10, midTerm: 30, endOfTerm: 40 }).map(([key, value]) => (
+                                                                    <div key={key} className="flex items-center gap-1">
+                                                                        <Label className="text-xs w-20 capitalize">{key.replace(/([A-Z])/g, ' $1')}</Label>
+                                                                        <Input 
+                                                                            type="number"
+                                                                            value={value}
+                                                                            onChange={(e) => updateSubjectWeights(index, key, e.target.value)}
+                                                                            className="w-16 h-7 text-xs rounded text-center"
+                                                                        />
+                                                                        <span className="text-xs">%</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                Total: {Object.values(subject.weights || { homework: 5, groupWork: 5, project: 10, quiz: 10, midTerm: 30, endOfTerm: 40 }).reduce((a, b) => a + b, 0)}%
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            {(!template?.subjects || template.subjects.length === 0) && (
+                                                <p className="text-sm text-muted-foreground text-center py-4">No subjects configured. Click "Add Subject" to create one.</p>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Social Skills Rating Scale */}
+                                <Card className="rounded-3xl border-border/50 shadow-sm">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Heart className="w-5 h-5" />
+                                                Social Skills Rating Scale
+                                            </div>
+                                            <Button variant="outline" size="sm" onClick={addRating} className="rounded-full">
+                                                <Plus className="w-4 h-4 mr-1" /> Add Rating
+                                            </Button>
+                                        </CardTitle>
+                                        <p className="text-sm text-muted-foreground">
+                                            Define the rating codes and labels for social skills assessment
+                                        </p>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div className="space-y-2">
+                                            {(template?.skill_ratings || normalizedRatings).map((rating, index) => (
+                                                <div key={index} className="flex items-center gap-2 p-2 rounded-xl bg-muted/30">
+                                                    <Input 
+                                                        value={typeof rating === 'string' ? rating : rating.code}
+                                                        onChange={(e) => updateRating(index, 'code', e.target.value)}
+                                                        className="w-20 h-8 text-center font-bold rounded-lg"
+                                                        placeholder="Code"
+                                                    />
+                                                    <span className="text-muted-foreground">=</span>
+                                                    <Input 
+                                                        value={typeof rating === 'string' ? rating : rating.label}
+                                                        onChange={(e) => updateRating(index, 'label', e.target.value)}
+                                                        className="flex-1 h-8 rounded-lg"
+                                                        placeholder="Description"
+                                                    />
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="sm"
+                                                        onClick={() => removeRating(index)}
+                                                        className="text-destructive hover:text-destructive"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Preview */}
+                                        <div className="p-4 rounded-xl bg-primary/5">
+                                            <h5 className="font-bold mb-2 text-sm">Preview - Rating Key:</h5>
+                                            <div className="flex flex-wrap gap-2">
+                                                {(template?.skill_ratings || normalizedRatings).map((r, i) => (
+                                                    <div key={i} className="px-3 py-1 rounded-full bg-background text-xs">
+                                                        <strong>{typeof r === 'string' ? r : r.code}</strong> = {typeof r === 'string' ? r : r.label}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            {/* Save Settings Button */}
+                            <div className="flex justify-end mt-6">
+                                <Button
+                                    onClick={handleSaveSettings}
+                                    disabled={savingSettings}
+                                    className="rounded-full px-8"
+                                    data-testid="save-settings-btn"
+                                >
+                                    {savingSettings ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <Save className="w-4 h-4 mr-2" />
+                                    )}
+                                    Save Settings
+                                </Button>
+                            </div>
+                        </TabsContent>
+                    )}
                 </Tabs>
             )}
 
