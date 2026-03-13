@@ -950,6 +950,11 @@ export default function ReportTemplateDesigner() {
                                 ))}
                             </div>
                         ))}
+                        </div>
+                    </div>
+                    {/* Pan/Zoom hint */}
+                    <div className="absolute bottom-2 left-2 text-[9px] text-muted-foreground bg-white/80 px-2 py-1 rounded shadow-sm">
+                        Ctrl+Scroll: Zoom • Alt+Drag: Pan • Double-click: Reset
                     </div>
                 </div>
 
