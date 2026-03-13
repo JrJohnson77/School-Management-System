@@ -28,6 +28,12 @@ Multi-tenant student management system for primary schools with a canvas-based W
 - **[NEW] Copy/Paste (Ctrl+C/Ctrl+V)**: Copy and paste elements with 30px offset
 - **[NEW] Clean Template Loading**: Templates load cleanly without duplicate/stale elements
 
+## Gradebook & Grading
+- **Per-subject grade weights**: Each subject can have its own customizable weights (Homework, Group Work, Project, Quiz, Mid-Term, End of Term)
+- **School-level default weights**: Set default weights that apply to new subjects
+- **Weighted grading toggle**: Enable/disable weighted grading per school
+- **Social skills rating scale**: Customizable code/label pairs (default: EX=Excellent, VG=Very Good, G=Good, NI=Needs Improvement)
+
 ## Credentials
 - Superuser: JTECH / jtech.innovations@outlook.com / Xekleidoma@1
 - Test Admin: WPS / wps.admin@school.com / Password@123
