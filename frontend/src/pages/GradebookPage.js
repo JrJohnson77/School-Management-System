@@ -620,8 +620,10 @@ export default function GradebookPage() {
                                                             <SelectValue placeholder="Select..." />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            {tplSkillRatings.map(rating => (
-                                                                <SelectItem key={rating} value={rating}>{rating}</SelectItem>
+                                                            {normalizedRatings.map(rating => (
+                                                                <SelectItem key={rating.code} value={rating.code}>
+                                                                    {rating.code} - {rating.label}
+                                                                </SelectItem>
                                                             ))}
                                                         </SelectContent>
                                                     </Select>
@@ -633,8 +635,8 @@ export default function GradebookPage() {
                                         <div className="mt-2 p-4 rounded-xl bg-primary/5 text-sm">
                                             <h5 className="font-bold mb-2">Rating Key:</h5>
                                             <ul className="space-y-1 text-muted-foreground">
-                                                {tplSkillRatings.map(r => (
-                                                    <li key={r}><strong>{r}</strong></li>
+                                                {normalizedRatings.map(r => (
+                                                    <li key={r.code}><strong>{r.code}</strong> = {r.label}</li>
                                                 ))}
                                             </ul>
                                         </div>
