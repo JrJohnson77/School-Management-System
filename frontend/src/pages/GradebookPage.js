@@ -916,12 +916,42 @@ export default function GradebookPage() {
                                         <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
                                             <div>
                                                 <Label className="font-medium">Weighted Grading</Label>
-                                                <p className="text-xs text-muted-foreground">HW 5% | GW 5% | Project 10% | Quiz 10% | Mid 30% | Final 40%</p>
+                                                <p className="text-xs text-muted-foreground">Enable component-based grade calculation</p>
                                             </div>
                                             <Switch 
                                                 checked={template?.use_weighted_grading || false}
                                                 onCheckedChange={(v) => setTemplate({...template, use_weighted_grading: v})}
                                             />
+                                        </div>
+
+                                        {/* Default Weights Configuration */}
+                                        <div className="p-3 rounded-xl border bg-blue-50/50 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <Label className="font-medium text-sm">Default Weights</Label>
+                                                <span className="text-xs text-muted-foreground">
+                                                    Total: {Object.values(template?.assessment_weights || DEFAULT_WEIGHTS).reduce((a, b) => a + b, 0)}%
+                                                </span>
+                                            </div>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {Object.entries(template?.assessment_weights || DEFAULT_WEIGHTS).map(([key, value]) => (
+                                                    <div key={key} className="flex items-center gap-1">
+                                                        <Label className="text-[10px] w-16 capitalize">{key.replace(/([A-Z])/g, ' $1')}</Label>
+                                                        <Input 
+                                                            type="number"
+                                                            value={value}
+                                                            onChange={(e) => setTemplate({
+                                                                ...template, 
+                                                                assessment_weights: {
+                                                                    ...(template?.assessment_weights || DEFAULT_WEIGHTS),
+                                                                    [key]: parseFloat(e.target.value) || 0
+                                                                }
+                                                            })}
+                                                            className="w-14 h-6 text-xs rounded text-center"
+                                                        />
+                                                        <span className="text-[10px]">%</span>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
 
                                         {/* Subjects List */}
