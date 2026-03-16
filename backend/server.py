@@ -301,6 +301,7 @@ class SignatureUpload(BaseModel):
 class ReportTemplateSubject(BaseModel):
     name: str
     is_core: bool = False
+    weights: Optional[Dict[str, float]] = None
 
 class ReportTemplateGrade(BaseModel):
     min: int
@@ -311,12 +312,17 @@ class ReportTemplateGrade(BaseModel):
 class ReportTemplateAchievement(BaseModel):
     min: int
     max: int
-    band: str
+    band: str = ""
+    grade: str = ""
     description: str = ""
 
 class ReportTemplateSocialCategory(BaseModel):
     category_name: str
     skills: List[str]
+
+class ReportTemplateSkillRating(BaseModel):
+    code: str
+    label: str
 
 class ReportTemplateCreate(BaseModel):
     school_code: str
@@ -331,7 +337,7 @@ class ReportTemplateCreate(BaseModel):
     assessment_weights: Dict[str, float] = {}
     sections: Dict[str, bool] = {}
     social_skills_categories: List[ReportTemplateSocialCategory] = []
-    skill_ratings: List[str] = ["Excellent", "Good", "Satisfactory", "Needs Improvement"]
+    skill_ratings: Optional[List[Any]] = None  # Can be List[str] or List[ReportTemplateSkillRating]
     achievement_standards: List[ReportTemplateAchievement] = []
     paper_size: str = "legal"
     # WYSIWYG builder fields
