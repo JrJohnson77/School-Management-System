@@ -151,7 +151,7 @@ export default function SchoolsPage() {
                             Add School
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-lg rounded-3xl">
+                    <DialogContent className="max-w-lg rounded-xl">
                         <DialogHeader>
                             <DialogTitle>
                                 {editingSchool ? 'Edit School' : 'Create New School'}
@@ -276,7 +276,7 @@ export default function SchoolsPage() {
                     {filteredSchools.map((school, index) => (
                         <Card 
                             key={school.id}
-                            className={`rounded-3xl border-border/50 shadow-sm card-hover opacity-0 animate-fade-in ${!school.is_active ? 'opacity-60' : ''}`}
+                            className={`rounded-2xl border-border shadow-sm card-hover opacity-0 animate-fade-in ${!school.is_active ? 'opacity-60' : ''}`}
                             style={{ animationDelay: `${index * 50}ms` }}
                             data-testid={`school-card-${school.id}`}
                         >
@@ -314,7 +314,7 @@ export default function SchoolsPage() {
                                 </div>
                                 
                                 {school.school_code !== 'JTECH' && (
-                                    <div className="flex gap-2 mt-4 pt-4 border-t border-border/50">
+                                    <div className="flex gap-2 mt-4 pt-4 border-t border-border">
                                         <Button 
                                             variant="outline" 
                                             size="sm" 
@@ -351,7 +351,7 @@ export default function SchoolsPage() {
                     ))}
                 </div>
             ) : (
-                <Card className="rounded-3xl border-border/50 shadow-sm">
+                <Card className="rounded-2xl border-border shadow-sm">
                     <CardContent className="py-16">
                         <div className="empty-state">
                             <Building2 className="empty-state-icon" />

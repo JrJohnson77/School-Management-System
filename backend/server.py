@@ -98,7 +98,7 @@ def calculate_age(dob_str: str) -> int:
         return 0
 
 # Create the main app
-app = FastAPI(title="Student Management System API")
+app = FastAPI(title="Lumina-SIS API")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -1840,7 +1840,7 @@ async def get_parents(current_user: dict = Depends(require_roles([UserRole.ADMIN
 
 @api_router.get("/")
 async def root():
-    return {"message": "Student Management System API", "status": "healthy"}
+    return {"message": "Lumina-SIS API", "status": "healthy"}
 
 @api_router.get("/health")
 async def health_check():

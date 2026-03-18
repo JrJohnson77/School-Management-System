@@ -177,7 +177,7 @@ export default function ClassesPage() {
                                 Add Class
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="rounded-3xl">
+                        <DialogContent className="rounded-xl">
                             <DialogHeader>
                                 <DialogTitle>
                                     {editingClass ? 'Edit Class' : 'Create New Class'}
@@ -309,7 +309,7 @@ export default function ClassesPage() {
                     {filteredClasses.map((cls, index) => (
                         <Card 
                             key={cls.id}
-                            className="rounded-3xl border-border/50 shadow-sm card-hover opacity-0 animate-fade-in"
+                            className="rounded-2xl border-border shadow-sm card-hover opacity-0 animate-fade-in"
                             style={{ animationDelay: `${index * 50}ms` }}
                             data-testid={`class-card-${cls.id}`}
                         >
@@ -346,7 +346,7 @@ export default function ClassesPage() {
                                 </div>
                                 
                                 {canManageClasses && (
-                                    <div className="flex gap-2 mt-4 pt-4 border-t border-border/50">
+                                    <div className="flex gap-2 mt-4 pt-4 border-t border-border">
                                         <Button 
                                             variant="outline" 
                                             size="sm" 
@@ -373,7 +373,7 @@ export default function ClassesPage() {
                     ))}
                 </div>
             ) : (
-                <Card className="rounded-3xl border-border/50 shadow-sm">
+                <Card className="rounded-2xl border-border shadow-sm">
                     <CardContent className="py-16">
                         <div className="empty-state">
                             <School className="empty-state-icon" />

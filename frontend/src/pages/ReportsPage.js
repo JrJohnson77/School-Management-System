@@ -908,7 +908,7 @@ export default function ReportsPage() {
                 </TabsList>
 
                 {/* Selection Controls */}
-                <Card className="mt-6 rounded-3xl border-border/50 shadow-sm">
+                <Card className="mt-6 rounded-2xl border-border shadow-sm">
                     <CardContent className="p-6">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div className="space-y-2">
@@ -1003,7 +1003,7 @@ export default function ReportsPage() {
                             />
                         </div>
                     ) : (
-                        <Card className="rounded-3xl border-border/50 shadow-sm">
+                        <Card className="rounded-2xl border-border shadow-sm">
                             <CardContent className="py-16">
                                 <div className="text-center">
                                     <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
@@ -1030,7 +1030,7 @@ export default function ReportsPage() {
                             />
                         </div>
                     ) : (
-                        <Card className="rounded-3xl border-border/50 shadow-sm">
+                        <Card className="rounded-2xl border-border shadow-sm">
                             <CardContent className="py-16">
                                 <div className="text-center">
                                     <BookOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
@@ -1061,7 +1061,7 @@ export default function ReportsPage() {
                             ))}
                         </div>
                     ) : (
-                        <Card className="rounded-3xl border-border/50 shadow-sm">
+                        <Card className="rounded-2xl border-border shadow-sm">
                             <CardContent className="py-16">
                                 <div className="text-center">
                                     <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />

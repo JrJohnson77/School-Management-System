@@ -577,7 +577,7 @@ export default function GradebookPage() {
             </div>
 
             {/* Selection Controls */}
-            <Card className="rounded-3xl border-border/50 shadow-sm">
+            <Card className="rounded-2xl border-border shadow-sm">
                 <CardContent className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="space-y-2">
@@ -649,7 +649,7 @@ export default function GradebookPage() {
 
             {/* Student Info Card */}
             {selectedStudentData && (
-                <Card className="rounded-3xl border-border/50 shadow-sm bg-primary/5">
+                <Card className="rounded-2xl border-border shadow-sm bg-primary/5">
                     <CardContent className="p-6">
                         <div className="flex items-center gap-4">
                             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -705,7 +705,7 @@ export default function GradebookPage() {
 
                     {/* Academic Grades Tab */}
                     <TabsContent value="grades" className="mt-6">
-                        <Card className="rounded-3xl border-border/50 shadow-sm">
+                        <Card className="rounded-2xl border-border shadow-sm">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <BookOpen className="w-5 h-5" />
@@ -798,7 +798,7 @@ export default function GradebookPage() {
 
                     {/* Social Skills Tab */}
                     <TabsContent value="social-skills" className="mt-6">
-                        <Card className="rounded-3xl border-border/50 shadow-sm">
+                        <Card className="rounded-2xl border-border shadow-sm">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Heart className="w-5 h-5" />
@@ -896,7 +896,7 @@ export default function GradebookPage() {
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 {/* Subjects & Grade Weights */}
-                                <Card className="rounded-3xl border-border/50 shadow-sm">
+                                <Card className="rounded-2xl border-border shadow-sm">
                                     <CardHeader>
                                         <CardTitle className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
@@ -1022,7 +1022,7 @@ export default function GradebookPage() {
                                 </Card>
 
                                 {/* Achievement Standards */}
-                                <Card className="rounded-3xl border-border/50 shadow-sm">
+                                <Card className="rounded-2xl border-border shadow-sm">
                                     <CardHeader>
                                         <CardTitle className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
@@ -1083,7 +1083,7 @@ export default function GradebookPage() {
                                 </Card>
 
                                 {/* Social Skills Rating Scale */}
-                                <Card className="rounded-3xl border-border/50 shadow-sm">
+                                <Card className="rounded-2xl border-border shadow-sm">
                                     <CardHeader>
                                         <CardTitle className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
@@ -1128,7 +1128,7 @@ export default function GradebookPage() {
                                 </Card>
 
                                 {/* Social Skills Categories */}
-                                <Card className="rounded-3xl border-border/50 shadow-sm">
+                                <Card className="rounded-2xl border-border shadow-sm">
                                     <CardHeader>
                                         <CardTitle className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
@@ -1223,7 +1223,7 @@ export default function GradebookPage() {
 
             {/* Grading Key */}
             {useMHPSMode && (
-                <Card className="rounded-3xl border-border/50 shadow-sm">
+                <Card className="rounded-2xl border-border shadow-sm">
                     <CardHeader>
                         <CardTitle className="text-sm">MHPS Grading Scale</CardTitle>
                     </CardHeader>

@@ -200,7 +200,7 @@ export default function GradesPage() {
                                 Add Grade
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-lg rounded-3xl max-h-[90vh] overflow-y-auto">
+                        <DialogContent className="max-w-lg rounded-xl max-h-[90vh] overflow-y-auto">
                             <DialogHeader>
                                 <DialogTitle>
                                     {editingGrade ? 'Edit Grade' : 'Add New Grade'}
@@ -403,7 +403,7 @@ export default function GradesPage() {
 
             {/* Grades List */}
             {filteredGrades.length > 0 ? (
-                <Card className="rounded-3xl border-border/50 shadow-sm overflow-hidden">
+                <Card className="rounded-2xl border-border shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full data-table">
                             <thead>
@@ -482,7 +482,7 @@ export default function GradesPage() {
                     </div>
                 </Card>
             ) : (
-                <Card className="rounded-3xl border-border/50 shadow-sm">
+                <Card className="rounded-2xl border-border shadow-sm">
                     <CardContent className="py-16">
                         <div className="empty-state">
                             <FileText className="empty-state-icon" />

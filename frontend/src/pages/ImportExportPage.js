@@ -173,7 +173,7 @@ export default function ImportExportPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Student CSV Import */}
-                <Card className="rounded-3xl border-border/50 shadow-sm">
+                <Card className="rounded-2xl border-border shadow-sm">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Users className="w-5 h-5" />
@@ -240,7 +240,7 @@ export default function ImportExportPage() {
                 </Card>
 
                 {/* Teacher CSV Import */}
-                <Card className="rounded-3xl border-border/50 shadow-sm">
+                <Card className="rounded-2xl border-border shadow-sm">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Pen className="w-5 h-5" />
@@ -293,7 +293,7 @@ export default function ImportExportPage() {
 
             {/* Import Result */}
             {importResult && (
-                <Card className="rounded-3xl border-border/50 shadow-sm">
+                <Card className="rounded-2xl border-border shadow-sm">
                     <CardContent className="p-6">
                         <div className="flex items-center gap-2 mb-3">
                             {importResult.errors?.length > 0 ? (
@@ -319,7 +319,7 @@ export default function ImportExportPage() {
             )}
 
             {/* Signatures Management */}
-            <Card className="rounded-3xl border-border/50 shadow-sm">
+            <Card className="rounded-2xl border-border shadow-sm">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Image className="w-5 h-5" />

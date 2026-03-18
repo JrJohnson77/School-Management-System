@@ -337,7 +337,7 @@ export default function ReportCardsPage() {
                 </div>
 
                 {/* Filters */}
-                <Card className="rounded-3xl border-border/50 shadow-sm mb-6">
+                <Card className="rounded-2xl border-border shadow-sm mb-6">
                     <CardContent className="p-6">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
@@ -414,7 +414,7 @@ export default function ReportCardsPage() {
 
                 {/* Summary Card */}
                 {reportData && (
-                    <Card className="rounded-3xl border-border/50 shadow-sm mb-6">
+                    <Card className="rounded-2xl border-border shadow-sm mb-6">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
@@ -456,7 +456,7 @@ export default function ReportCardsPage() {
 
             {/* Empty State */}
             {!reportData && (
-                <Card className="rounded-3xl border-border/50 shadow-sm print:hidden">
+                <Card className="rounded-2xl border-border shadow-sm print:hidden">
                     <CardContent className="py-16">
                         <div className="empty-state">
                             <FileText className="empty-state-icon" />

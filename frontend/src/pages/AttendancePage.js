@@ -151,7 +151,7 @@ export default function AttendancePage() {
 
             {/* Filters */}
             {(isAdmin || isTeacher) && (
-                <Card className="rounded-3xl border-border/50 shadow-sm mb-6">
+                <Card className="rounded-2xl border-border shadow-sm mb-6">
                     <CardContent className="p-6">
                         <div className="flex flex-col md:flex-row gap-4">
                             <div className="flex-1">
@@ -218,7 +218,7 @@ export default function AttendancePage() {
             {(isAdmin || isTeacher) && (
                 <>
                     {classStudents.length > 0 ? (
-                        <Card className="rounded-3xl border-border/50 shadow-sm">
+                        <Card className="rounded-2xl border-border shadow-sm">
                             <CardHeader className="pb-4">
                                 <CardTitle className="flex items-center gap-2">
                                     <CalendarCheck className="w-5 h-5 text-primary" />
@@ -266,7 +266,7 @@ export default function AttendancePage() {
                             </CardContent>
                         </Card>
                     ) : (
-                        <Card className="rounded-3xl border-border/50 shadow-sm">
+                        <Card className="rounded-2xl border-border shadow-sm">
                             <CardContent className="py-16">
                                 <div className="empty-state">
                                     <CalendarCheck className="empty-state-icon" />
@@ -283,7 +283,7 @@ export default function AttendancePage() {
 
             {/* Parent View */}
             {isParent && (
-                <Card className="rounded-3xl border-border/50 shadow-sm">
+                <Card className="rounded-2xl border-border shadow-sm">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <CalendarCheck className="w-5 h-5 text-primary" />

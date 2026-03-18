@@ -235,7 +235,7 @@ export default function StudentsPage() {
                                 Add Student
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl rounded-3xl max-h-[90vh] overflow-y-auto">
+                        <DialogContent className="max-w-2xl rounded-xl max-h-[90vh] overflow-y-auto">
                             <DialogHeader>
                                 <DialogTitle>
                                     {editingStudent ? 'Edit Student' : 'Add New Student'}
@@ -509,7 +509,7 @@ export default function StudentsPage() {
                         return (
                         <Card 
                             key={student.id}
-                            className="rounded-3xl border-border/50 shadow-sm card-hover opacity-0 animate-fade-in"
+                            className="rounded-2xl border-border shadow-sm card-hover opacity-0 animate-fade-in"
                             style={{ animationDelay: `${index * 50}ms` }}
                             data-testid={`student-card-${student.id}`}
                         >
@@ -577,7 +577,7 @@ export default function StudentsPage() {
                                 </div>
                                 
                                 {(isAdmin || isTeacher) && (
-                                    <div className="flex gap-2 mt-4 pt-4 border-t border-border/50">
+                                    <div className="flex gap-2 mt-4 pt-4 border-t border-border">
                                         <Button 
                                             variant="outline" 
                                             size="sm" 
@@ -607,7 +607,7 @@ export default function StudentsPage() {
                     })}
                 </div>
             ) : (
-                <Card className="rounded-3xl border-border/50 shadow-sm">
+                <Card className="rounded-2xl border-border shadow-sm">
                     <CardContent className="py-16">
                         <div className="empty-state">
                             <GraduationCap className="empty-state-icon" />

@@ -270,7 +270,7 @@ export default function UsersPage() {
                             Add User
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-lg rounded-3xl max-h-[90vh] overflow-y-auto">
+                    <DialogContent className="max-w-lg rounded-xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>
                                 {editingUser ? 'Edit User' : 'Create New User'}
@@ -446,7 +446,7 @@ export default function UsersPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <Card className="rounded-2xl border-border/50 shadow-sm">
+                <Card className="rounded-2xl border-border shadow-sm">
                     <CardContent className="p-4 flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
                             <Users className="w-5 h-5 text-muted-foreground" />
@@ -460,7 +460,7 @@ export default function UsersPage() {
                 {['admin', 'teacher', 'parent'].map((role) => {
                     const config = roleConfig[role];
                     return (
-                        <Card key={role} className="rounded-2xl border-border/50 shadow-sm">
+                        <Card key={role} className="rounded-2xl border-border shadow-sm">
                             <CardContent className="p-4 flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${config.color}`}>
                                     <config.icon className="w-5 h-5" />
@@ -502,7 +502,7 @@ export default function UsersPage() {
 
             {/* Users List */}
             {filteredUsers.length > 0 ? (
-                <Card className="rounded-3xl border-border/50 shadow-sm overflow-hidden">
+                <Card className="rounded-2xl border-border shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full data-table">
                             <thead>
@@ -588,7 +588,7 @@ export default function UsersPage() {
                                                                         <Trash2 className="w-4 h-4" />
                                                                     </Button>
                                                                 </AlertDialogTrigger>
-                                                                <AlertDialogContent className="rounded-2xl">
+                                                                <AlertDialogContent className="rounded-xl">
                                                                     <AlertDialogHeader>
                                                                         <AlertDialogTitle>Delete User</AlertDialogTitle>
                                                                         <AlertDialogDescription>
@@ -618,7 +618,7 @@ export default function UsersPage() {
                     </div>
                 </Card>
             ) : (
-                <Card className="rounded-3xl border-border/50 shadow-sm">
+                <Card className="rounded-2xl border-border shadow-sm">
                     <CardContent className="py-16">
                         <div className="empty-state">
                             <Users className="empty-state-icon" />
@@ -633,7 +633,7 @@ export default function UsersPage() {
 
             {/* Reset Credentials Dialog */}
             <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-                <DialogContent className="rounded-3xl max-w-md">
+                <DialogContent className="rounded-xl max-w-md">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <KeyRound className="w-5 h-5" />
