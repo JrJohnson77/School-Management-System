@@ -423,10 +423,10 @@ const SocialSkillsPropEditor = ({ config, onChange }) => {
 };
 
 // ==================== MAIN DESIGNER ====================
-export default function ReportTemplateDesigner() {
+export default function ReportTemplateDesigner({ schoolCodeProp, embedded = false }) {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const schoolCode = searchParams.get('school');
+    const schoolCode = schoolCodeProp || searchParams.get('school');
     const { isSuperuser } = useAuth();
 
     const [loading, setLoading] = useState(true);
@@ -906,7 +906,7 @@ export default function ReportTemplateDesigner() {
             {/* Top Bar */}
             <div className="flex items-center justify-between px-3 py-1.5 border-b bg-background flex-shrink-0 gap-2">
                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => navigate('/schools')} className="h-8 w-8 p-0 rounded-full" data-testid="back-to-schools-btn"><ArrowLeft className="w-4 h-4" /></Button>
+                    {!embedded && <Button variant="ghost" size="sm" onClick={() => navigate('/schools')} className="h-8 w-8 p-0 rounded-full" data-testid="back-to-schools-btn"><ArrowLeft className="w-4 h-4" /></Button>}
                     <div><h1 className="text-sm font-bold leading-tight">Template Designer</h1><p className="text-[10px] text-muted-foreground">{rawTemplate?.school_name || schoolCode}</p></div>
                 </div>
                 <div className="flex items-center gap-1.5">

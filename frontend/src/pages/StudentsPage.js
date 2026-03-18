@@ -4,48 +4,38 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Card, CardContent } from '../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Textarea } from '../components/ui/textarea';
 import { toast } from 'sonner';
 import { 
-    Plus, 
-    Search, 
-    Edit2, 
-    Trash2, 
-    GraduationCap,
-    Loader2,
-    Calendar,
-    MapPin,
-    Phone,
-    Home,
-    Upload,
-    X
+    Plus, Search, Edit2, Trash2, GraduationCap, Loader2,
+    Calendar, Phone, Mail, Home, Upload, X, Users as UsersIcon, ChevronDown, ChevronUp
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+const SALUTATIONS = ['Mr.', 'Ms.', 'Mrs.'];
+const RELATIONSHIPS = ['Mother', 'Father', 'Aunt', 'Uncle', 'Brother', 'Sister', 'Stepmother', 'Stepfather', 'Grandparent', 'Guardian', 'Other'];
+
+const emptyFamilyMember = {
+    id: '', salutation: '', first_name: '', middle_name: '', last_name: '',
+    gender: '', relationship: '', address_line1: '', address_line2: '',
+    city_state: '', country: '', home_phone: '', cell_phone: '', work_phone: '', email: ''
+};
+
 const initialFormData = {
-    student_id: '',
-    first_name: '',
-    middle_name: '',
-    last_name: '',
-    date_of_birth: '',
-    gender: '',
-    address: '',
-    house: '',
-    class_id: '',
-    parent_id: '',
-    emergency_contact: '',
-    teacher_comment: '',
-    photo_url: ''
+    student_id: '', first_name: '', middle_name: '', last_name: '',
+    date_of_birth: '', gender: '', student_phone: '', student_email: '',
+    address_line1: '', address_line2: '', city_state: '', country: '',
+    house: '', class_id: '', emergency_contact: '', teacher_comment: '',
+    photo_url: '', family_members: []
 };
 
 export default function StudentsPage() {
     const [students, setStudents] = useState([]);
     const [classes, setClasses] = useState([]);
-    const [parents, setParents] = useState([]);
     const [houses, setHouses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -54,12 +44,11 @@ export default function StudentsPage() {
     const [formData, setFormData] = useState(initialFormData);
     const [submitting, setSubmitting] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [expandedFamily, setExpandedFamily] = useState({});
     const fileInputRef = useRef(null);
     const { isAdmin, isTeacher, isParent } = useAuth();
 
-    useEffect(() => {
-        fetchData();
-    }, []);
+    useEffect(() => { fetchData(); }, []);
 
     const fetchData = async () => {
         try {
@@ -71,11 +60,6 @@ export default function StudentsPage() {
             setStudents(studentsRes.data);
             setClasses(classesRes.data);
             setHouses(housesRes.data.houses || []);
-            
-            if (isAdmin || isTeacher) {
-                const parentsRes = await axios.get(`${API}/parents`).catch(() => ({ data: [] }));
-                setParents(parentsRes.data);
-            }
         } catch (error) {
             toast.error('Failed to load students');
         } finally {
@@ -86,67 +70,45 @@ export default function StudentsPage() {
     const handlePhotoUpload = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
-        // Validate file type
         const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        if (!validTypes.includes(file.type)) {
-            toast.error('Invalid file type. Please upload a JPG, PNG, GIF, or WebP image.');
-            return;
-        }
-
-        // Validate file size (5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            toast.error('File too large. Maximum size is 5MB.');
-            return;
-        }
-
+        if (!validTypes.includes(file.type)) { toast.error('Invalid file type.'); return; }
+        if (file.size > 5 * 1024 * 1024) { toast.error('File too large (max 5MB).'); return; }
         setUploading(true);
         try {
-            const formDataUpload = new FormData();
-            formDataUpload.append('file', file);
-
-            const response = await axios.post(`${API}/upload/photo`, formDataUpload, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-
+            const fd = new FormData();
+            fd.append('file', file);
+            const response = await axios.post(`${API}/upload/photo`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
             setFormData(prev => ({ ...prev, photo_url: response.data.photo_url }));
-            toast.success('Photo uploaded successfully');
+            toast.success('Photo uploaded');
         } catch (error) {
             toast.error(error.response?.data?.detail || 'Failed to upload photo');
-        } finally {
-            setUploading(false);
-        }
+        } finally { setUploading(false); }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
-        
-        // Convert "none" values back to empty strings for backend
         const submitData = {
             ...formData,
             house: formData.house === 'none' ? '' : formData.house,
             class_id: formData.class_id === 'none' ? '' : formData.class_id,
-            parent_id: formData.parent_id === 'none' ? '' : formData.parent_id,
         };
-        
         try {
             if (editingStudent) {
                 await axios.put(`${API}/students/${editingStudent.id}`, submitData);
-                toast.success('Student updated successfully');
+                toast.success('Student updated');
             } else {
                 await axios.post(`${API}/students`, submitData);
-                toast.success('Student added successfully');
+                toast.success('Student added');
             }
             setIsDialogOpen(false);
             setEditingStudent(null);
             setFormData(initialFormData);
+            setExpandedFamily({});
             fetchData();
         } catch (error) {
             toast.error(error.response?.data?.detail || 'Failed to save student');
-        } finally {
-            setSubmitting(false);
-        }
+        } finally { setSubmitting(false); }
     };
 
     const handleEdit = (student) => {
@@ -158,27 +120,51 @@ export default function StudentsPage() {
             last_name: student.last_name || '',
             date_of_birth: student.date_of_birth || '',
             gender: student.gender || '',
-            address: student.address || '',
+            student_phone: student.student_phone || '',
+            student_email: student.student_email || '',
+            address_line1: student.address_line1 || '',
+            address_line2: student.address_line2 || '',
+            city_state: student.city_state || '',
+            country: student.country || '',
             house: student.house || '',
             class_id: student.class_id || '',
-            parent_id: student.parent_id || '',
             emergency_contact: student.emergency_contact || '',
             teacher_comment: student.teacher_comment || '',
-            photo_url: student.photo_url || ''
+            photo_url: student.photo_url || '',
+            family_members: student.family_members || []
         });
         setIsDialogOpen(true);
     };
 
     const handleDelete = async (studentId) => {
-        if (!window.confirm('Are you sure you want to delete this student?')) return;
-        
+        if (!window.confirm('Are you sure?')) return;
         try {
             await axios.delete(`${API}/students/${studentId}`);
             toast.success('Student deleted');
             fetchData();
-        } catch (error) {
-            toast.error('Failed to delete student');
-        }
+        } catch (error) { toast.error('Failed to delete student'); }
+    };
+
+    const addFamilyMember = () => {
+        setFormData(prev => ({
+            ...prev,
+            family_members: [...prev.family_members, { ...emptyFamilyMember }]
+        }));
+    };
+
+    const removeFamilyMember = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            family_members: prev.family_members.filter((_, i) => i !== index)
+        }));
+    };
+
+    const updateFamilyMember = (index, field, value) => {
+        setFormData(prev => {
+            const updated = [...prev.family_members];
+            updated[index] = { ...updated[index], [field]: value };
+            return { ...prev, family_members: updated };
+        });
     };
 
     const filteredStudents = students.filter(s => {
@@ -187,10 +173,7 @@ export default function StudentsPage() {
         return fullName.includes(searchQuery.toLowerCase()) || studentId.includes(searchQuery.toLowerCase());
     });
 
-    const getClassName = (classId) => {
-        const cls = classes.find(c => c.id === classId);
-        return cls?.name || '-';
-    };
+    const getClassName = (classId) => classes.find(c => c.id === classId)?.name || '-';
 
     const getHouseColor = (house) => {
         const colors = {
@@ -202,283 +185,281 @@ export default function StudentsPage() {
         return colors[house] || 'bg-muted text-muted-foreground';
     };
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-        );
-    }
+    if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
     return (
         <div data-testid="students-page">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div>
-                    <h1 className="text-3xl font-extrabold text-foreground">Students</h1>
-                    <p className="text-muted-foreground">
-                        {isParent ? 'View your children\'s information' : 'Manage student records'}
-                    </p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div className="page-header mb-0">
+                    <h1>Students</h1>
+                    <p>{isParent ? "View your children's information" : 'Manage student records'}</p>
                 </div>
-                
                 {(isAdmin || isTeacher) && (
                     <Dialog open={isDialogOpen} onOpenChange={(open) => {
                         setIsDialogOpen(open);
-                        if (!open) {
-                            setEditingStudent(null);
-                            setFormData(initialFormData);
-                        }
+                        if (!open) { setEditingStudent(null); setFormData(initialFormData); setExpandedFamily({}); }
                     }}>
                         <DialogTrigger asChild>
-                            <Button className="rounded-full shadow-md" data-testid="add-student-btn">
-                                <Plus className="w-5 h-5 mr-2" />
-                                Add Student
+                            <Button className="gradient-primary rounded-lg shadow-md" data-testid="add-student-btn">
+                                <Plus className="w-4 h-4 mr-2" /> Add Student
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl rounded-xl max-h-[90vh] overflow-y-auto">
+                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-xl">
                             <DialogHeader>
-                                <DialogTitle>
-                                    {editingStudent ? 'Edit Student' : 'Add New Student'}
-                                </DialogTitle>
+                                <DialogTitle>{editingStudent ? 'Edit Student' : 'Add New Student'}</DialogTitle>
                             </DialogHeader>
-                            <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                            <form onSubmit={handleSubmit} className="space-y-6 pt-2">
                                 {/* Photo Upload */}
                                 <div className="flex items-center gap-4">
-                                    <div className="relative w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center overflow-hidden group">
+                                    <div className="relative w-20 h-20 rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/30 cursor-pointer hover:border-primary/50 transition-colors"
+                                        onClick={() => fileInputRef.current?.click()}>
                                         {formData.photo_url ? (
-                                            <>
-                                                <img 
-                                                    src={formData.photo_url.startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${formData.photo_url}` : formData.photo_url}
-                                                    alt="Student" 
-                                                    className="w-full h-full object-cover"
-                                                    onError={(e) => { e.target.style.display = 'none'; }}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setFormData({ ...formData, photo_url: '' })}
-                                                    className="absolute top-1 right-1 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
-                                            </>
+                                            <img src={formData.photo_url.startsWith('http') ? formData.photo_url : `${process.env.REACT_APP_BACKEND_URL}${formData.photo_url}`} alt="Student" className="w-full h-full object-cover" />
+                                        ) : uploading ? (
+                                            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                                         ) : (
-                                            <GraduationCap className="w-10 h-10 text-primary" />
+                                            <Upload className="w-5 h-5 text-muted-foreground" />
                                         )}
                                     </div>
-                                    <div className="flex-1 space-y-3">
-                                        <Label>Student Photo</Label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="file"
-                                                ref={fileInputRef}
-                                                onChange={handlePhotoUpload}
-                                                accept="image/jpeg,image/png,image/gif,image/webp"
-                                                className="hidden"
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                className="rounded-xl"
-                                                onClick={() => fileInputRef.current?.click()}
-                                                disabled={uploading}
-                                                data-testid="upload-photo-btn"
-                                            >
-                                                {uploading ? (
-                                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                ) : (
-                                                    <Upload className="w-4 h-4 mr-2" />
-                                                )}
-                                                {uploading ? 'Uploading...' : 'Upload Photo'}
-                                            </Button>
+                                    <div className="text-sm">
+                                        <p className="font-medium">Student Photo</p>
+                                        <p className="text-xs text-muted-foreground">JPG, PNG, WebP (max 5MB)</p>
+                                        {formData.photo_url && (
+                                            <button type="button" className="text-xs text-destructive hover:underline mt-1" onClick={() => setFormData(prev => ({ ...prev, photo_url: '' }))}>Remove</button>
+                                        )}
+                                    </div>
+                                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                                </div>
+
+                                {/* Basic Info */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2"><GraduationCap className="w-4 h-4" /> Basic Information</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Student ID</Label>
+                                            <Input value={formData.student_id} onChange={(e) => setFormData({...formData, student_id: e.target.value})} placeholder="School ID" className="h-9 rounded-lg text-sm" data-testid="student-id-input" />
                                         </div>
-                                        <p className="text-xs text-muted-foreground">
-                                            JPG, PNG, GIF or WebP. Max 5MB.
-                                        </p>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">First Name *</Label>
+                                            <Input value={formData.first_name} onChange={(e) => setFormData({...formData, first_name: e.target.value})} required className="h-9 rounded-lg text-sm" data-testid="student-first-name" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Middle Name</Label>
+                                            <Input value={formData.middle_name} onChange={(e) => setFormData({...formData, middle_name: e.target.value})} className="h-9 rounded-lg text-sm" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Last Name *</Label>
+                                            <Input value={formData.last_name} onChange={(e) => setFormData({...formData, last_name: e.target.value})} required className="h-9 rounded-lg text-sm" data-testid="student-last-name" />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Date of Birth *</Label>
+                                            <Input type="date" value={formData.date_of_birth} onChange={(e) => setFormData({...formData, date_of_birth: e.target.value})} required className="h-9 rounded-lg text-sm" data-testid="student-dob" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Gender *</Label>
+                                            <Select value={formData.gender} onValueChange={(v) => setFormData({...formData, gender: v})}>
+                                                <SelectTrigger className="h-9 rounded-lg text-sm" data-testid="student-gender"><SelectValue placeholder="Select" /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Male">Male</SelectItem>
+                                                    <SelectItem value="Female">Female</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Emergency Contact</Label>
+                                            <Input value={formData.emergency_contact} onChange={(e) => setFormData({...formData, emergency_contact: e.target.value})} placeholder="Phone number" className="h-9 rounded-lg text-sm" />
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-4 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>Student ID</Label>
-                                        <Input
-                                            value={formData.student_id}
-                                            onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
-                                            className="rounded-xl"
-                                            placeholder="e.g., STU001"
-                                            data-testid="student-id-input"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>First Name *</Label>
-                                        <Input
-                                            value={formData.first_name}
-                                            onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                                            className="rounded-xl"
-                                            required
-                                            data-testid="student-first-name-input"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Middle Name</Label>
-                                        <Input
-                                            value={formData.middle_name}
-                                            onChange={(e) => setFormData({ ...formData, middle_name: e.target.value })}
-                                            className="rounded-xl"
-                                            data-testid="student-middle-name-input"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Last Name *</Label>
-                                        <Input
-                                            value={formData.last_name}
-                                            onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                                            className="rounded-xl"
-                                            required
-                                            data-testid="student-last-name-input"
-                                        />
-                                    </div>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>Date of Birth *</Label>
-                                        <Input
-                                            type="date"
-                                            value={formData.date_of_birth}
-                                            onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-                                            className="rounded-xl"
-                                            required
-                                            data-testid="student-dob-input"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Gender *</Label>
-                                        <Select 
-                                            value={formData.gender}
-                                            onValueChange={(value) => setFormData({ ...formData, gender: value })}
-                                        >
-                                            <SelectTrigger className="rounded-xl" data-testid="student-gender-select">
-                                                <SelectValue placeholder="Select gender" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Male">Male</SelectItem>
-                                                <SelectItem value="Female">Female</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                                
-                                <div className="space-y-2">
-                                    <Label>Address</Label>
-                                    <Textarea
-                                        value={formData.address}
-                                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                        className="rounded-xl"
-                                        rows={2}
-                                        placeholder="Student's home address"
-                                        data-testid="student-address-input"
-                                    />
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>House</Label>
-                                        <Select 
-                                            value={formData.house}
-                                            onValueChange={(value) => setFormData({ ...formData, house: value })}
-                                        >
-                                            <SelectTrigger className="rounded-xl" data-testid="student-house-select">
-                                                <SelectValue placeholder="Select house" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="none">No house</SelectItem>
-                                                {houses.map(house => (
-                                                    <SelectItem key={house} value={house}>{house}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Class</Label>
-                                        <Select 
-                                            value={formData.class_id}
-                                            onValueChange={(value) => setFormData({ ...formData, class_id: value })}
-                                        >
-                                            <SelectTrigger className="rounded-xl" data-testid="student-class-select">
-                                                <SelectValue placeholder="Select class" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="none">No class</SelectItem>
-                                                {classes.map(cls => (
-                                                    <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                {/* Contact */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2"><Phone className="w-4 h-4" /> Contact</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Student Phone</Label>
+                                            <Input value={formData.student_phone} onChange={(e) => setFormData({...formData, student_phone: e.target.value})} placeholder="Phone number" className="h-9 rounded-lg text-sm" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Student Email</Label>
+                                            <Input type="email" value={formData.student_email} onChange={(e) => setFormData({...formData, student_email: e.target.value})} placeholder="Email address" className="h-9 rounded-lg text-sm" />
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>Parent/Guardian</Label>
-                                        <Select 
-                                            value={formData.parent_id}
-                                            onValueChange={(value) => setFormData({ ...formData, parent_id: value })}
-                                        >
-                                            <SelectTrigger className="rounded-xl" data-testid="student-parent-select">
-                                                <SelectValue placeholder="Select parent" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="none">No parent assigned</SelectItem>
-                                                {parents.map(parent => (
-                                                    <SelectItem key={parent.id} value={parent.id}>{parent.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Emergency Contact</Label>
-                                        <Input
-                                            value={formData.emergency_contact}
-                                            onChange={(e) => setFormData({ ...formData, emergency_contact: e.target.value })}
-                                            className="rounded-xl"
-                                            placeholder="Phone number"
-                                            data-testid="student-emergency-input"
-                                        />
+                                {/* Address */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2"><Home className="w-4 h-4" /> Address</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Address Line 1</Label>
+                                            <Input value={formData.address_line1} onChange={(e) => setFormData({...formData, address_line1: e.target.value})} placeholder="Street address" className="h-9 rounded-lg text-sm" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Address Line 2</Label>
+                                            <Input value={formData.address_line2} onChange={(e) => setFormData({...formData, address_line2: e.target.value})} placeholder="Apt, Suite, etc." className="h-9 rounded-lg text-sm" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">City / State</Label>
+                                            <Input value={formData.city_state} onChange={(e) => setFormData({...formData, city_state: e.target.value})} placeholder="City, State" className="h-9 rounded-lg text-sm" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Country</Label>
+                                            <Input value={formData.country} onChange={(e) => setFormData({...formData, country: e.target.value})} placeholder="Country" className="h-9 rounded-lg text-sm" />
+                                        </div>
                                     </div>
                                 </div>
-                                
-                                <div className="space-y-2">
-                                    <Label>Teacher's Comment</Label>
-                                    <Textarea
-                                        value={formData.teacher_comment}
-                                        onChange={(e) => setFormData({ ...formData, teacher_comment: e.target.value })}
-                                        className="rounded-xl"
-                                        rows={3}
-                                        placeholder="General comments about the student"
-                                        data-testid="student-comment-input"
-                                    />
+
+                                {/* School Assignment */}
+                                <div>
+                                    <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2"><GraduationCap className="w-4 h-4" /> School Assignment</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Class</Label>
+                                            <Select value={formData.class_id || 'none'} onValueChange={(v) => setFormData({...formData, class_id: v})}>
+                                                <SelectTrigger className="h-9 rounded-lg text-sm"><SelectValue placeholder="Select class" /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="none">No class</SelectItem>
+                                                    {classes.map(cls => <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">House</Label>
+                                            <Select value={formData.house || 'none'} onValueChange={(v) => setFormData({...formData, house: v})}>
+                                                <SelectTrigger className="h-9 rounded-lg text-sm"><SelectValue placeholder="Select house" /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="none">No house</SelectItem>
+                                                    {houses.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
                                 </div>
-                                
-                                <div className="flex gap-3 pt-4">
-                                    <Button 
-                                        type="button" 
-                                        variant="outline" 
-                                        className="flex-1 rounded-full"
-                                        onClick={() => setIsDialogOpen(false)}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button 
-                                        type="submit" 
-                                        className="flex-1 rounded-full"
-                                        disabled={submitting}
-                                        data-testid="save-student-btn"
-                                    >
-                                        {submitting ? (
-                                            <Loader2 className="w-5 h-5 animate-spin" />
-                                        ) : (
-                                            editingStudent ? 'Update Student' : 'Add Student'
-                                        )}
+
+                                {/* Teacher Comment */}
+                                <div className="space-y-1">
+                                    <Label className="text-xs">Teacher Comment</Label>
+                                    <Textarea value={formData.teacher_comment} onChange={(e) => setFormData({...formData, teacher_comment: e.target.value})} placeholder="Optional comment" rows={2} className="rounded-lg text-sm" />
+                                </div>
+
+                                {/* Family Members */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2"><UsersIcon className="w-4 h-4" /> Family Members</h3>
+                                        <Button type="button" variant="outline" size="sm" onClick={addFamilyMember} className="rounded-lg h-8 text-xs">
+                                            <Plus className="w-3 h-3 mr-1" /> Add Family
+                                        </Button>
+                                    </div>
+                                    {formData.family_members.length === 0 && (
+                                        <p className="text-xs text-muted-foreground text-center py-4 border rounded-lg border-dashed">No family members added. Click "Add Family" to add a parent or guardian.</p>
+                                    )}
+                                    <div className="space-y-3">
+                                        {formData.family_members.map((fm, index) => (
+                                            <div key={index} className="border rounded-xl p-4 bg-muted/10 space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <button type="button" className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
+                                                        onClick={() => setExpandedFamily(prev => ({ ...prev, [index]: !prev[index] }))}>
+                                                        {expandedFamily[index] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                                        {fm.first_name || fm.last_name ? `${fm.salutation || ''} ${fm.first_name} ${fm.last_name}`.trim() : `Family Member ${index + 1}`}
+                                                        {fm.relationship && <span className="text-xs px-2 py-0.5 rounded-md bg-primary/10 text-primary font-medium ml-2">{fm.relationship}</span>}
+                                                    </button>
+                                                    <Button type="button" variant="ghost" size="sm" onClick={() => removeFamilyMember(index)} className="h-7 w-7 p-0 text-destructive hover:text-destructive">
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </Button>
+                                                </div>
+                                                {(expandedFamily[index] !== false || (!fm.first_name && !fm.last_name)) && (
+                                                    <>
+                                                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                                            <div className="space-y-1">
+                                                                <Label className="text-xs">Salutation</Label>
+                                                                <Select value={fm.salutation} onValueChange={(v) => updateFamilyMember(index, 'salutation', v)}>
+                                                                    <SelectTrigger className="h-8 rounded-lg text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
+                                                                    <SelectContent>{SALUTATIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                                                                </Select>
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-xs">First Name *</Label>
+                                                                <Input value={fm.first_name} onChange={(e) => updateFamilyMember(index, 'first_name', e.target.value)} className="h-8 rounded-lg text-xs" />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-xs">Middle Name</Label>
+                                                                <Input value={fm.middle_name} onChange={(e) => updateFamilyMember(index, 'middle_name', e.target.value)} className="h-8 rounded-lg text-xs" />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-xs">Last Name *</Label>
+                                                                <Input value={fm.last_name} onChange={(e) => updateFamilyMember(index, 'last_name', e.target.value)} className="h-8 rounded-lg text-xs" />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-xs">Gender</Label>
+                                                                <Select value={fm.gender} onValueChange={(v) => updateFamilyMember(index, 'gender', v)}>
+                                                                    <SelectTrigger className="h-8 rounded-lg text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
+                                                                    <SelectContent>
+                                                                        <SelectItem value="Male">Male</SelectItem>
+                                                                        <SelectItem value="Female">Female</SelectItem>
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <div className="space-y-1">
+                                                                <Label className="text-xs">Relationship *</Label>
+                                                                <Select value={fm.relationship} onValueChange={(v) => updateFamilyMember(index, 'relationship', v)}>
+                                                                    <SelectTrigger className="h-8 rounded-lg text-xs"><SelectValue placeholder="Select relationship" /></SelectTrigger>
+                                                                    <SelectContent>{RELATIONSHIPS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+                                                                </Select>
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-xs">Email</Label>
+                                                                <Input type="email" value={fm.email} onChange={(e) => updateFamilyMember(index, 'email', e.target.value)} className="h-8 rounded-lg text-xs" placeholder="Email" />
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                            <div className="space-y-1">
+                                                                <Label className="text-xs">Address Line 1</Label>
+                                                                <Input value={fm.address_line1} onChange={(e) => updateFamilyMember(index, 'address_line1', e.target.value)} className="h-8 rounded-lg text-xs" />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-xs">Address Line 2</Label>
+                                                                <Input value={fm.address_line2} onChange={(e) => updateFamilyMember(index, 'address_line2', e.target.value)} className="h-8 rounded-lg text-xs" />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-xs">City / State</Label>
+                                                                <Input value={fm.city_state} onChange={(e) => updateFamilyMember(index, 'city_state', e.target.value)} className="h-8 rounded-lg text-xs" />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-xs">Country</Label>
+                                                                <Input value={fm.country} onChange={(e) => updateFamilyMember(index, 'country', e.target.value)} className="h-8 rounded-lg text-xs" />
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-3 gap-3">
+                                                            <div className="space-y-1">
+                                                                <Label className="text-xs">Home Phone</Label>
+                                                                <Input value={fm.home_phone} onChange={(e) => updateFamilyMember(index, 'home_phone', e.target.value)} className="h-8 rounded-lg text-xs" />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-xs">Cell Phone</Label>
+                                                                <Input value={fm.cell_phone} onChange={(e) => updateFamilyMember(index, 'cell_phone', e.target.value)} className="h-8 rounded-lg text-xs" />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-xs">Work Phone</Label>
+                                                                <Input value={fm.work_phone} onChange={(e) => updateFamilyMember(index, 'work_phone', e.target.value)} className="h-8 rounded-lg text-xs" />
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end gap-2 pt-2">
+                                    <Button type="button" variant="outline" className="rounded-lg" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                                    <Button type="submit" disabled={submitting} className="gradient-primary rounded-lg" data-testid="student-submit-btn">
+                                        {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                        {editingStudent ? 'Update Student' : 'Add Student'}
                                     </Button>
                                 </div>
                             </form>
@@ -488,140 +469,50 @@ export default function StudentsPage() {
             </div>
 
             {/* Search */}
-            <div className="relative mb-6">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                    placeholder="Search by name or student ID..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 rounded-xl h-12"
-                    data-testid="search-students-input"
-                />
+            <div className="relative mb-4 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input placeholder="Search students..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 h-10 rounded-lg" data-testid="student-search" />
             </div>
 
             {/* Students Grid */}
-            {filteredStudents.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredStudents.map((student, index) => {
-                        const photoSrc = student.photo_url?.startsWith('/api') 
-                            ? `${process.env.REACT_APP_BACKEND_URL}${student.photo_url}` 
-                            : student.photo_url;
-                        return (
-                        <Card 
-                            key={student.id}
-                            className="rounded-2xl border-border shadow-sm card-hover opacity-0 animate-fade-in"
-                            style={{ animationDelay: `${index * 50}ms` }}
-                            data-testid={`student-card-${student.id}`}
-                        >
-                            <CardContent className="p-6">
-                                <div className="flex items-start gap-4">
-                                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg overflow-hidden">
-                                        {student.photo_url ? (
-                                            <img 
-                                                src={photoSrc} 
-                                                alt={`${student.first_name} ${student.last_name}`}
-                                                className="w-full h-full object-cover"
-                                                onError={(e) => { 
-                                                    e.target.style.display = 'none'; 
-                                                    e.target.nextSibling.style.display = 'flex';
-                                                }}
-                                            />
-                                        ) : null}
-                                        <span className={student.photo_url ? 'hidden' : 'flex'}>
-                                            {student.first_name?.[0]}{student.last_name?.[0]}
-                                        </span>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-lg truncate">
-                                            {student.first_name} {student.middle_name || ''} {student.last_name}
-                                        </h3>
-                                        <div className="flex flex-wrap items-center gap-2 mt-1">
-                                            {student.student_id && (
-                                                <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-mono">
-                                                    {student.student_id}
-                                                </span>
-                                            )}
-                                            {student.house && (
-                                                <span className={`text-xs px-2 py-1 rounded-full border ${getHouseColor(student.house)}`}>
-                                                    {student.house}
-                                                </span>
-                                            )}
-                                            <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
-                                                {student.gender}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div className="mt-4 space-y-2 text-sm">
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <Calendar className="w-4 h-4" />
-                                        <span>{student.date_of_birth} ({student.age} years old)</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <GraduationCap className="w-4 h-4" />
-                                        <span>{getClassName(student.class_id)}</span>
-                                    </div>
-                                    {student.address && (
-                                        <div className="flex items-center gap-2 text-muted-foreground">
-                                            <MapPin className="w-4 h-4 flex-shrink-0" />
-                                            <span className="truncate">{student.address}</span>
-                                        </div>
-                                    )}
-                                    {student.emergency_contact && (
-                                        <div className="flex items-center gap-2 text-muted-foreground">
-                                            <Phone className="w-4 h-4" />
-                                            <span>{student.emergency_contact}</span>
-                                        </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredStudents.map(student => (
+                    <Card key={student.id} className="rounded-2xl border-border shadow-sm hover:shadow-md transition-shadow" data-testid="student-card">
+                        <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                                <div className="w-12 h-12 rounded-xl bg-primary/8 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0 overflow-hidden">
+                                    {student.photo_url ? (
+                                        <img src={student.photo_url.startsWith('http') ? student.photo_url : `${process.env.REACT_APP_BACKEND_URL}${student.photo_url}`} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        `${student.first_name?.[0] || ''}${student.last_name?.[0] || ''}`
                                     )}
                                 </div>
-                                
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-semibold text-sm truncate">{student.first_name} {student.middle_name ? `${student.middle_name} ` : ''}{student.last_name}</h3>
+                                    <p className="text-xs text-muted-foreground">{student.student_id || 'No ID'} · {student.gender}</p>
+                                    <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                        <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-muted font-medium">{getClassName(student.class_id)}</span>
+                                        {student.house && <span className={`text-[11px] px-1.5 py-0.5 rounded-md border font-medium ${getHouseColor(student.house)}`}>{student.house}</span>}
+                                        {student.family_members?.length > 0 && <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-primary/10 text-primary font-medium">{student.family_members.length} family</span>}
+                                    </div>
+                                </div>
                                 {(isAdmin || isTeacher) && (
-                                    <div className="flex gap-2 mt-4 pt-4 border-t border-border">
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
-                                            className="flex-1 rounded-full"
-                                            onClick={() => handleEdit(student)}
-                                            data-testid={`edit-student-${student.id}`}
-                                        >
-                                            <Edit2 className="w-4 h-4 mr-1" />
-                                            Edit
-                                        </Button>
-                                        {isAdmin && (
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
-                                                className="rounded-full text-destructive hover:bg-destructive/10"
-                                                onClick={() => handleDelete(student.id)}
-                                                data-testid={`delete-student-${student.id}`}
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
-                                        )}
+                                    <div className="flex gap-1">
+                                        <Button variant="ghost" size="sm" onClick={() => handleEdit(student)} className="h-7 w-7 p-0 rounded-lg"><Edit2 className="w-3.5 h-3.5" /></Button>
+                                        <Button variant="ghost" size="sm" onClick={() => handleDelete(student.id)} className="h-7 w-7 p-0 rounded-lg text-destructive hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></Button>
                                     </div>
                                 )}
-                            </CardContent>
-                        </Card>
-                    );
-                    })}
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+            {filteredStudents.length === 0 && (
+                <div className="empty-state mt-8">
+                    <GraduationCap className="empty-state-icon" />
+                    <h3 className="text-base font-semibold mb-1">No students found</h3>
+                    <p className="text-sm text-muted-foreground">{searchQuery ? 'Try a different search term' : 'Add your first student to get started'}</p>
                 </div>
-            ) : (
-                <Card className="rounded-2xl border-border shadow-sm">
-                    <CardContent className="py-16">
-                        <div className="empty-state">
-                            <GraduationCap className="empty-state-icon" />
-                            <h3 className="text-lg font-semibold mb-2">No students found</h3>
-                            <p className="text-muted-foreground">
-                                {searchQuery 
-                                    ? 'Try adjusting your search query' 
-                                    : isParent 
-                                        ? 'No children assigned to your account' 
-                                        : 'Add your first student to get started'}
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
             )}
         </div>
     );

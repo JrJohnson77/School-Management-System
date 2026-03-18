@@ -138,6 +138,18 @@ class UserBase(BaseModel):
     school_code: str
     permissions: List[str] = []
     photo_url: Optional[str] = ""
+    # Extended teacher/staff fields
+    salutation: Optional[str] = ""
+    first_name: Optional[str] = ""
+    middle_name: Optional[str] = ""
+    last_name: Optional[str] = ""
+    gender: Optional[str] = ""
+    address_line1: Optional[str] = ""
+    address_line2: Optional[str] = ""
+    city_state: Optional[str] = ""
+    country: Optional[str] = ""
+    phone: Optional[str] = ""
+    email: Optional[str] = ""
 
 class UserCreate(UserBase):
     password: str
@@ -156,6 +168,17 @@ class UserResponse(BaseModel):
     school_code: str
     permissions: List[str] = []
     photo_url: Optional[str] = ""
+    salutation: Optional[str] = ""
+    first_name: Optional[str] = ""
+    middle_name: Optional[str] = ""
+    last_name: Optional[str] = ""
+    gender: Optional[str] = ""
+    address_line1: Optional[str] = ""
+    address_line2: Optional[str] = ""
+    city_state: Optional[str] = ""
+    country: Optional[str] = ""
+    phone: Optional[str] = ""
+    email: Optional[str] = ""
     created_at: str
 
 class TokenResponse(BaseModel):
@@ -167,6 +190,23 @@ class RoleUpdate(BaseModel):
     role: str
     permissions: Optional[List[str]] = None
 
+class FamilyMember(BaseModel):
+    id: Optional[str] = ""
+    salutation: Optional[str] = ""
+    first_name: str = ""
+    middle_name: Optional[str] = ""
+    last_name: str = ""
+    gender: Optional[str] = ""
+    relationship: str = ""  # Mother, Father, Aunt, Uncle, Brother, Sister, Stepmother, Stepfather, Grandparent, Guardian, Other
+    address_line1: Optional[str] = ""
+    address_line2: Optional[str] = ""
+    city_state: Optional[str] = ""
+    country: Optional[str] = ""
+    home_phone: Optional[str] = ""
+    cell_phone: Optional[str] = ""
+    work_phone: Optional[str] = ""
+    email: Optional[str] = ""
+
 class StudentBase(BaseModel):
     student_id: Optional[str] = ""  # School-assigned student ID
     first_name: str
@@ -174,13 +214,21 @@ class StudentBase(BaseModel):
     last_name: str
     date_of_birth: str
     gender: str
-    address: Optional[str] = ""
+    student_phone: Optional[str] = ""
+    student_email: Optional[str] = ""
+    address_line1: Optional[str] = ""
+    address_line2: Optional[str] = ""
+    city_state: Optional[str] = ""
+    country: Optional[str] = ""
     house: Optional[str] = ""
     class_id: Optional[str] = None
-    parent_id: Optional[str] = None
     emergency_contact: Optional[str] = ""
     teacher_comment: Optional[str] = ""
-    photo_url: Optional[str] = ""  # Student photo URL
+    photo_url: Optional[str] = ""
+    family_members: Optional[List[FamilyMember]] = []
+    # Keep old fields for backward compat
+    address: Optional[str] = ""
+    parent_id: Optional[str] = None
 
 class StudentCreate(StudentBase):
     pass
@@ -782,6 +830,17 @@ async def create_user(user_data: UserCreate, current_user: dict = Depends(requir
         "school_code": school_code,
         "permissions": permissions,
         "photo_url": user_data.photo_url or "",
+        "salutation": user_data.salutation or "",
+        "first_name": user_data.first_name or "",
+        "middle_name": user_data.middle_name or "",
+        "last_name": user_data.last_name or "",
+        "gender": user_data.gender or "",
+        "address_line1": user_data.address_line1 or "",
+        "address_line2": user_data.address_line2 or "",
+        "city_state": user_data.city_state or "",
+        "country": user_data.country or "",
+        "phone": user_data.phone or "",
+        "email": user_data.email or "",
         "password_hash": hash_password(user_data.password),
         "created_at": now
     }
@@ -897,10 +956,15 @@ async def create_student(student: StudentCreate, current_user: dict = Depends(re
     student_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     age = calculate_age(student.date_of_birth)
+    student_data = student.model_dump()
+    # Generate IDs for family members
+    for fm in student_data.get("family_members", []):
+        if not fm.get("id"):
+            fm["id"] = str(uuid.uuid4())
     doc = {
         "id": student_id,
         "school_code": current_user["school_code"],
-        **student.model_dump(),
+        **student_data,
         "age": age,
         "created_at": now,
         "updated_at": now
@@ -949,7 +1013,12 @@ async def update_student(student_id: str, student: StudentCreate, current_user: 
     
     now = datetime.now(timezone.utc).isoformat()
     age = calculate_age(student.date_of_birth)
-    update_data = {**student.model_dump(), "age": age, "updated_at": now}
+    student_data = student.model_dump()
+    # Generate IDs for new family members
+    for fm in student_data.get("family_members", []):
+        if not fm.get("id"):
+            fm["id"] = str(uuid.uuid4())
+    update_data = {**student_data, "age": age, "updated_at": now}
     
     await db.students.update_one(query, {"$set": update_data})
     updated = await db.students.find_one(query, {"_id": 0})

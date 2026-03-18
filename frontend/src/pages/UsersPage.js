@@ -46,13 +46,27 @@ const ALL_PERMISSIONS = [
     { key: 'generate_reports', label: 'Generate Reports', description: 'Generate report cards' },
 ];
 
+const SALUTATIONS_USER = ['Mr.', 'Ms.', 'Mrs.'];
+
 const initialFormData = {
     username: '',
     name: '',
     password: '',
     role: 'teacher',
     permissions: [],
-    photo_url: ''
+    photo_url: '',
+    salutation: '',
+    first_name: '',
+    middle_name: '',
+    last_name: '',
+    gender: '',
+    address_line1: '',
+    address_line2: '',
+    city_state: '',
+    country: '',
+    phone: '',
+    email: '',
+    school_code: ''
 };
 
 export default function UsersPage() {
@@ -121,19 +135,24 @@ export default function UsersPage() {
         setSubmitting(true);
         
         try {
+            // Auto-compute name from first/middle/last if teacher fields are filled
+            const computedName = formData.first_name 
+                ? [formData.first_name, formData.middle_name, formData.last_name].filter(Boolean).join(' ')
+                : formData.name;
+            
             if (editingUser) {
-                // Update role and permissions
                 await axios.put(`${API}/users/${editingUser.id}/role`, {
                     role: formData.role,
                     permissions: formData.permissions
                 });
                 toast.success('User updated successfully');
             } else {
-                // Create new user
-                await axios.post(`${API}/users`, {
+                const submitData = {
                     ...formData,
-                    school_code: schoolCode
-                });
+                    name: computedName,
+                    school_code: formData.school_code || schoolCode
+                };
+                await axios.post(`${API}/users`, submitData);
                 toast.success('User created successfully');
             }
             setIsDialogOpen(false);
@@ -155,7 +174,19 @@ export default function UsersPage() {
             password: '',
             role: user.role,
             permissions: user.permissions || [],
-            photo_url: user.photo_url || ''
+            photo_url: user.photo_url || '',
+            salutation: user.salutation || '',
+            first_name: user.first_name || '',
+            middle_name: user.middle_name || '',
+            last_name: user.last_name || '',
+            gender: user.gender || '',
+            address_line1: user.address_line1 || '',
+            address_line2: user.address_line2 || '',
+            city_state: user.city_state || '',
+            country: user.country || '',
+            phone: user.phone || '',
+            email: user.email || '',
+            school_code: user.school_code || ''
         });
         setIsDialogOpen(true);
     };
@@ -347,17 +378,107 @@ export default function UsersPage() {
                                         />
                                     </div>
                                     
-                                    <div className="space-y-2">
-                                        <Label>Full Name *</Label>
-                                        <Input
-                                            value={formData.name}
-                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                            className="rounded-xl"
-                                            placeholder="Enter full name"
-                                            required
-                                            data-testid="user-name-input"
-                                        />
-                                    </div>
+                                    {/* School Code */}
+                                    {isSuperuser && (
+                                        <div className="space-y-2">
+                                            <Label>School Code *</Label>
+                                            <Input
+                                                value={formData.school_code}
+                                                onChange={(e) => setFormData({ ...formData, school_code: e.target.value.toUpperCase() })}
+                                                className="rounded-xl uppercase"
+                                                placeholder="Enter school code"
+                                                required
+                                                data-testid="user-school-code-input"
+                                            />
+                                            <p className="text-xs text-muted-foreground">School code to assign this user to</p>
+                                        </div>
+                                    )}
+
+                                    {/* Teacher/Staff Detailed Fields */}
+                                    {(formData.role === 'teacher' || formData.role === 'admin') && (
+                                        <>
+                                            <div className="border-t pt-3 mt-2">
+                                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Personal Details</p>
+                                                <div className="grid grid-cols-4 gap-2 mb-3">
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">Salutation</Label>
+                                                        <Select value={formData.salutation} onValueChange={(v) => setFormData({ ...formData, salutation: v })}>
+                                                            <SelectTrigger className="h-9 rounded-lg text-sm"><SelectValue placeholder="Title" /></SelectTrigger>
+                                                            <SelectContent>{SALUTATIONS_USER.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">First Name *</Label>
+                                                        <Input value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} className="h-9 rounded-lg text-sm" />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">Middle Name</Label>
+                                                        <Input value={formData.middle_name} onChange={(e) => setFormData({ ...formData, middle_name: e.target.value })} className="h-9 rounded-lg text-sm" />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">Last Name *</Label>
+                                                        <Input value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} className="h-9 rounded-lg text-sm" />
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 mb-3">
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">Gender</Label>
+                                                        <Select value={formData.gender} onValueChange={(v) => setFormData({ ...formData, gender: v })}>
+                                                            <SelectTrigger className="h-9 rounded-lg text-sm"><SelectValue placeholder="Select" /></SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="Male">Male</SelectItem>
+                                                                <SelectItem value="Female">Female</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">Email</Label>
+                                                        <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="h-9 rounded-lg text-sm" placeholder="Email address" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="border-t pt-3">
+                                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Address & Contact</p>
+                                                <div className="grid grid-cols-2 gap-2 mb-3">
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">Address Line 1</Label>
+                                                        <Input value={formData.address_line1} onChange={(e) => setFormData({ ...formData, address_line1: e.target.value })} className="h-9 rounded-lg text-sm" />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">Address Line 2</Label>
+                                                        <Input value={formData.address_line2} onChange={(e) => setFormData({ ...formData, address_line2: e.target.value })} className="h-9 rounded-lg text-sm" />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">City / State</Label>
+                                                        <Input value={formData.city_state} onChange={(e) => setFormData({ ...formData, city_state: e.target.value })} className="h-9 rounded-lg text-sm" />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">Country</Label>
+                                                        <Input value={formData.country} onChange={(e) => setFormData({ ...formData, country: e.target.value })} className="h-9 rounded-lg text-sm" />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label className="text-xs">Phone</Label>
+                                                    <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="h-9 rounded-lg text-sm" placeholder="Phone number" />
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {/* Simple name field for non-teacher roles */}
+                                    {formData.role !== 'teacher' && formData.role !== 'admin' && (
+                                        <div className="space-y-2">
+                                            <Label>Full Name *</Label>
+                                            <Input
+                                                value={formData.name}
+                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                                className="rounded-xl"
+                                                placeholder="Enter full name"
+                                                required
+                                                data-testid="user-name-input"
+                                            />
+                                        </div>
+                                    )}
                                     
                                     <div className="space-y-2">
                                         <Label>Password *</Label>

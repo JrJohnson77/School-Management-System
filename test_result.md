@@ -120,6 +120,36 @@ backend:
           agent: "testing"
           comment: "✅ TESTED ALL KEY API ENDPOINTS: Health endpoint (/api/health) returns {\"status\": \"healthy\"}, Branded health endpoint confirms \"Lumina-SIS API\" branding, Login endpoint working with JTECH credentials, Auth me endpoint returns proper user info, Students endpoint returns empty list (0 students), Classes endpoint returns empty list (0 classes), Dashboard stats endpoint returns proper statistics. All 7 tests passed successfully."
 
+  - task: "Extended Student model with new fields"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Student form expanded with phone, email, address fields (Line1/2, City/State, Country), and Family Members section with full relationship tracking"
+        - working: true
+          agent: "testing"
+          comment: "✅ TESTED STUDENT CREATION WITH NEW FIELDS: POST /api/students successfully creates students with all new fields including student_phone, student_email, address_line1, address_line2, city_state, country, and complete family_members array with salutation, relationship, contact info. GET /api/students returns all new fields correctly. Student model extension fully functional."
+
+  - task: "Extended User/Teacher model with new fields"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Teacher/User creation expanded with salutation, separate name fields, gender, address, phone, email, school code"
+        - working: true
+          agent: "testing"
+          comment: "✅ TESTED TEACHER CREATION WITH NEW FIELDS: POST /api/users successfully creates teachers with all extended fields including salutation, first_name, middle_name, last_name, gender, address_line1, city_state, country, phone, email. All fields are properly stored and returned. User model extension fully functional."
+
 frontend:
   - task: "Rebrand to Lumina-SIS"
     implemented: true
@@ -196,19 +226,21 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: false
 
 test_plan:
   current_focus:
-    - "API health check and branding update"
-    - "Rebrand to Lumina-SIS"
+    - "Extended Student model with new fields"
+    - "Extended User/Teacher model with new fields"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
-      message: "Completed full UI redesign: EduManager -> Lumina-SIS rebrand, new indigo/violet color scheme, dark sidebar, modern login page, refined dashboard. All existing functionality preserved. Please test backend API health endpoint and login flow."
+      message: "Major update complete: 1) Student form expanded with phone, email, address fields (Line1/2, City/State, Country), and Family Members section. 2) Teacher/User creation expanded with salutation, separate name fields, gender, address, phone, email, school code. 3) School editor now has tabs: Basic Info, Gradebook Settings (moved from Gradebook page), Report Template (canvas designer embedded). 4) Settings tab removed from Gradebook page. Please test: POST /api/students with new fields including family_members array, POST /api/users with teacher fields, GET /api/students returns new fields, health check still works."
     - agent: "testing"
       message: "✅ BACKEND API TESTING COMPLETE: All 7 key endpoints tested and working perfectly. Health check confirms Lumina-SIS branding, login flow works with test credentials, authenticated endpoints (auth/me, students, classes, stats/dashboard) all respond correctly. API is fully functional after rebranding. Backend testing successful - no issues found."
+    - agent: "testing"
+      message: "✅ EXTENDED FIELDS TESTING COMPLETE: Comprehensive testing of new Student and User/Teacher model extensions. All new fields working perfectly: 1) Students can be created with student_phone, student_email, address fields, and complete family_members array with full contact/relationship data. 2) Teachers/Users can be created with salutation, separate name fields, gender, address, phone, email. 3) All extended data is properly stored, retrieved, and can be deleted. Both POST and GET operations work flawlessly with new field structures. Backend model extensions are fully functional and ready for production use."
