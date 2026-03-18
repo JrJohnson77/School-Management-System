@@ -1,7 +1,8 @@
-# Student Management System - PRD
+# Lumina-SIS (Student Information System) - PRD
 
 ## Original Problem Statement
 Multi-tenant student management system for primary schools with a canvas-based WYSIWYG report template designer.
+Rebranded from "EduManager" to "Lumina-SIS" with a modern, sleek UI redesign.
 
 ## Core Requirements
 - [x] JWT Auth & Multi-tenancy (Superuser, Admin, Teacher, Parent)
@@ -61,6 +62,7 @@ Multi-tenant student management system for primary schools with a canvas-based W
 - [ ] P2: Dark mode, Parent portal, Academic calendar
 
 ## Changelog
+- **Jul 2025 (Session 14)**: Rebranded from "EduManager" to "Lumina-SIS". Complete UI redesign with indigo/violet color palette, dark sidebar, Inter + Plus Jakarta Sans fonts, refined login page (split layout with dark branding panel), polished dashboard with accent-strip stat cards, consistent styling across all pages (rounded-2xl cards, subtle borders, clean animations).
 - **Dec 2025 (Session 13)**: Added custom weighting configuration in Settings tab. Fixed backend validation errors for skill_ratings and subject weights. Settings now save successfully.
 - **Dec 2025 (Session 12)**: Updated Academic Grades tab to MHPS Assessment Entry format with columns for each weighted component (HW 5%, GW 5%, Project 10%, Quiz 10%, Mid-Term 30%, End of Term 40%). Added all 10 subjects with auto-calculated weighted scores and grades.
 - **Dec 2025 (Session 11)**: Simplified Social Skills tab to show 7 specific skills (Completes Assignments, Follows Instructions, Punctuality, Deportment, Courteous in Speech and Action, Respect for Teacher, Respect for Peers) with EX/VG/G/NI rating dropdowns.
