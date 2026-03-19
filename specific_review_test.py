@@ -9,7 +9,7 @@ import json
 import sys
 
 # API base URL from frontend configuration
-BASE_URL = "https://lumina-ui-refresh.preview.emergentagent.com/api"
+BASE_URL = "https://github-mhps-test.preview.emergentagent.com/api"
 
 class ReviewRequestTester:
     def __init__(self):

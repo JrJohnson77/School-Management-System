@@ -10,7 +10,7 @@ import sys
 from typing import Dict, Any
 
 # API base URL from frontend configuration
-BASE_URL = "https://lumina-ui-refresh.preview.emergentagent.com/api"
+BASE_URL = "https://github-mhps-test.preview.emergentagent.com/api"
 
 # Test credentials
 TEST_CREDENTIALS = {
