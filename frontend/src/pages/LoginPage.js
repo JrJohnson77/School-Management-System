@@ -59,9 +59,15 @@ export default function LoginPage() {
                         <span className="text-white font-extrabold text-xl tracking-tight">Lumina-SIS</span>
                     </div>
 
-                    {/* Hero content — just the logo large */}
-                    <div className="flex flex-col items-center justify-center flex-1">
-                        <img src="/lumina-logo.png" alt="Lumina-SIS" className="w-64 h-64 object-contain animate-float" />
+                    {/* Hero content — logo + tagline */}
+                    <div className="flex flex-col items-center justify-center flex-1 space-y-6">
+                        <img src="/lumina-logo.png" alt="Lumina-SIS" className="w-56 h-56 object-contain animate-float" />
+                        <h1 className="text-3xl xl:text-4xl font-extrabold text-white leading-tight tracking-tight text-center">
+                            Student Information,<br />
+                            <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, hsl(198 100% 60%), hsl(45 100% 60%), hsl(18 85% 60%))' }}>
+                                Reimagined.
+                            </span>
+                        </h1>
                     </div>
 
                     {/* Bottom quote */}
