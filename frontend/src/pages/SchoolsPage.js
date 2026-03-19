@@ -351,15 +351,45 @@ export default function SchoolsPage() {
                                             </div>
                                             <div className="p-2.5 rounded-lg border bg-blue-50/50 space-y-2">
                                                 <div className="flex items-center justify-between">
-                                                    <Label className="text-xs font-medium">Default Weights</Label>
-                                                    <span className="text-[10px] text-muted-foreground">Total: {Object.values(template?.assessment_weights || DEFAULT_WEIGHTS).reduce((a, b) => a + b, 0)}%</span>
+                                                    <Label className="text-xs font-medium">Assignment Types & Weights</Label>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] text-muted-foreground">Total: {Object.values(template?.assessment_weights || DEFAULT_WEIGHTS).reduce((a, b) => a + b, 0)}%</span>
+                                                        <Button type="button" variant="ghost" size="sm" onClick={() => {
+                                                            const newKey = `custom_${Date.now()}`;
+                                                            setTemplate(prev => ({...prev, assessment_weights: {...(prev?.assessment_weights || DEFAULT_WEIGHTS), [newKey]: 0 }}));
+                                                        }} className="h-6 text-[10px] px-2"><Plus className="w-3 h-3 mr-0.5" /> Add Type</Button>
+                                                    </div>
                                                 </div>
-                                                <div className="grid grid-cols-3 gap-1.5">
+                                                <div className="space-y-1.5">
                                                     {Object.entries(template?.assessment_weights || DEFAULT_WEIGHTS).map(([key, value]) => (
-                                                        <div key={key} className="flex items-center gap-1">
-                                                            <Label className="text-[10px] w-14 capitalize">{key.replace(/([A-Z])/g, ' $1')}</Label>
-                                                            <Input type="number" value={value} onChange={(e) => setTemplate({...template, assessment_weights: {...(template?.assessment_weights || DEFAULT_WEIGHTS), [key]: parseFloat(e.target.value) || 0}})} className="w-12 h-6 text-xs rounded text-center" />
+                                                        <div key={key} className="flex items-center gap-1.5 p-1.5 rounded bg-white/60">
+                                                            <Input 
+                                                                value={key} 
+                                                                onChange={(e) => {
+                                                                    const newKey = e.target.value;
+                                                                    if (!newKey) return;
+                                                                    const oldWeights = template?.assessment_weights || DEFAULT_WEIGHTS;
+                                                                    const newWeights = {};
+                                                                    Object.entries(oldWeights).forEach(([k, v]) => {
+                                                                        newWeights[k === key ? newKey : k] = v;
+                                                                    });
+                                                                    setTemplate(prev => ({...prev, assessment_weights: newWeights}));
+                                                                }} 
+                                                                className="flex-1 h-6 text-xs rounded" 
+                                                                placeholder="Assignment type name" 
+                                                            />
+                                                            <Input 
+                                                                type="number" 
+                                                                value={value} 
+                                                                onChange={(e) => setTemplate(prev => ({...prev, assessment_weights: {...(prev?.assessment_weights || DEFAULT_WEIGHTS), [key]: parseFloat(e.target.value) || 0}}))} 
+                                                                className="w-14 h-6 text-xs rounded text-center" 
+                                                            />
                                                             <span className="text-[10px]">%</span>
+                                                            <Button type="button" variant="ghost" size="sm" onClick={() => {
+                                                                const newWeights = {...(template?.assessment_weights || DEFAULT_WEIGHTS)};
+                                                                delete newWeights[key];
+                                                                setTemplate(prev => ({...prev, assessment_weights: newWeights}));
+                                                            }} className="h-6 w-6 p-0 text-destructive"><Trash2 className="w-2.5 h-2.5" /></Button>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -520,8 +550,8 @@ export default function SchoolsPage() {
                         <Card key={school.id} className="rounded-2xl border-border shadow-sm hover:shadow-md transition-shadow" data-testid={`school-card-${school.school_code}`}>
                             <CardContent className="p-5">
                                 <div className="flex items-start justify-between mb-3">
-                                    <div className="w-11 h-11 rounded-xl gradient-primary flex items-center justify-center text-white font-bold text-sm shadow-md shadow-primary/20">
-                                        {school.school_code?.slice(0, 2)}
+                                    <div className="w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center bg-muted shadow-sm">
+                                        <img src="/lumina-logo.png" alt="" className="w-9 h-9 object-contain" />
                                     </div>
                                     <div className="flex gap-1">
                                         <Button variant="ghost" size="sm" onClick={() => handleEdit(school)} className="h-8 w-8 p-0 rounded-lg" data-testid={`edit-school-${school.school_code}`}><Edit2 className="w-3.5 h-3.5" /></Button>

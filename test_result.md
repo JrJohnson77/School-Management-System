@@ -120,6 +120,18 @@ backend:
           agent: "testing"
           comment: "✅ TESTED ALL KEY API ENDPOINTS: Health endpoint (/api/health) returns {\"status\": \"healthy\"}, Branded health endpoint confirms \"Lumina-SIS API\" branding, Login endpoint working with JTECH credentials, Auth me endpoint returns proper user info, Students endpoint returns empty list (0 students), Classes endpoint returns empty list (0 classes), Dashboard stats endpoint returns proper statistics. All 7 tests passed successfully."
 
+  - task: "Report template API with dynamic weight keys"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ COMPREHENSIVE REPORT TEMPLATE API TESTING COMPLETE: All 6 tests passed successfully. (1) Health check endpoint working, (2) Authentication with JTECH credentials successful, (3) GET /api/report-templates/JTECH returns template with assessment_weights object containing original keys (homework=5, groupWork=5, project=10, quiz=10, midTerm=30, endOfTerm=40), (4) PUT /api/report-templates/JTECH successfully updates with CUSTOM dynamic weight keys (homework=10, classwork=15, midTermExam=35, finalExam=40), (5) Custom weights persistence verified - GET request confirms new keys are saved correctly, (6) Restore original weights successful - PUT request restores original keys. Dynamic weight keys functionality working perfectly - system accepts ANY custom assessment weight keys and persists them correctly."
+
   - task: "Extended Student model with new fields"
     implemented: true
     working: true
@@ -319,10 +331,10 @@ test_plan:
 
 agent_communication:
     - agent: "main"
-      message: "Major update complete: 1) Student form expanded with phone, email, address fields (Line1/2, City/State, Country), and Family Members section. 2) Teacher/User creation expanded with salutation, separate name fields, gender, address, phone, email, school code. 3) School editor now has tabs: Basic Info, Gradebook Settings (moved from Gradebook page), Report Template (canvas designer embedded). 4) Settings tab removed from Gradebook page. Please test: POST /api/students with new fields including family_members array, POST /api/users with teacher fields, GET /api/students returns new fields, health check still works."
+      message: "Enhancement complete: 1) Dynamic assignment types - users can now add/delete/rename assignment types that contribute to final grade weight. 2) Login page - removed description text and feature pills, changed quote to 'Education made simple'. 3) Logo - Lumina-SIS.png now used in sidebar, login page, and school cards. 4) Color scheme updated to navy/cyan/amber matching logo colors. Please test: login page appearance, school gradebook settings dynamic weights (add/delete/rename types), and verify overall UI consistency."
     - agent: "testing"
       message: "✅ BACKEND API TESTING COMPLETE: All 7 key endpoints tested and working perfectly. Health check confirms Lumina-SIS branding, login flow works with test credentials, authenticated endpoints (auth/me, students, classes, stats/dashboard) all respond correctly. API is fully functional after rebranding. Backend testing successful - no issues found."
     - agent: "testing"
       message: "✅ EXTENDED FIELDS TESTING COMPLETE: Comprehensive testing of new Student and User/Teacher model extensions. All new fields working perfectly: 1) Students can be created with student_phone, student_email, address fields, and complete family_members array with full contact/relationship data. 2) Teachers/Users can be created with salutation, separate name fields, gender, address, phone, email. 3) All extended data is properly stored, retrieved, and can be deleted. Both POST and GET operations work flawlessly with new field structures. Backend model extensions are fully functional and ready for production use."
     - agent: "testing"
-      message: "✅ COMPREHENSIVE FRONTEND UI TESTING COMPLETE: Tested all 7 flows as requested: (1) Login flow with JTECH credentials - working perfectly, redirects to dashboard. (2) Dashboard loads with 7 stat cards and welcome message. (3) Students page NEW form structure verified - all 5 sections present (Basic Info, Contact, Address, School Assignment, Family Members), 'Add Family' button works and shows family member sub-form with all required fields (Salutation, First/Middle/Last Name, Gender, Relationship, Address, Phone fields). (4) Schools page tabbed editor verified - all 3 tabs present (Basic Info, Gradebook Settings with subjects/weights/standards, Report Template with canvas designer). (5) Users page teacher form verified - all expanded fields present when teacher role selected (Salutation, First/Middle/Last Name, Gender, Email, Address fields, Phone). (6) Gradebook page Settings tab removal verified - NO Settings tab found, settings successfully moved to Schools page. (7) Logout flow working - user menu dropdown with logout button redirects to login page. ALL REQUIREMENTS MET. Minor observations: Console warnings about missing DialogContent descriptions (accessibility, not critical), Gradebook simplified to direct grade entry interface (valid design choice). Application is fully functional with modern UI and all requested features implemented correctly."
+      message: "✅ REPORT TEMPLATE DYNAMIC WEIGHT KEYS TESTING COMPLETE: Comprehensive testing of the report template / gradebook settings endpoints confirmed that dynamic weight keys are working perfectly. System successfully accepts, stores, and retrieves ANY custom assessment weight keys. Testing included: (1) Authentication and health checks working, (2) GET endpoint returns current template with assessment_weights object, (3) PUT endpoint accepts custom dynamic keys (homework=10, classwork=15, midTermExam=35, finalExam=40) and stores them correctly, (4) Persistence verification shows custom keys are properly saved and retrievable, (5) Restoration to original weights works correctly. All 6/6 tests passed. The API correctly handles partial updates that merge with existing template data and supports dynamic assessment type configuration as requested."

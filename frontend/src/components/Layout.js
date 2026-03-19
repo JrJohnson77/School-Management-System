@@ -27,7 +27,6 @@ import {
     ChevronDown,
     Shield,
     FolderInput,
-    Sparkles,
     Bell
 } from 'lucide-react';
 
@@ -114,9 +113,7 @@ export const Layout = ({ children }) => {
                     {/* Logo */}
                     <div className="flex items-center justify-between px-5 py-5">
                         <Link to="/dashboard" className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center shadow-lg shadow-primary/25">
-                                <Sparkles className="w-5 h-5 text-white" />
-                            </div>
+                            <img src="/lumina-logo.png" alt="Lumina-SIS" className="w-9 h-9 object-contain rounded-lg" />
                             <div>
                                 <h1 className="font-extrabold text-white text-base tracking-tight">Lumina-SIS</h1>
                                 <p className="text-[11px] font-medium" style={{ color: 'hsl(var(--sidebar-muted))' }}>{schoolCode}</p>

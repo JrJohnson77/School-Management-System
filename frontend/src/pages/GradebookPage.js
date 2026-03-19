@@ -52,21 +52,13 @@ const getGradeFromScale = (score, gradeScale) => {
 };
 
 const calcWeightedFromWeights = (components, weights) => {
-    const homework = parseFloat(components.homework) || 0;
-    const groupWork = parseFloat(components.groupWork) || 0;
-    const project = parseFloat(components.project) || 0;
-    const quiz = parseFloat(components.quiz) || 0;
-    const midTerm = parseFloat(components.midTerm) || 0;
-    const endOfTerm = parseFloat(components.endOfTerm) || 0;
-    
-    return (
-        homework * ((weights.homework || 0) / 100) +
-        groupWork * ((weights.groupWork || 0) / 100) +
-        project * ((weights.project || 0) / 100) +
-        quiz * ((weights.quiz || 0) / 100) +
-        midTerm * ((weights.midTerm || 0) / 100) +
-        endOfTerm * ((weights.endOfTerm || 0) / 100)
-    );
+    // Dynamic: iterate over all weight keys
+    let total = 0;
+    for (const [key, weightPct] of Object.entries(weights)) {
+        const score = parseFloat(components[key]) || 0;
+        total += score * ((weightPct || 0) / 100);
+    }
+    return total;
 };
 
 export default function GradebookPage() {
@@ -120,11 +112,7 @@ export default function GradebookPage() {
         : DEFAULT_WEIGHTS;
     const tplComponents = Object.entries(tplWeights).map(([key, weight]) => ({
         key, 
-        label: key === 'homework' ? 'HW' : 
-               key === 'groupWork' ? 'GW' : 
-               key === 'midTerm' ? 'Mid-Term' :
-               key === 'endOfTerm' ? 'End of Term' :
-               key.charAt(0).toUpperCase() + key.slice(1), 
+        label: key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).trim(),
         weight
     }));
     const tplSocialCategories = template?.social_skills_categories || [];
@@ -214,15 +202,12 @@ export default function GradebookPage() {
                 const gradesObj = {};
                 existing.subjects.forEach(s => {
                     if (useMHPSMode) {
-                        gradesObj[s.subject] = {
-                            homework: s.homework ?? '',
-                            groupWork: s.groupWork ?? '',
-                            project: s.project ?? '',
-                            quiz: s.quiz ?? '',
-                            midTerm: s.midTerm ?? '',
-                            endOfTerm: s.endOfTerm ?? '',
-                            comment: s.comment || ''
-                        };
+                        const entry = { comment: s.comment || '' };
+                        // Dynamically load all component keys from template
+                        tplComponents.forEach(comp => {
+                            entry[comp.key] = s[comp.key] ?? '';
+                        });
+                        gradesObj[s.subject] = entry;
                     } else {
                         gradesObj[s.subject] = {
                             score: s.score ?? '',
@@ -236,10 +221,11 @@ export default function GradebookPage() {
                 const emptyGrades = {};
                 subjects.forEach(subj => {
                     if (useMHPSMode) {
-                        emptyGrades[subj] = {
-                            homework: '', groupWork: '', project: '',
-                            quiz: '', midTerm: '', endOfTerm: '', comment: ''
-                        };
+                        const entry = { comment: '' };
+                        tplComponents.forEach(comp => {
+                            entry[comp.key] = '';
+                        });
+                        emptyGrades[subj] = entry;
                     } else {
                         emptyGrades[subj] = { score: '', comment: '' };
                     }

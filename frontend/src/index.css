@@ -6,61 +6,61 @@
 
 @layer base {
     :root {
-        --background: 220 14% 96%;
-        --foreground: 224 71% 4%;
+        --background: 210 20% 97%;
+        --foreground: 215 72% 10%;
         --card: 0 0% 100%;
-        --card-foreground: 224 71% 4%;
+        --card-foreground: 215 72% 10%;
         --popover: 0 0% 100%;
-        --popover-foreground: 224 71% 4%;
-        --primary: 243 75% 59%;
+        --popover-foreground: 215 72% 10%;
+        --primary: 210 65% 38%;
         --primary-foreground: 0 0% 100%;
-        --secondary: 220 14% 96%;
-        --secondary-foreground: 224 71% 4%;
-        --muted: 220 14% 92%;
-        --muted-foreground: 220 9% 46%;
-        --accent: 243 75% 59%;
+        --secondary: 210 20% 95%;
+        --secondary-foreground: 215 72% 10%;
+        --muted: 210 18% 92%;
+        --muted-foreground: 215 15% 45%;
+        --accent: 18 85% 54%;
         --accent-foreground: 0 0% 100%;
         --destructive: 0 84% 60%;
         --destructive-foreground: 0 0% 100%;
-        --border: 220 13% 91%;
-        --input: 220 13% 91%;
-        --ring: 243 75% 59%;
+        --border: 210 18% 90%;
+        --input: 210 18% 90%;
+        --ring: 198 100% 42%;
         --radius: 0.75rem;
-        --chart-1: 243 75% 59%;
-        --chart-2: 38 92% 50%;
+        --chart-1: 210 65% 38%;
+        --chart-2: 18 85% 54%;
         --chart-3: 160 84% 39%;
-        --chart-4: 280 65% 60%;
-        --chart-5: 340 75% 55%;
+        --chart-4: 198 100% 47%;
+        --chart-5: 45 100% 55%;
 
         /* Lumina custom tokens */
-        --sidebar-bg: 228 33% 10%;
-        --sidebar-fg: 220 14% 96%;
-        --sidebar-muted: 220 14% 40%;
-        --sidebar-accent: 243 75% 64%;
+        --sidebar-bg: 215 72% 10%;
+        --sidebar-fg: 210 20% 96%;
+        --sidebar-muted: 210 18% 50%;
+        --sidebar-accent: 198 100% 55%;
         --success: 160 84% 39%;
-        --warning: 38 92% 50%;
+        --warning: 45 100% 55%;
     }
 
     .dark {
-        --background: 224 71% 4%;
+        --background: 215 72% 5%;
         --foreground: 210 40% 98%;
-        --card: 228 33% 10%;
+        --card: 215 50% 10%;
         --card-foreground: 210 40% 98%;
-        --popover: 228 33% 10%;
+        --popover: 215 50% 10%;
         --popover-foreground: 210 40% 98%;
-        --primary: 243 75% 64%;
+        --primary: 198 100% 50%;
         --primary-foreground: 0 0% 100%;
-        --secondary: 228 33% 15%;
+        --secondary: 215 50% 15%;
         --secondary-foreground: 210 40% 98%;
-        --muted: 228 33% 15%;
-        --muted-foreground: 220 14% 60%;
-        --accent: 243 75% 64%;
+        --muted: 215 50% 15%;
+        --muted-foreground: 210 18% 60%;
+        --accent: 18 85% 54%;
         --accent-foreground: 0 0% 100%;
         --destructive: 0 63% 31%;
         --destructive-foreground: 210 40% 98%;
-        --border: 228 33% 17%;
-        --input: 228 33% 17%;
-        --ring: 243 75% 64%;
+        --border: 215 50% 17%;
+        --input: 215 50% 17%;
+        --ring: 198 100% 50%;
     }
 }
 
@@ -219,19 +219,19 @@
 .stagger-4 { animation-delay: 0.2s; }
 .stagger-5 { animation-delay: 0.25s; }
 
-/* Gradient backgrounds */
+/* Gradient backgrounds - Navy to Cyan matching logo */
 .gradient-hero {
     background: linear-gradient(135deg, 
-        hsl(243 75% 97%) 0%, 
-        hsl(220 14% 96%) 40%,
-        hsl(38 92% 97%) 100%
+        hsl(210 30% 97%) 0%, 
+        hsl(210 20% 96%) 40%,
+        hsl(198 40% 96%) 100%
     );
 }
 
 .gradient-primary {
-    background: linear-gradient(135deg, hsl(243 75% 59%) 0%, hsl(260 70% 55%) 100%);
+    background: linear-gradient(135deg, hsl(210 65% 38%) 0%, hsl(198 100% 42%) 100%);
 }
 
 .gradient-card {
-    background: linear-gradient(135deg, hsl(243 75% 59% / 0.05) 0%, hsl(260 70% 55% / 0.02) 100%);
+    background: linear-gradient(135deg, hsl(210 65% 38% / 0.05) 0%, hsl(198 100% 42% / 0.02) 100%);
 }
