@@ -1195,7 +1195,7 @@ export default function ReportTemplateDesigner({ schoolCodeProp, embedded = fals
                             )}
                             {selected.type === 'data-field' && (
                                 <div className="space-y-1.5">
-                                    <DataFieldPicker field={selected.config?.field} onChange={v=>updateElement(selected.id,{config:{...selected.config,field:v}})} template={template} />
+                                    <DataFieldPicker field={selected.config?.field} onChange={v=>updateElement(selected.id,{config:{...selected.config,field:v}})} template={rawTemplate} />
                                     <div className="flex items-center gap-2"><Switch checked={selected.config?.showLabel!==false} onCheckedChange={v=>updateElement(selected.id,{config:{...selected.config,showLabel:v}})}/><Label className="text-[10px]">Show label</Label></div>
                                 </div>
                             )}
