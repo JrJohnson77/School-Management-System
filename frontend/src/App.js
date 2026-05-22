@@ -14,6 +14,10 @@ import ReportsPage from "./pages/ReportsPage";
 import UsersPage from "./pages/UsersPage";
 import ImportExportPage from "./pages/ImportExportPage";
 import ReportTemplateDesigner from "./pages/ReportTemplateDesigner";
+import AdmissionsPage from "./pages/AdmissionsPage";
+import HealthPage from "./pages/HealthPage";
+import DisciplinePage from "./pages/DisciplinePage";
+import ReEnrollmentPage from "./pages/ReEnrollmentPage";
 import { Loader2 } from "lucide-react";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -157,6 +161,38 @@ function AppRoutes() {
                 element={
                     <ProtectedRoute allowedRoles={['superuser', 'admin']}>
                         <UsersPage />
+                    </ProtectedRoute>
+                } 
+            />
+            <Route 
+                path="/admissions" 
+                element={
+                    <ProtectedRoute allowedRoles={['superuser', 'admin']}>
+                        <AdmissionsPage />
+                    </ProtectedRoute>
+                } 
+            />
+            <Route 
+                path="/health" 
+                element={
+                    <ProtectedRoute allowedRoles={['superuser', 'admin', 'teacher']}>
+                        <HealthPage />
+                    </ProtectedRoute>
+                } 
+            />
+            <Route 
+                path="/discipline" 
+                element={
+                    <ProtectedRoute allowedRoles={['superuser', 'admin', 'teacher']}>
+                        <DisciplinePage />
+                    </ProtectedRoute>
+                } 
+            />
+            <Route 
+                path="/re-enrollment" 
+                element={
+                    <ProtectedRoute allowedRoles={['superuser', 'admin']}>
+                        <ReEnrollmentPage />
                     </ProtectedRoute>
                 } 
             />

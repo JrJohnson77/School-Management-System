@@ -27,7 +27,12 @@ import {
     ChevronDown,
     Shield,
     FolderInput,
-    Bell
+    Bell,
+    UserPlus,
+    Activity,
+    AlertTriangle,
+    RefreshCw,
+    ClipboardList
 } from 'lucide-react';
 
 const NavItem = ({ to, icon: Icon, label, isCollapsed, isActive }) => (
