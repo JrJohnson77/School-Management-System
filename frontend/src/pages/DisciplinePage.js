@@ -9,14 +9,15 @@ import { Badge } from '../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
 import { Textarea } from '../components/ui/textarea';
-import { Loader2, Plus, Edit2, AlertTriangle, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { Loader2, Plus, Edit2, AlertTriangle, CheckCircle2, Clock, X } from 'lucide-react';
 import { toast } from 'sonner';
 
-const API = process.env.REACT_APP_BACKEND_URL;
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function DisciplinePage() {
     const { token } = useAuth();
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [incidents, setIncidents] = useState([]);
     const [students, setStudents] = useState([]);
     const [showDialog, setShowDialog] = useState(false);
@@ -46,6 +47,7 @@ export default function DisciplinePage() {
     };
 
     const handleSubmit = async () => {
+        setSaving(true);
         try {
             if (editingItem) {
                 await axios.put(`${API}/discipline/${editingItem.id}`, formData, {
@@ -62,7 +64,10 @@ export default function DisciplinePage() {
             setEditingItem(null);
             fetchData();
         } catch (error) {
-            toast.error('Failed to save');
+            const msg = error?.response?.data?.detail || 'Failed to save';
+            toast.error(msg);
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -207,8 +212,8 @@ export default function DisciplinePage() {
 
             <Dialog open={showDialog} onOpenChange={setShowDialog}>
                 <DialogContent className="rounded-2xl max-w-2xl p-6">
-                    <button onClick={() => setShowDialog(false)} className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">
-                        <XCircle className="h-4 w-4" />
+                    <button onClick={() => setShowDialog(false)} className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100" data-testid="discipline-dialog-close">
+                        <X className="h-4 w-4" />
                     </button>
                     <DialogHeader>
                         <DialogTitle>{editingItem ? 'Edit' : 'New'} Incident</DialogTitle>
@@ -269,8 +274,9 @@ export default function DisciplinePage() {
                         </div>
                     </div>
                     <DialogFooter className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setShowDialog(false)} className="rounded-xl">Cancel</Button>
-                        <Button onClick={handleSubmit} disabled={!formData.student_id || !formData.description} className="rounded-xl">
+                        <Button variant="outline" onClick={() => setShowDialog(false)} className="rounded-xl" data-testid="discipline-cancel-btn">Cancel</Button>
+                        <Button onClick={handleSubmit} disabled={saving || !formData.student_id || !formData.description} className="rounded-xl" data-testid="discipline-save-btn">
+                            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                             {editingItem ? 'Update' : 'Create'}
                         </Button>
                     </DialogFooter>

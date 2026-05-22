@@ -4,17 +4,25 @@ import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Badge } from '../components/ui/badge';
 import { Checkbox } from '../components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
-import { Loader2, Users, CheckCircle2, XCircle, ArrowUpCircle, UserX, GraduationCap } from 'lucide-react';
+import { Loader2, GraduationCap, X } from 'lucide-react';
 import { toast } from 'sonner';
 
-const API = process.env.REACT_APP_BACKEND_URL;
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+const ACTIONS = [
+    { value: 'promote', label: 'Promote' },
+    { value: 'retain', label: 'Retain' },
+    { value: 'graduate', label: 'Graduate' },
+    { value: 'withdraw', label: 'Withdraw' },
+    { value: 'no_change', label: 'No Change' },
+];
 
 export default function ReEnrollmentPage() {
     const { token } = useAuth();
     const [loading, setLoading] = useState(true);
+    const [previewLoading, setPreviewLoading] = useState(false);
     const [academicYears, setAcademicYears] = useState([]);
     const [fromYear, setFromYear] = useState('');
     const [toYear, setToYear] = useState('');
@@ -31,19 +39,19 @@ export default function ReEnrollmentPage() {
     const fetchAcademicYears = async () => {
         setLoading(true);
         try {
-            // Fetch from school settings
             const res = await axios.get(`${API}/schools`, { headers: { Authorization: `Bearer ${token}` } });
             if (res.data && res.data.length > 0) {
                 const school = res.data[0];
                 const years = school.academic_years || [];
                 setAcademicYears(years.map(y => y.year));
-                
-                // Auto-select current year as "from"
                 const current = years.find(y => y.is_current);
                 if (current) setFromYear(current.year);
+            } else {
+                setAcademicYears([]);
             }
         } catch (error) {
             toast.error('Failed to load academic years');
+            setAcademicYears([]);
         } finally {
             setLoading(false);
         }
@@ -54,23 +62,31 @@ export default function ReEnrollmentPage() {
             toast.error('Please select both years');
             return;
         }
-        setLoading(true);
+        if (fromYear === toYear) {
+            toast.error('From year and to year must be different');
+            return;
+        }
+        setPreviewLoading(true);
         try {
             const res = await axios.get(`${API}/enrollment/preview?from_year=${fromYear}&to_year=${toYear}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setPreview(res.data);
             setSelectedStudents(new Set());
+            if (res.data.length === 0) {
+                toast.info('No active students found for the selected from-year.');
+            }
         } catch (error) {
-            toast.error('Failed to load preview');
+            const msg = error?.response?.data?.detail || 'Failed to load preview';
+            toast.error(msg);
         } finally {
-            setLoading(false);
+            setPreviewLoading(false);
         }
     };
 
-    const handleActionChange = (studentId, action, targetClass) => {
+    const handleActionChange = (studentId, action) => {
         setPreview(prev => prev.map(s =>
-            s.student_id === studentId ? { ...s, action, target_class_id: targetClass || s.target_class_id } : s
+            s.student_id === studentId ? { ...s, action } : s
         ));
     };
 
@@ -85,18 +101,24 @@ export default function ReEnrollmentPage() {
     const handleExecute = async () => {
         setProcessing(true);
         try {
-            const res = await axios.post(`${API}/enrollment/execute`, {
+            const body = {
                 from_year: fromYear,
                 to_year: toYear,
-                students: preview
-            }, {
+                students: preview.map(s => ({
+                    student_id: s.student_id,
+                    action: s.action,
+                    target_class_id: s.target_class_id || s.suggested_class_id || null,
+                })),
+            };
+            const res = await axios.post(`${API}/enrollment/execute`, body, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success(`Re-enrollment complete: ${res.data.promoted} promoted, ${res.data.retained} retained, ${res.data.graduated} graduated`);
             setShowConfirm(false);
             fetchPreview();
         } catch (error) {
-            toast.error('Failed to execute re-enrollment');
+            const msg = error?.response?.data?.detail || 'Failed to execute re-enrollment';
+            toast.error(msg);
         } finally {
             setProcessing(false);
         }
@@ -119,16 +141,16 @@ export default function ReEnrollmentPage() {
         }
     };
 
-    if (loading && academicYears.length === 0) {
+    if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[400px]">
+            <div className="flex items-center justify-center min-h-[400px]" data-testid="reenrollment-loading">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
         );
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6" data-testid="reenrollment-page">
             <div>
                 <h1 className="text-3xl font-bold">Re-Enrollment & Promotion</h1>
                 <p className="text-muted-foreground">Promote students to the next academic year</p>
@@ -140,17 +162,17 @@ export default function ReEnrollmentPage() {
                 </CardHeader>
                 <CardContent>
                     {academicYears.length === 0 ? (
-                        <div className="text-center py-8">
+                        <div className="text-center py-8" data-testid="empty-academic-years">
                             <GraduationCap className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-20" />
                             <h3 className="text-lg font-medium mb-2">No academic years configured</h3>
-                            <p className="text-muted-foreground">Configure academic years in School Settings first</p>
+                            <p className="text-muted-foreground">Configure academic years in School Settings before running re-enrollment.</p>
                         </div>
                     ) : (
-                        <div className="flex items-end gap-4">
+                        <div className="flex flex-col md:flex-row md:items-end gap-4">
                             <div className="flex-1">
                                 <label className="block text-sm font-medium mb-2">From Year</label>
                                 <Select value={fromYear} onValueChange={setFromYear}>
-                                    <SelectTrigger className="rounded-lg"><SelectValue placeholder="Select year" /></SelectTrigger>
+                                    <SelectTrigger className="rounded-lg" data-testid="from-year-select"><SelectValue placeholder="Select year" /></SelectTrigger>
                                     <SelectContent>
                                         {academicYears.map(year => (
                                             <SelectItem key={year} value={year}>{year}</SelectItem>
@@ -161,7 +183,7 @@ export default function ReEnrollmentPage() {
                             <div className="flex-1">
                                 <label className="block text-sm font-medium mb-2">To Year</label>
                                 <Select value={toYear} onValueChange={setToYear}>
-                                    <SelectTrigger className="rounded-lg"><SelectValue placeholder="Select year" /></SelectTrigger>
+                                    <SelectTrigger className="rounded-lg" data-testid="to-year-select"><SelectValue placeholder="Select year" /></SelectTrigger>
                                     <SelectContent>
                                         {academicYears.map(year => (
                                             <SelectItem key={year} value={year}>{year}</SelectItem>
@@ -169,8 +191,8 @@ export default function ReEnrollmentPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <Button onClick={fetchPreview} disabled={!fromYear || !toYear || loading} className="rounded-xl">
-                                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                            <Button onClick={fetchPreview} disabled={!fromYear || !toYear || previewLoading} className="rounded-xl" data-testid="load-preview-btn">
+                                {previewLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                                 Load Preview
                             </Button>
                         </div>
@@ -192,16 +214,14 @@ export default function ReEnrollmentPage() {
                         <CardContent>
                             <div className="flex items-center gap-4">
                                 <Select value={bulkAction} onValueChange={setBulkAction}>
-                                    <SelectTrigger className="w-[200px] rounded-lg"><SelectValue placeholder="Select action" /></SelectTrigger>
+                                    <SelectTrigger className="w-[200px] rounded-lg" data-testid="bulk-action-select"><SelectValue placeholder="Select action" /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="promote">Promote</SelectItem>
-                                        <SelectItem value="retain">Retain</SelectItem>
-                                        <SelectItem value="graduate">Graduate</SelectItem>
-                                        <SelectItem value="withdraw">Withdraw</SelectItem>
-                                        <SelectItem value="no_change">No Change</SelectItem>
+                                        {ACTIONS.map(a => (
+                                            <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
-                                <Button onClick={handleBulkAction} disabled={!bulkAction || selectedStudents.size === 0} className="rounded-xl">
+                                <Button onClick={handleBulkAction} disabled={!bulkAction || selectedStudents.size === 0} className="rounded-xl" data-testid="apply-bulk-btn">
                                     Apply to Selected
                                 </Button>
                             </div>
@@ -214,11 +234,11 @@ export default function ReEnrollmentPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="overflow-x-auto">
-                                <table className="w-full">
+                                <table className="w-full" data-testid="reenrollment-table">
                                     <thead className="bg-muted/50 sticky top-0">
                                         <tr>
                                             <th className="text-left p-3">
-                                                <Checkbox checked={selectedStudents.size === preview.length} onCheckedChange={toggleAll} />
+                                                <Checkbox checked={selectedStudents.size === preview.length && preview.length > 0} onCheckedChange={toggleAll} />
                                             </th>
                                             <th className="text-left p-3 font-medium">Student</th>
                                             <th className="text-left p-3 font-medium">Current Class</th>
@@ -234,7 +254,7 @@ export default function ReEnrollmentPage() {
                                                 </td>
                                                 <td className="p-3">
                                                     <p className="font-medium">{item.student_name}</p>
-                                                    <p className="text-sm text-muted-foreground">{item.student_id}</p>
+                                                    <p className="text-sm text-muted-foreground">{item.student_external_id}</p>
                                                 </td>
                                                 <td className="p-3">{item.current_class}</td>
                                                 <td className="p-3">{item.suggested_class || '-'}</td>
@@ -242,11 +262,9 @@ export default function ReEnrollmentPage() {
                                                     <Select value={item.action} onValueChange={(val) => handleActionChange(item.student_id, val)}>
                                                         <SelectTrigger className="w-[140px] rounded-lg"><SelectValue /></SelectTrigger>
                                                         <SelectContent>
-                                                            <SelectItem value="promote">Promote</SelectItem>
-                                                            <SelectItem value="retain">Retain</SelectItem>
-                                                            <SelectItem value="graduate">Graduate</SelectItem>
-                                                            <SelectItem value="withdraw">Withdraw</SelectItem>
-                                                            <SelectItem value="no_change">No Change</SelectItem>
+                                                            {ACTIONS.map(a => (
+                                                                <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+                                                            ))}
                                                         </SelectContent>
                                                     </Select>
                                                 </td>
@@ -256,7 +274,7 @@ export default function ReEnrollmentPage() {
                                 </table>
                             </div>
                             <div className="mt-6 flex justify-end">
-                                <Button onClick={() => setShowConfirm(true)} size="lg" className="rounded-xl">
+                                <Button onClick={() => setShowConfirm(true)} size="lg" className="rounded-xl" data-testid="execute-btn">
                                     Execute Re-Enrollment
                                 </Button>
                             </div>
@@ -267,6 +285,9 @@ export default function ReEnrollmentPage() {
 
             <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
                 <DialogContent className="rounded-2xl p-6">
+                    <button onClick={() => setShowConfirm(false)} className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100" data-testid="confirm-close-btn">
+                        <X className="h-4 w-4" />
+                    </button>
                     <DialogHeader>
                         <DialogTitle>Confirm Re-Enrollment</DialogTitle>
                     </DialogHeader>
@@ -283,7 +304,7 @@ export default function ReEnrollmentPage() {
                     </div>
                     <DialogFooter className="flex justify-end gap-2">
                         <Button variant="outline" onClick={() => setShowConfirm(false)} className="rounded-xl">Cancel</Button>
-                        <Button onClick={handleExecute} disabled={processing} className="rounded-xl">
+                        <Button onClick={handleExecute} disabled={processing} className="rounded-xl" data-testid="confirm-execute-btn">
                             {processing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                             Confirm & Execute
                         </Button>

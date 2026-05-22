@@ -1,0 +1,63 @@
+{
+  "summary": "Backend testing of the 6-step audit (Admissions / Health / Discipline / Re-Enrollment + RBAC fixes on /schools and /report-templates). Created /app/backend/tests/test_audit_modules.py with 31 tests covering auth, full CRUD on each new module, role-gate checks (admin vs teacher vs unauthenticated), and cross-tenant isolation via SUNF and RVSD seeds. All 31 tests passed (100%).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "POST /api/auth/login (SUNF admin) -> 200 with role=admin, school_code=SUNF",
+    "GET /api/admissions/stats -> 200 with full count breakdown",
+    "GET /api/admissions/inquiries (admin) -> 200; (teacher) -> 403",
+    "GET /api/admissions/applications (admin) -> 200",
+    "POST/PUT/GET/DELETE /api/admissions full CRUD round-trip, school_code stamped to SUNF, 404 after delete",
+    "GET /api/health/stats (admin) -> 200 with vaccinations/allergies/conditions/medications/visits/records",
+    "GET /api/health/stats (teacher) -> 200",
+    "GET /api/health/{sunf_student_id} -> 200, auto-creates empty record",
+    "GET /api/health/{rvsd_student_id} (called by SUNF admin) -> 404 cross-tenant isolation",
+    "POST /api/health/{id}/vaccination, /allergy, /visit -> 200 with appended entry visible in response",
+    "DELETE /api/health/{id}/vaccination/{entry_id} -> 200 and entry removed on re-GET",
+    "Health route blocks unauthenticated -> 401/403 (parent creds not provided in test_credentials.md, see note)",
+    "GET /api/discipline/stats -> 200 with full counts",
+    "GET /api/discipline (admin & teacher) -> 200",
+    "POST /api/discipline with same-school student -> 200",
+    "POST /api/discipline with RVSD student via SUNF admin -> 404",
+    "PUT /api/discipline/{id} -> 200 (status/type persisted)",
+    "DELETE /api/discipline/{id} as teacher -> 403; as admin -> 200",
+    "GET /api/enrollment/preview?from_year=2025-2026&to_year=2026-2027 -> 200 list",
+    "GET /api/enrollment/preview for non-existent year -> 200 [] (graceful empty)",
+    "POST /api/enrollment/execute with action=no_change -> 200 with matching counts (no DB mutation)",
+    "GET /api/schools as admin -> exactly 1 school (own)",
+    "GET /api/schools as superuser -> all schools (SUNF & RVSD present)",
+    "GET /api/schools/{rvsd_id} as SUNF admin -> 403",
+    "GET /api/schools/{sunf_id}/subjects as SUNF admin -> 200; cross-tenant -> 403",
+    "GET /api/report-templates/RVSD as SUNF admin -> 403"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_audit_modules.py",
+    "/app/test_reports/pytest/audit_modules_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is now 2961 lines — strongly recommend splitting modules (admissions/health/discipline/enrollment) into separate routers to stay under the 700-line guideline.",
+    "test_credentials.md does not list any PARENT account. The spec required asserting parent -> 403 on /api/health; we substituted unauthenticated -> 401/403 instead. Add a parent test user so future runs can assert the explicit 403 from require_roles.",
+    "/api/enrollment/execute returns BOTH withdrew and withdrawn keys (legacy alias). Consider deprecating one to reduce ambiguity.",
+    "_append_health_entry pushes a payload that already contains an `id` key but spreads `{'id': uuid, **entry}` — order is fine, however if a caller ever passes id in the payload it would be silently overridden. Tighten the Pydantic models if intentional."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_audit_modules.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (31/31)",
+    "frontend": "N/A (backend-only run)"
+  },
+  "test_credentials": "Used SUNF admin/Admin@123, RVSD admin/Admin@123, SUNF teacher sarah.thompson.sunf/Teacher@123, JTECH superuser jtech.innovations@outlook.com/Xekleidoma@1 (from /app/memory/test_credentials.md). No parent account available.",
+  "seed_data_creation": "Tests created/then-deleted ephemeral admission, vaccination, allergy, visit and discipline records in SUNF (all prefixed TEST_). Enrollment/execute test used action=no_change so no student row mutation.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend audit endpoints are stable. test_audit_modules.py can be re-run as a regression suite (15s). When parent test creds are added, replace TestHealth.test_parent_403's unauthenticated check with an authenticated parent token to assert the explicit 403 from require_roles."
+}

@@ -571,6 +571,17 @@ def require_superuser():
         return current_user
     return superuser_checker
 
+
+async def assert_school_tenant(school_id: str, current_user: dict) -> dict:
+    """Look up a school by id and assert the current user has tenant access.
+    Returns the school document. Raises 404 if not found, 403 if cross-tenant."""
+    school = await db.schools.find_one({"id": school_id}, {"_id": 0})
+    if not school:
+        raise HTTPException(status_code=404, detail="School not found")
+    if current_user["role"] != UserRole.SUPERUSER and school.get("school_code") != current_user["school_code"]:
+        raise HTTPException(status_code=403, detail="Cross-tenant access denied")
+    return school
+
 # ==================== STARTUP - Create Superuser ====================
 
 @app.on_event("startup")
@@ -728,15 +739,21 @@ async def create_school(school: SchoolCreate, current_user: dict = Depends(requi
     return SchoolResponse(**doc)
 
 @api_router.get("/schools", response_model=List[SchoolResponse])
-async def get_schools(current_user: dict = Depends(require_superuser())):
-    schools = await db.schools.find({}, {"_id": 0}).to_list(1000)
+async def get_schools(current_user: dict = Depends(get_current_user)):
+    """List schools. Superuser sees all; everyone else only sees their own school."""
+    if current_user["role"] == UserRole.SUPERUSER:
+        schools = await db.schools.find({}, {"_id": 0}).to_list(1000)
+    else:
+        schools = await db.schools.find({"school_code": current_user["school_code"]}, {"_id": 0}).to_list(1)
     return [SchoolResponse(**s) for s in schools]
 
 @api_router.get("/schools/{school_id}", response_model=SchoolResponse)
-async def get_school(school_id: str, current_user: dict = Depends(require_superuser())):
+async def get_school(school_id: str, current_user: dict = Depends(get_current_user)):
     school = await db.schools.find_one({"id": school_id}, {"_id": 0})
     if not school:
         raise HTTPException(status_code=404, detail="School not found")
+    if current_user["role"] != UserRole.SUPERUSER and school.get("school_code") != current_user["school_code"]:
+        raise HTTPException(status_code=403, detail="Access to this school is denied")
     return SchoolResponse(**school)
 
 @api_router.put("/schools/{school_id}", response_model=SchoolResponse)
@@ -776,9 +793,7 @@ async def add_academic_year(
     current_user: dict = Depends(require_roles([UserRole.SUPERUSER, UserRole.ADMIN]))
 ):
     """Add a new academic year to a school"""
-    school = await db.schools.find_one({"id": school_id})
-    if not school:
-        raise HTTPException(status_code=404, detail="School not found")
+    school = await assert_school_tenant(school_id, current_user)
     
     # Check if year already exists
     academic_years = school.get("academic_years", [])
@@ -809,9 +824,7 @@ async def toggle_academic_year(
     current_user: dict = Depends(require_roles([UserRole.SUPERUSER, UserRole.ADMIN]))
 ):
     """Enable or disable an academic year"""
-    school = await db.schools.find_one({"id": school_id})
-    if not school:
-        raise HTTPException(status_code=404, detail="School not found")
+    school = await assert_school_tenant(school_id, current_user)
     
     academic_years = school.get("academic_years", [])
     found = False
@@ -839,9 +852,7 @@ async def set_current_academic_year(
     current_user: dict = Depends(require_roles([UserRole.SUPERUSER, UserRole.ADMIN]))
 ):
     """Set the current academic year"""
-    school = await db.schools.find_one({"id": school_id})
-    if not school:
-        raise HTTPException(status_code=404, detail="School not found")
+    school = await assert_school_tenant(school_id, current_user)
     
     academic_years = school.get("academic_years", [])
     found = False
@@ -879,9 +890,7 @@ async def upload_school_signature(
     if signature_type not in ["principal", "teacher"]:
         raise HTTPException(status_code=400, detail="Invalid signature type. Must be 'principal' or 'teacher'")
     
-    school = await db.schools.find_one({"id": school_id})
-    if not school:
-        raise HTTPException(status_code=404, detail="School not found")
+    school = await assert_school_tenant(school_id, current_user)
     
     ext = Path(file.filename).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
@@ -915,9 +924,7 @@ async def get_school_signatures(
     current_user: dict = Depends(get_current_user)
 ):
     """Get school signatures"""
-    school = await db.schools.find_one({"id": school_id}, {"_id": 0})
-    if not school:
-        raise HTTPException(status_code=404, detail="School not found")
+    school = await assert_school_tenant(school_id, current_user)
     
     return {
         "principal_signature": school.get("principal_signature", ""),
@@ -933,10 +940,7 @@ async def get_school_subjects(
     current_user: dict = Depends(get_current_user)
 ):
     """Get subjects for a school"""
-    school = await db.schools.find_one({"id": school_id}, {"_id": 0})
-    if not school:
-        raise HTTPException(status_code=404, detail="School not found")
-    
+    school = await assert_school_tenant(school_id, current_user)
     return {"subjects": school.get("subjects", [])}
 
 @api_router.put("/schools/{school_id}/subjects")
@@ -946,9 +950,7 @@ async def update_school_subjects(
     current_user: dict = Depends(require_roles([UserRole.SUPERUSER, UserRole.ADMIN]))
 ):
     """Update subjects for a school"""
-    school = await db.schools.find_one({"id": school_id})
-    if not school:
-        raise HTTPException(status_code=404, detail="School not found")
+    school = await assert_school_tenant(school_id, current_user)
     
     # Convert subjects to dict format
     subjects_data = [subj.model_dump() for subj in subjects]
@@ -973,9 +975,7 @@ async def add_school_subject(
     current_user: dict = Depends(require_roles([UserRole.SUPERUSER, UserRole.ADMIN]))
 ):
     """Add a new subject to a school"""
-    school = await db.schools.find_one({"id": school_id})
-    if not school:
-        raise HTTPException(status_code=404, detail="School not found")
+    school = await assert_school_tenant(school_id, current_user)
     
     subjects = school.get("subjects", [])
     
@@ -1001,9 +1001,7 @@ async def delete_school_subject(
     current_user: dict = Depends(require_roles([UserRole.SUPERUSER, UserRole.ADMIN]))
 ):
     """Delete a subject from a school"""
-    school = await db.schools.find_one({"id": school_id})
-    if not school:
-        raise HTTPException(status_code=404, detail="School not found")
+    school = await assert_school_tenant(school_id, current_user)
     
     subjects = school.get("subjects", [])
     subjects = [s for s in subjects if s.get("name") != subject_name]
@@ -1020,16 +1018,19 @@ async def delete_school_subject(
 
 @api_router.get("/report-templates/{school_code}")
 async def get_report_template(school_code: str, current_user: dict = Depends(get_current_user)):
-    """Get report template for a school. Any authenticated user can read their school's template."""
+    """Get report template for a school. Any authenticated user can read their own school's template."""
+    sc = school_code.upper()
+    if current_user["role"] != UserRole.SUPERUSER and current_user["school_code"] != sc:
+        raise HTTPException(status_code=403, detail="Cannot access template of another school")
     template = await db.report_templates.find_one(
-        {"school_code": school_code.upper()}, {"_id": 0}
+        {"school_code": sc}, {"_id": 0}
     )
     if not template:
         # Auto-create default if missing
-        school = await db.schools.find_one({"school_code": school_code.upper()}, {"_id": 0})
+        school = await db.schools.find_one({"school_code": sc}, {"_id": 0})
         if not school:
             raise HTTPException(status_code=404, detail="School not found")
-        template = build_default_template(school_code.upper(), school.get("name", school_code))
+        template = build_default_template(sc, school.get("name", school_code))
         await db.report_templates.insert_one(template)
         template.pop("_id", None)
     return template
@@ -2216,6 +2217,695 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
             stats["average_grade"] = 0
     
     return stats
+
+# ==================== ADMISSIONS MODULE ====================
+# Models for Admissions
+
+class AdmissionBase(BaseModel):
+    student_first_name: str
+    student_last_name: str
+    student_middle_name: Optional[str] = ""
+    student_dob: Optional[str] = ""
+    student_gender: Optional[str] = ""
+    parent_name: str
+    parent_email: str
+    parent_phone: str
+    grade_level: str
+    status: str = "inquiry"  # inquiry, application, pending, accepted, rejected
+    notes: Optional[str] = ""
+    source: Optional[str] = ""  # website, walk-in, referral
+
+class AdmissionCreate(AdmissionBase):
+    pass
+
+class AdmissionResponse(AdmissionBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    school_code: str
+    created_by: Optional[str] = ""
+    created_at: str
+    updated_at: str
+
+
+def _admissions_query(current_user: dict, extra: Optional[Dict] = None) -> Dict:
+    q = {"school_code": current_user["school_code"]}
+    if extra:
+        q.update(extra)
+    return q
+
+
+@api_router.get("/admissions/stats")
+async def admissions_stats(current_user: dict = Depends(require_roles([UserRole.ADMIN]))):
+    """GET /api/admissions/stats — counts by status. Role: superuser/admin."""
+    q_base = {"school_code": current_user["school_code"]}
+    total = await db.admissions.count_documents(q_base)
+    inquiries = await db.admissions.count_documents({**q_base, "status": "inquiry"})
+    applications = await db.admissions.count_documents({**q_base, "status": {"$in": ["application", "pending", "accepted", "rejected"]}})
+    accepted = await db.admissions.count_documents({**q_base, "status": "accepted"})
+    pending = await db.admissions.count_documents({**q_base, "status": "pending"})
+    rejected = await db.admissions.count_documents({**q_base, "status": "rejected"})
+    return {
+        "total": total,
+        "inquiries": inquiries,
+        "applications": applications,
+        "accepted": accepted,
+        "pending": pending,
+        "rejected": rejected,
+    }
+
+
+@api_router.get("/admissions/inquiries", response_model=List[AdmissionResponse])
+async def list_admissions_inquiries(current_user: dict = Depends(require_roles([UserRole.ADMIN]))):
+    """GET /api/admissions/inquiries — list of inquiries. Role: superuser/admin."""
+    docs = await db.admissions.find(
+        _admissions_query(current_user, {"status": "inquiry"}), {"_id": 0}
+    ).sort("created_at", -1).to_list(1000)
+    return [AdmissionResponse(**d) for d in docs]
+
+
+@api_router.get("/admissions/applications", response_model=List[AdmissionResponse])
+async def list_admissions_applications(current_user: dict = Depends(require_roles([UserRole.ADMIN]))):
+    """GET /api/admissions/applications — list of applications. Role: superuser/admin."""
+    docs = await db.admissions.find(
+        _admissions_query(
+            current_user,
+            {"status": {"$in": ["application", "pending", "accepted", "rejected"]}},
+        ),
+        {"_id": 0},
+    ).sort("created_at", -1).to_list(1000)
+    return [AdmissionResponse(**d) for d in docs]
+
+
+@api_router.get("/admissions", response_model=List[AdmissionResponse])
+async def list_admissions(current_user: dict = Depends(require_roles([UserRole.ADMIN]))):
+    """GET /api/admissions — full list, school-scoped. Role: superuser/admin."""
+    docs = await db.admissions.find(_admissions_query(current_user), {"_id": 0}).sort("created_at", -1).to_list(2000)
+    return [AdmissionResponse(**d) for d in docs]
+
+
+@api_router.get("/admissions/{admission_id}", response_model=AdmissionResponse)
+async def get_admission(admission_id: str, current_user: dict = Depends(require_roles([UserRole.ADMIN]))):
+    """GET /api/admissions/{id} — fetch one (school-scoped). Role: superuser/admin. 404 if not in school."""
+    doc = await db.admissions.find_one(
+        {"id": admission_id, "school_code": current_user["school_code"]}, {"_id": 0}
+    )
+    if not doc:
+        raise HTTPException(status_code=404, detail="Admission record not found")
+    return AdmissionResponse(**doc)
+
+
+@api_router.post("/admissions", response_model=AdmissionResponse)
+async def create_admission(
+    payload: AdmissionCreate, current_user: dict = Depends(require_roles([UserRole.ADMIN]))
+):
+    """POST /api/admissions — create an inquiry/application. Role: superuser/admin."""
+    now = datetime.now(timezone.utc).isoformat()
+    doc = {
+        "id": str(uuid.uuid4()),
+        "school_code": current_user["school_code"],
+        "created_by": current_user["id"],
+        **payload.model_dump(),
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.admissions.insert_one(doc)
+    doc.pop("_id", None)
+    return AdmissionResponse(**doc)
+
+
+@api_router.put("/admissions/{admission_id}", response_model=AdmissionResponse)
+async def update_admission(
+    admission_id: str,
+    payload: AdmissionCreate,
+    current_user: dict = Depends(require_roles([UserRole.ADMIN])),
+):
+    """PUT /api/admissions/{id} — update record. Role: superuser/admin. 404 outside tenant."""
+    query = {"id": admission_id, "school_code": current_user["school_code"]}
+    existing = await db.admissions.find_one(query, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Admission record not found")
+    now = datetime.now(timezone.utc).isoformat()
+    update = {**payload.model_dump(), "updated_at": now}
+    await db.admissions.update_one(query, {"$set": update})
+    updated = await db.admissions.find_one(query, {"_id": 0})
+    return AdmissionResponse(**updated)
+
+
+@api_router.delete("/admissions/{admission_id}")
+async def delete_admission(
+    admission_id: str, current_user: dict = Depends(require_roles([UserRole.ADMIN]))
+):
+    """DELETE /api/admissions/{id} — delete record. Role: superuser/admin."""
+    query = {"id": admission_id, "school_code": current_user["school_code"]}
+    result = await db.admissions.delete_one(query)
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Admission record not found")
+    return {"message": "Admission record deleted"}
+
+
+# ==================== HEALTH RECORDS MODULE ====================
+# Models for Health
+
+class HealthVaccination(BaseModel):
+    name: str
+    date: str
+    dose: Optional[str] = ""
+    notes: Optional[str] = ""
+
+class HealthAllergy(BaseModel):
+    allergen: str
+    reaction: str
+    severity: Optional[str] = ""  # Mild/Moderate/Severe
+    notes: Optional[str] = ""
+
+class HealthCondition(BaseModel):
+    name: str
+    diagnosis_date: Optional[str] = ""
+    notes: Optional[str] = ""
+
+class HealthMedication(BaseModel):
+    name: str
+    dosage: Optional[str] = ""
+    frequency: Optional[str] = ""
+    start_date: Optional[str] = ""
+    end_date: Optional[str] = ""
+    notes: Optional[str] = ""
+
+class HealthVisit(BaseModel):
+    date: str
+    reason: str
+    notes: Optional[str] = ""
+    handled_by: Optional[str] = ""
+
+class HealthRecordResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    student_id: str
+    school_code: str
+    vaccinations: List[Dict] = []
+    allergies: List[Dict] = []
+    conditions: List[Dict] = []
+    medications: List[Dict] = []
+    visits: List[Dict] = []
+    created_at: str
+    updated_at: str
+
+
+HEALTH_LIST_KEYS = {
+    "vaccination": "vaccinations",
+    "allergy": "allergies",
+    "condition": "conditions",
+    "medication": "medications",
+    "visit": "visits",
+}
+
+HEALTH_ROLES = [UserRole.ADMIN, UserRole.TEACHER]
+
+
+async def _ensure_student_in_school(student_id: str, school_code: str) -> dict:
+    student = await db.students.find_one({"id": student_id, "school_code": school_code}, {"_id": 0})
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found in this school")
+    return student
+
+
+async def _get_or_create_health_record(student_id: str, school_code: str) -> dict:
+    rec = await db.health_records.find_one({"student_id": student_id, "school_code": school_code}, {"_id": 0})
+    if rec:
+        return rec
+    now = datetime.now(timezone.utc).isoformat()
+    rec = {
+        "id": str(uuid.uuid4()),
+        "student_id": student_id,
+        "school_code": school_code,
+        "vaccinations": [],
+        "allergies": [],
+        "conditions": [],
+        "medications": [],
+        "visits": [],
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.health_records.insert_one(dict(rec))
+    return rec
+
+
+@api_router.get("/health/stats")
+async def health_stats(current_user: dict = Depends(require_roles(HEALTH_ROLES))):
+    """GET /api/health/stats — aggregated counts for school. Role: admin/teacher."""
+    school_code = current_user["school_code"]
+    pipeline = [
+        {"$match": {"school_code": school_code}},
+        {"$project": {
+            "_id": 0,
+            "vac": {"$size": {"$ifNull": ["$vaccinations", []]}},
+            "alg": {"$size": {"$ifNull": ["$allergies", []]}},
+            "cnd": {"$size": {"$ifNull": ["$conditions", []]}},
+            "med": {"$size": {"$ifNull": ["$medications", []]}},
+            "vis": {"$size": {"$ifNull": ["$visits", []]}},
+        }},
+        {"$group": {
+            "_id": None,
+            "vaccinations": {"$sum": "$vac"},
+            "allergies": {"$sum": "$alg"},
+            "conditions": {"$sum": "$cnd"},
+            "medications": {"$sum": "$med"},
+            "visits": {"$sum": "$vis"},
+            "records": {"$sum": 1},
+        }}
+    ]
+    cur = db.health_records.aggregate(pipeline)
+    result = await cur.to_list(1)
+    if not result:
+        return {"records": 0, "vaccinations": 0, "allergies": 0, "conditions": 0, "medications": 0, "visits": 0}
+    r = result[0]
+    r.pop("_id", None)
+    return r
+
+
+@api_router.get("/health/{student_id}", response_model=HealthRecordResponse)
+async def get_health_record(
+    student_id: str, current_user: dict = Depends(require_roles(HEALTH_ROLES))
+):
+    """GET /api/health/{student_id} — fetch (creates empty record if missing). Role: admin/teacher."""
+    await _ensure_student_in_school(student_id, current_user["school_code"])
+    rec = await _get_or_create_health_record(student_id, current_user["school_code"])
+    rec.pop("_id", None)
+    return HealthRecordResponse(**rec)
+
+
+async def _append_health_entry(student_id: str, school_code: str, list_key: str, entry: dict) -> dict:
+    """Append one entry to a list within the student's health record."""
+    await _get_or_create_health_record(student_id, school_code)
+    entry = {"id": str(uuid.uuid4()), **entry}
+    now = datetime.now(timezone.utc).isoformat()
+    await db.health_records.update_one(
+        {"student_id": student_id, "school_code": school_code},
+        {"$push": {list_key: entry}, "$set": {"updated_at": now}},
+    )
+    updated = await db.health_records.find_one(
+        {"student_id": student_id, "school_code": school_code}, {"_id": 0}
+    )
+    return updated
+
+
+@api_router.post("/health/{student_id}/vaccination", response_model=HealthRecordResponse)
+async def add_vaccination(
+    student_id: str,
+    payload: HealthVaccination,
+    current_user: dict = Depends(require_roles(HEALTH_ROLES)),
+):
+    """POST /api/health/{student_id}/vaccination — append a vaccination. Role: admin/teacher."""
+    await _ensure_student_in_school(student_id, current_user["school_code"])
+    updated = await _append_health_entry(
+        student_id, current_user["school_code"], "vaccinations", payload.model_dump()
+    )
+    return HealthRecordResponse(**updated)
+
+
+@api_router.post("/health/{student_id}/allergy", response_model=HealthRecordResponse)
+async def add_allergy(
+    student_id: str,
+    payload: HealthAllergy,
+    current_user: dict = Depends(require_roles(HEALTH_ROLES)),
+):
+    """POST /api/health/{student_id}/allergy — append an allergy. Role: admin/teacher."""
+    await _ensure_student_in_school(student_id, current_user["school_code"])
+    updated = await _append_health_entry(
+        student_id, current_user["school_code"], "allergies", payload.model_dump()
+    )
+    return HealthRecordResponse(**updated)
+
+
+@api_router.post("/health/{student_id}/condition", response_model=HealthRecordResponse)
+async def add_condition(
+    student_id: str,
+    payload: HealthCondition,
+    current_user: dict = Depends(require_roles(HEALTH_ROLES)),
+):
+    """POST /api/health/{student_id}/condition — append a condition. Role: admin/teacher."""
+    await _ensure_student_in_school(student_id, current_user["school_code"])
+    updated = await _append_health_entry(
+        student_id, current_user["school_code"], "conditions", payload.model_dump()
+    )
+    return HealthRecordResponse(**updated)
+
+
+@api_router.post("/health/{student_id}/medication", response_model=HealthRecordResponse)
+async def add_medication(
+    student_id: str,
+    payload: HealthMedication,
+    current_user: dict = Depends(require_roles(HEALTH_ROLES)),
+):
+    """POST /api/health/{student_id}/medication — append a medication. Role: admin/teacher."""
+    await _ensure_student_in_school(student_id, current_user["school_code"])
+    updated = await _append_health_entry(
+        student_id, current_user["school_code"], "medications", payload.model_dump()
+    )
+    return HealthRecordResponse(**updated)
+
+
+@api_router.post("/health/{student_id}/visit", response_model=HealthRecordResponse)
+async def add_visit(
+    student_id: str,
+    payload: HealthVisit,
+    current_user: dict = Depends(require_roles(HEALTH_ROLES)),
+):
+    """POST /api/health/{student_id}/visit — append a clinic visit. Role: admin/teacher."""
+    await _ensure_student_in_school(student_id, current_user["school_code"])
+    updated = await _append_health_entry(
+        student_id, current_user["school_code"], "visits", payload.model_dump()
+    )
+    return HealthRecordResponse(**updated)
+
+
+@api_router.delete("/health/{student_id}/{entry_type}/{entry_id}")
+async def delete_health_entry(
+    student_id: str,
+    entry_type: str,
+    entry_id: str,
+    current_user: dict = Depends(require_roles(HEALTH_ROLES)),
+):
+    """DELETE /api/health/{student_id}/{entry_type}/{entry_id} — remove a single entry. Role: admin/teacher."""
+    list_key = HEALTH_LIST_KEYS.get(entry_type)
+    if not list_key:
+        raise HTTPException(status_code=400, detail="Invalid entry type")
+    await _ensure_student_in_school(student_id, current_user["school_code"])
+    now = datetime.now(timezone.utc).isoformat()
+    result = await db.health_records.update_one(
+        {"student_id": student_id, "school_code": current_user["school_code"]},
+        {"$pull": {list_key: {"id": entry_id}}, "$set": {"updated_at": now}},
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    return {"message": "Entry deleted"}
+
+
+# ==================== DISCIPLINE MODULE ====================
+# Models for Discipline
+
+class DisciplineBase(BaseModel):
+    student_id: str
+    date: str
+    type: str = "Minor"  # Minor, Moderate, Major
+    description: str
+    action_taken: Optional[str] = ""
+    status: str = "Open"  # Open, In Progress, Resolved
+    follow_up: Optional[str] = ""
+    reported_by_name: Optional[str] = ""
+
+class DisciplineCreate(DisciplineBase):
+    pass
+
+class DisciplineResponse(DisciplineBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    school_code: str
+    reported_by: str
+    created_at: str
+    updated_at: str
+
+
+DISCIPLINE_ROLES = [UserRole.ADMIN, UserRole.TEACHER]
+
+
+@api_router.get("/discipline/stats")
+async def discipline_stats(current_user: dict = Depends(require_roles(DISCIPLINE_ROLES))):
+    """GET /api/discipline/stats — counts by status/type. Role: admin/teacher."""
+    school_code = current_user["school_code"]
+    q = {"school_code": school_code}
+    total = await db.discipline_incidents.count_documents(q)
+    open_count = await db.discipline_incidents.count_documents({**q, "status": "Open"})
+    in_progress = await db.discipline_incidents.count_documents({**q, "status": "In Progress"})
+    resolved = await db.discipline_incidents.count_documents({**q, "status": "Resolved"})
+    minor = await db.discipline_incidents.count_documents({**q, "type": "Minor"})
+    moderate = await db.discipline_incidents.count_documents({**q, "type": "Moderate"})
+    major = await db.discipline_incidents.count_documents({**q, "type": "Major"})
+    return {
+        "total": total,
+        "open": open_count,
+        "in_progress": in_progress,
+        "resolved": resolved,
+        "minor": minor,
+        "moderate": moderate,
+        "major": major,
+    }
+
+
+@api_router.get("/discipline", response_model=List[DisciplineResponse])
+async def list_discipline(current_user: dict = Depends(require_roles(DISCIPLINE_ROLES))):
+    """GET /api/discipline — list incidents (school-scoped). Role: admin/teacher."""
+    q = {"school_code": current_user["school_code"]}
+    # Teachers only see incidents they reported OR for students in their classes
+    if current_user["role"] == UserRole.TEACHER:
+        # Get class ids where this teacher is teacher
+        classes = await db.classes.find(
+            {"school_code": current_user["school_code"], "teacher_id": current_user["id"]},
+            {"_id": 0, "id": 1},
+        ).to_list(1000)
+        class_ids = [c["id"] for c in classes]
+        student_ids = []
+        if class_ids:
+            students = await db.students.find(
+                {"school_code": current_user["school_code"], "class_id": {"$in": class_ids}},
+                {"_id": 0, "id": 1},
+            ).to_list(5000)
+            student_ids = [s["id"] for s in students]
+        q["$or"] = [{"reported_by": current_user["id"]}, {"student_id": {"$in": student_ids}}]
+    docs = await db.discipline_incidents.find(q, {"_id": 0}).sort("date", -1).to_list(2000)
+    return [DisciplineResponse(**d) for d in docs]
+
+
+@api_router.get("/discipline/{incident_id}", response_model=DisciplineResponse)
+async def get_discipline(
+    incident_id: str, current_user: dict = Depends(require_roles(DISCIPLINE_ROLES))
+):
+    """GET /api/discipline/{id} — fetch one. Role: admin/teacher."""
+    doc = await db.discipline_incidents.find_one(
+        {"id": incident_id, "school_code": current_user["school_code"]}, {"_id": 0}
+    )
+    if not doc:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    return DisciplineResponse(**doc)
+
+
+@api_router.post("/discipline", response_model=DisciplineResponse)
+async def create_discipline(
+    payload: DisciplineCreate, current_user: dict = Depends(require_roles(DISCIPLINE_ROLES))
+):
+    """POST /api/discipline — create an incident. Role: admin/teacher.
+    Validates the referenced student belongs to the same school."""
+    await _ensure_student_in_school(payload.student_id, current_user["school_code"])
+    now = datetime.now(timezone.utc).isoformat()
+    doc = {
+        "id": str(uuid.uuid4()),
+        "school_code": current_user["school_code"],
+        "reported_by": current_user["id"],
+        **payload.model_dump(),
+        "created_at": now,
+        "updated_at": now,
+    }
+    if not doc.get("reported_by_name"):
+        doc["reported_by_name"] = current_user.get("name", "")
+    await db.discipline_incidents.insert_one(dict(doc))
+    return DisciplineResponse(**doc)
+
+
+@api_router.put("/discipline/{incident_id}", response_model=DisciplineResponse)
+async def update_discipline(
+    incident_id: str,
+    payload: DisciplineCreate,
+    current_user: dict = Depends(require_roles(DISCIPLINE_ROLES)),
+):
+    """PUT /api/discipline/{id} — update incident. Role: admin/teacher."""
+    query = {"id": incident_id, "school_code": current_user["school_code"]}
+    existing = await db.discipline_incidents.find_one(query, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    await _ensure_student_in_school(payload.student_id, current_user["school_code"])
+    now = datetime.now(timezone.utc).isoformat()
+    await db.discipline_incidents.update_one(
+        query, {"$set": {**payload.model_dump(), "updated_at": now}}
+    )
+    updated = await db.discipline_incidents.find_one(query, {"_id": 0})
+    return DisciplineResponse(**updated)
+
+
+@api_router.delete("/discipline/{incident_id}")
+async def delete_discipline(
+    incident_id: str, current_user: dict = Depends(require_roles([UserRole.ADMIN]))
+):
+    """DELETE /api/discipline/{id} — delete incident. Role: superuser/admin only."""
+    query = {"id": incident_id, "school_code": current_user["school_code"]}
+    result = await db.discipline_incidents.delete_one(query)
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    return {"message": "Incident deleted"}
+
+
+# ==================== RE-ENROLLMENT MODULE ====================
+# Models for Re-Enrollment / Promotion
+
+class EnrollmentExecuteStudent(BaseModel):
+    student_id: str
+    action: str  # promote, retain, graduate, withdraw, no_change
+    target_class_id: Optional[str] = None
+
+class EnrollmentExecuteRequest(BaseModel):
+    from_year: str
+    to_year: str
+    students: List[EnrollmentExecuteStudent]
+
+
+def _extract_grade_number(grade_level: str) -> Optional[int]:
+    """Extract a numeric grade level (e.g. 'Grade 3' -> 3, '3' -> 3)."""
+    if not grade_level:
+        return None
+    import re
+    m = re.search(r"\d+", str(grade_level))
+    if m:
+        try:
+            return int(m.group(0))
+        except ValueError:
+            return None
+    return None
+
+
+@api_router.get("/enrollment/preview")
+async def enrollment_preview(
+    from_year: str,
+    to_year: str,
+    current_user: dict = Depends(require_roles([UserRole.ADMIN])),
+):
+    """GET /api/enrollment/preview?from_year=&to_year= — returns a list of students
+    with their current class and a suggested target class for to_year.
+    Role: superuser/admin."""
+    school_code = current_user["school_code"]
+    from_classes = await db.classes.find(
+        {"school_code": school_code, "academic_year": from_year}, {"_id": 0}
+    ).to_list(2000)
+    to_classes = await db.classes.find(
+        {"school_code": school_code, "academic_year": to_year}, {"_id": 0}
+    ).to_list(2000)
+    from_class_map = {c["id"]: c for c in from_classes}
+    if not from_class_map:
+        return []
+    students = await db.students.find(
+        {
+            "school_code": school_code,
+            "class_id": {"$in": list(from_class_map.keys())},
+            "$or": [
+                {"enrollment_status": {"$exists": False}},
+                {"enrollment_status": {"$nin": ["graduated", "withdrawn"]}},
+            ],
+        },
+        {"_id": 0},
+    ).to_list(5000)
+
+    def _suggest(current_class: dict):
+        cur_num = _extract_grade_number(current_class.get("grade_level", ""))
+        if cur_num is None:
+            return None, "no_change"
+        next_num = cur_num + 1
+        # find a to_year class with the next grade number
+        for c in to_classes:
+            if _extract_grade_number(c.get("grade_level", "")) == next_num:
+                return c, "promote"
+        # if nothing higher, assume graduate
+        return None, "graduate"
+
+    out = []
+    for s in students:
+        cls = from_class_map.get(s.get("class_id"))
+        if not cls:
+            continue
+        suggest_cls, suggested_action = _suggest(cls)
+        out.append({
+            "student_id": s["id"],
+            "student_name": f"{s.get('first_name','')} {s.get('last_name','')}".strip(),
+            "student_external_id": s.get("student_id", ""),
+            "current_class_id": cls["id"],
+            "current_class": f"{cls.get('name','')} ({cls.get('grade_level','')})",
+            "suggested_class_id": suggest_cls["id"] if suggest_cls else None,
+            "suggested_class": (
+                f"{suggest_cls.get('name','')} ({suggest_cls.get('grade_level','')})"
+                if suggest_cls
+                else None
+            ),
+            "target_class_id": suggest_cls["id"] if suggest_cls else None,
+            "action": suggested_action,
+        })
+    return out
+
+
+@api_router.post("/enrollment/execute")
+async def enrollment_execute(
+    payload: EnrollmentExecuteRequest,
+    current_user: dict = Depends(require_roles([UserRole.ADMIN])),
+):
+    """POST /api/enrollment/execute — apply promotion actions in bulk.
+    Body: { from_year, to_year, students:[{student_id, action, target_class_id}] }.
+    Role: superuser/admin."""
+    school_code = current_user["school_code"]
+    now = datetime.now(timezone.utc).isoformat()
+    counts = {"promoted": 0, "retained": 0, "graduated": 0, "withdrawn": 0, "unchanged": 0}
+
+    for item in payload.students:
+        update: Dict[str, Any] = {"updated_at": now}
+        if item.action == "promote":
+            if not item.target_class_id:
+                continue
+            target = await db.classes.find_one(
+                {"id": item.target_class_id, "school_code": school_code, "academic_year": payload.to_year},
+                {"_id": 0},
+            )
+            if not target:
+                continue
+            update["class_id"] = item.target_class_id
+            update["enrollment_status"] = "enrolled"
+            counts["promoted"] += 1
+        elif item.action == "retain":
+            update["enrollment_status"] = "retained"
+            counts["retained"] += 1
+        elif item.action == "graduate":
+            update["enrollment_status"] = "graduated"
+            update["class_id"] = None
+            counts["graduated"] += 1
+        elif item.action == "withdraw":
+            update["enrollment_status"] = "withdrawn"
+            update["class_id"] = None
+            counts["withdrawn"] += 1
+        elif item.action == "no_change":
+            counts["unchanged"] += 1
+            continue
+        else:
+            continue
+        await db.students.update_one(
+            {"id": item.student_id, "school_code": school_code},
+            {"$set": update},
+        )
+    # Log the run
+    await db.enrollment_runs.insert_one({
+        "id": str(uuid.uuid4()),
+        "school_code": school_code,
+        "from_year": payload.from_year,
+        "to_year": payload.to_year,
+        "executed_by": current_user["id"],
+        "counts": counts,
+        "created_at": now,
+    })
+    return {
+        "from_year": payload.from_year,
+        "to_year": payload.to_year,
+        "promoted": counts["promoted"],
+        "retained": counts["retained"],
+        "graduated": counts["graduated"],
+        "withdrew": counts["withdrawn"],
+        "unchanged": counts["unchanged"],
+        # legacy alias used by frontend
+        "withdrawn": counts["withdrawn"],
+    }
+
 
 # ==================== TEACHER/PARENT LISTS ====================
 
