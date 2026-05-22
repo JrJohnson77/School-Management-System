@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Checkbox } from '../components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
 import { Loader2, GraduationCap, X } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -290,6 +290,7 @@ export default function ReEnrollmentPage() {
                     </button>
                     <DialogHeader>
                         <DialogTitle>Confirm Re-Enrollment</DialogTitle>
+                        <DialogDescription>Review the totals before promoting / retaining / graduating students. This action cannot be undone.</DialogDescription>
                     </DialogHeader>
                     <div className="py-4">
                         <p className="mb-4">You are about to process re-enrollment for <strong>{preview.length} students</strong> from <strong>{fromYear}</strong> to <strong>{toYear}</strong>.</p>

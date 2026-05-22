@@ -59,9 +59,28 @@ Rebranded from "EduManager" to "Lumina-SIS" with a modern, sleek UI redesign.
 ## Backlog
 - [ ] P1: Email report cards to parents
 - [ ] P1: Attendance analytics dashboard
-- [ ] P2: Dark mode, Parent portal, Academic calendar
+- [ ] P1: Class Schedule / Timetable
+- [ ] P1: Lesson Plans / Assignments / Homework
+- [ ] P1: Communication / Announcements
+- [ ] P1: Academic Calendar / Events
+- [ ] P2: Parent Portal
+- [ ] P2: Teacher Dashboard
+- [ ] P2: Student Documents
+- [ ] P2: Dark mode
+- [ ] P3: Transportation & Library integrations
+- [ ] Tech-debt: split server.py (~3k lines) into routers by module
 
 ## Changelog
+- **Feb 2026 (Session 15 — 6-step audit)**: 
+  - **Backend APIs**: Full CRUD + Stats for Admissions (`/api/admissions`), Health (`/api/health/{student_id}/...` for vaccinations/allergies/conditions/medications/visits) and Discipline (`/api/discipline`). Re-Enrollment endpoints (`/api/enrollment/preview`, `/api/enrollment/execute`) with promote/retain/graduate/withdraw flow. All endpoints documented inline (method, path, required role).
+  - **RBAC Audit**: Added `assert_school_tenant()` helper; closed cross-tenant gaps on `/api/schools`, `/api/schools/{id}/{academic-years,signatures,subjects}`, and `/api/report-templates/{code}`. `/api/schools` now returns the admin's own school only (was superuser-only). All role violations return **403** (not 401).
+  - **Sidebar**: FACTS-style grouped collapsible navigation (Overview / Admissions / People / Academics / Student Services / Administration), persisted to `localStorage[lumina_sidebar_open_groups]`, auto-expand parent group on route change.
+  - **Frontend State**: loading/empty/error states added to AdmissionsPage, HealthPage, DisciplinePage, ReEnrollmentPage. `overflow-x-auto` on every table. Re-Enrollment falls back gracefully when no academic years are configured.
+  - **Design Consistency**: All new dialogs use `rounded-2xl p-6` with a close-X (lucide `X`). Cancel/Save buttons standardized with `Loader2` spinner while saving. Toasts on every CRUD action (success + error from `response.data.detail`). Added `DialogDescription` for a11y.
+  - **Health page**: added missing TabsContent for Conditions and Medications + dialog forms.
+  - **API base fix**: Admissions/Health/Discipline/Re-Enrollment pages were calling endpoints without the `/api` prefix; corrected.
+  - **Date/Time**: Backend uniformly stores `datetime.now(timezone.utc).isoformat()`. Frontend renders with `toLocaleDateString()`.
+  - **Testing**: Backend 31/31 (100%) — see `/app/test_reports/iteration_11.json`; Frontend ~95% — see `/app/test_reports/iteration_12.json`.
 - **Jul 2025 (Session 14)**: Rebranded from "EduManager" to "Lumina-SIS". Complete UI redesign with indigo/violet color palette, dark sidebar, Inter + Plus Jakarta Sans fonts, refined login page (split layout with dark branding panel), polished dashboard with accent-strip stat cards, consistent styling across all pages (rounded-2xl cards, subtle borders, clean animations).
 - **Dec 2025 (Session 13)**: Added custom weighting configuration in Settings tab. Fixed backend validation errors for skill_ratings and subject weights. Settings now save successfully.
 - **Dec 2025 (Session 12)**: Updated Academic Grades tab to MHPS Assessment Entry format with columns for each weighted component (HW 5%, GW 5%, Project 10%, Quiz 10%, Mid-Term 30%, End of Term 40%). Added all 10 subjects with auto-calculated weighted scores and grades.

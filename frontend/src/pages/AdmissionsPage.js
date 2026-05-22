@@ -7,7 +7,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Loader2, Plus, Edit2, Trash2, Users, CheckCircle2, Clock, UserPlus, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -283,6 +283,7 @@ export default function AdmissionsPage() {
                     </button>
                     <DialogHeader>
                         <DialogTitle>{editingItem ? 'Edit' : 'New'} Inquiry/Application</DialogTitle>
+                        <DialogDescription>Capture an admission inquiry or application for prospective students.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-2 gap-4">

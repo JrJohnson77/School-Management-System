@@ -6,7 +6,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Textarea } from '../components/ui/textarea';
 import { Loader2, Plus, Heart, Activity, Pill, Stethoscope, AlertCircle, X } from 'lucide-react';
@@ -142,18 +142,26 @@ export default function HealthPage() {
                     ) : (
                         <div className="space-y-4">
                             <Card className="rounded-2xl">
-                                <CardHeader className="flex flex-row items-center justify-between">
+                                <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-3">
                                     <CardTitle>Health Record: {selectedStudent.first_name} {selectedStudent.last_name}</CardTitle>
-                                    <div className="flex gap-2">
-                                        <Button size="sm" onClick={() => openDialog('vaccination')} className="rounded-lg">
+                                    <div className="flex gap-2 flex-wrap">
+                                        <Button size="sm" onClick={() => openDialog('vaccination')} className="rounded-lg" data-testid="open-vaccination-btn">
                                             <Plus className="w-4 h-4 mr-2" />
                                             Vaccination
                                         </Button>
-                                        <Button size="sm" onClick={() => openDialog('allergy')} className="rounded-lg">
+                                        <Button size="sm" onClick={() => openDialog('allergy')} className="rounded-lg" data-testid="open-allergy-btn">
                                             <Plus className="w-4 h-4 mr-2" />
                                             Allergy
                                         </Button>
-                                        <Button size="sm" onClick={() => openDialog('visit')} className="rounded-lg">
+                                        <Button size="sm" onClick={() => openDialog('condition')} className="rounded-lg" data-testid="open-condition-btn">
+                                            <Plus className="w-4 h-4 mr-2" />
+                                            Condition
+                                        </Button>
+                                        <Button size="sm" onClick={() => openDialog('medication')} className="rounded-lg" data-testid="open-medication-btn">
+                                            <Plus className="w-4 h-4 mr-2" />
+                                            Medication
+                                        </Button>
+                                        <Button size="sm" onClick={() => openDialog('visit')} className="rounded-lg" data-testid="open-visit-btn">
                                             <Plus className="w-4 h-4 mr-2" />
                                             Visit
                                         </Button>
@@ -232,6 +240,63 @@ export default function HealthPage() {
                                     </Card>
                                 </TabsContent>
 
+                                <TabsContent value="conditions">
+                                    <Card className="rounded-2xl">
+                                        <CardContent className="pt-6">
+                                            {!healthRecord || healthRecord.conditions?.length === 0 ? (
+                                                <div className="text-center py-12">
+                                                    <Heart className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-20" />
+                                                    <h3 className="text-lg font-medium mb-2">No conditions recorded</h3>
+                                                    <Button onClick={() => openDialog('condition')} className="rounded-xl mt-4" data-testid="add-condition-btn">
+                                                        <Plus className="w-4 h-4 mr-2" />
+                                                        Add Condition
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-3">
+                                                    {healthRecord.conditions.map((cond, idx) => (
+                                                        <div key={cond.id || idx} className="p-4 rounded-xl bg-muted/30 border">
+                                                            <p className="font-medium">{cond.name}</p>
+                                                            {cond.diagnosis_date ? <p className="text-sm text-muted-foreground">Diagnosed: {cond.diagnosis_date}</p> : null}
+                                                            {cond.notes ? <p className="text-sm mt-2">{cond.notes}</p> : null}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+
+                                <TabsContent value="medications">
+                                    <Card className="rounded-2xl">
+                                        <CardContent className="pt-6">
+                                            {!healthRecord || healthRecord.medications?.length === 0 ? (
+                                                <div className="text-center py-12">
+                                                    <Pill className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-20" />
+                                                    <h3 className="text-lg font-medium mb-2">No medications recorded</h3>
+                                                    <Button onClick={() => openDialog('medication')} className="rounded-xl mt-4" data-testid="add-medication-btn">
+                                                        <Plus className="w-4 h-4 mr-2" />
+                                                        Add Medication
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-3">
+                                                    {healthRecord.medications.map((med, idx) => (
+                                                        <div key={med.id || idx} className="p-4 rounded-xl bg-muted/30 border">
+                                                            <p className="font-medium">{med.name}</p>
+                                                            {med.dosage ? <p className="text-sm text-muted-foreground">{med.dosage} · {med.frequency}</p> : null}
+                                                            {(med.start_date || med.end_date) ? (
+                                                                <p className="text-xs text-muted-foreground mt-1">{med.start_date || '?'} → {med.end_date || 'ongoing'}</p>
+                                                            ) : null}
+                                                            {med.notes ? <p className="text-sm mt-2">{med.notes}</p> : null}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+
                                 <TabsContent value="visits">
                                     <Card className="rounded-2xl">
                                         <CardContent className="pt-6">
@@ -271,6 +336,7 @@ export default function HealthPage() {
                     </button>
                     <DialogHeader>
                         <DialogTitle>Add {dialogType}</DialogTitle>
+                        <DialogDescription>Append a new {dialogType} entry to this student&apos;s health record.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         {dialogType === 'vaccination' && (
@@ -318,6 +384,54 @@ export default function HealthPage() {
                                 <div>
                                     <Label>Notes</Label>
                                     <Textarea value={formData.notes || ''} onChange={(e) => setFormData({...formData, notes: e.target.value})} className="rounded-lg" rows={4} />
+                                </div>
+                            </>
+                        )}
+                        {dialogType === 'condition' && (
+                            <>
+                                <div>
+                                    <Label>Condition Name*</Label>
+                                    <Input value={formData.name || ''} onChange={(e) => setFormData({...formData, name: e.target.value})} className="rounded-lg" />
+                                </div>
+                                <div>
+                                    <Label>Diagnosis Date</Label>
+                                    <Input type="date" value={formData.diagnosis_date || ''} onChange={(e) => setFormData({...formData, diagnosis_date: e.target.value})} className="rounded-lg" />
+                                </div>
+                                <div>
+                                    <Label>Notes</Label>
+                                    <Textarea value={formData.notes || ''} onChange={(e) => setFormData({...formData, notes: e.target.value})} className="rounded-lg" rows={3} />
+                                </div>
+                            </>
+                        )}
+                        {dialogType === 'medication' && (
+                            <>
+                                <div>
+                                    <Label>Medication Name*</Label>
+                                    <Input value={formData.name || ''} onChange={(e) => setFormData({...formData, name: e.target.value})} className="rounded-lg" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <Label>Dosage</Label>
+                                        <Input value={formData.dosage || ''} onChange={(e) => setFormData({...formData, dosage: e.target.value})} className="rounded-lg" placeholder="e.g., 5mg" />
+                                    </div>
+                                    <div>
+                                        <Label>Frequency</Label>
+                                        <Input value={formData.frequency || ''} onChange={(e) => setFormData({...formData, frequency: e.target.value})} className="rounded-lg" placeholder="e.g., Twice daily" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <Label>Start Date</Label>
+                                        <Input type="date" value={formData.start_date || ''} onChange={(e) => setFormData({...formData, start_date: e.target.value})} className="rounded-lg" />
+                                    </div>
+                                    <div>
+                                        <Label>End Date</Label>
+                                        <Input type="date" value={formData.end_date || ''} onChange={(e) => setFormData({...formData, end_date: e.target.value})} className="rounded-lg" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label>Notes</Label>
+                                    <Textarea value={formData.notes || ''} onChange={(e) => setFormData({...formData, notes: e.target.value})} className="rounded-lg" rows={2} />
                                 </div>
                             </>
                         )}
