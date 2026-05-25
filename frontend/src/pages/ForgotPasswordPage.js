@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
                 school_code: schoolCode.toUpperCase(),
                 username: username.toLowerCase(),
             });
-            toast.success('If the account exists, a reset token was generated. (Check backend log in dev mode.)');
+            toast.success('If the account exists, a reset code has been sent to the email on file.');
             setStep('reset');
         } catch (error) {
             const msg = error?.response?.data?.detail || 'Request failed';
@@ -116,7 +116,7 @@ export default function ForgotPasswordPage() {
                                     data-testid="reset-token-input"
                                 />
                                 <p className="text-xs text-muted-foreground mt-1">
-                                    In dev mode, the token is printed to the backend log.
+                                    Check the email associated with your Lumina-SIS account. The code is valid for 1 hour.
                                 </p>
                             </div>
                             <div>

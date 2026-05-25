@@ -7,6 +7,8 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import asyncio
+import resend
 import csv
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
@@ -34,6 +36,12 @@ db = client[os.environ['DB_NAME']]
 JWT_SECRET = os.environ.get('JWT_SECRET', 'your-secret-key-change-in-production')
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24
+
+# Resend (transactional email)
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
+if RESEND_API_KEY:
+    resend.api_key = RESEND_API_KEY
 
 # Grading Scheme
 GRADING_SCHEME = [
@@ -3063,7 +3071,51 @@ async def list_audit_logs(
 
 
 # ==================== PASSWORD RESET MODULE ====================
-# Mock email transport: tokens are printed to the backend log.
+# Production: emails are sent via Resend (RESEND_API_KEY in backend/.env).
+# Fallback: if Resend is not configured or send fails, the token is logged to the
+# backend stdout so a developer can recover it from the logs.
+
+async def _send_reset_email(to_email: str, user_name: str, school_code: str, token: str) -> bool:
+    """Send the password-reset token to the user via Resend.
+    Returns True on success, False on failure (so caller can fall back to log)."""
+    if not RESEND_API_KEY or not to_email:
+        return False
+    subject = f"Lumina-SIS password reset code · {school_code}"
+    html = f"""
+    <div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1f2937;">
+      <h2 style="margin:0 0 16px;font-size:22px;color:#111827;">Hi {user_name or 'there'},</h2>
+      <p style="font-size:15px;line-height:1.55;color:#374151;margin:0 0 16px;">
+        You requested a password reset for your <strong>Lumina-SIS</strong> account
+        at school <strong>{school_code}</strong>. Use the code below on the reset page within the next hour:
+      </p>
+      <div style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:12px;padding:18px;text-align:center;margin:16px 0;">
+        <code style="font-size:22px;letter-spacing:2px;font-family:Menlo,Consolas,monospace;color:#111827;">{token}</code>
+      </div>
+      <p style="font-size:13px;line-height:1.55;color:#6b7280;margin:16px 0 0;">
+        If you didn't request this, you can safely ignore this email — your password won't be changed.
+      </p>
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;"/>
+      <p style="font-size:11px;color:#9ca3af;margin:0;">
+        Sent by Lumina-SIS · no-reply
+      </p>
+    </div>
+    """
+    try:
+        # Resend SDK is sync — run in a thread to keep FastAPI non-blocking
+        await asyncio.to_thread(
+            resend.Emails.send,
+            {
+                "from": SENDER_EMAIL,
+                "to": [to_email],
+                "subject": subject,
+                "html": html,
+            },
+        )
+        return True
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Resend send failed for {to_email}: {e}")
+        return False
+
 
 class ForgotPasswordRequest(BaseModel):
     school_code: str
@@ -3077,13 +3129,15 @@ class ResetPasswordRequest(BaseModel):
 
 @api_router.post("/auth/forgot-password")
 async def forgot_password(req: ForgotPasswordRequest):
-    """POST /api/auth/forgot-password — issue a one-time reset token. Response is the same
-    whether the user exists or not (to avoid account enumeration). In dev, the token is
-    logged to the backend console — wire to real SMTP in prod."""
+    """POST /api/auth/forgot-password — issue a one-time reset token. Response is the
+    same whether the user exists or not (to avoid account enumeration). If the user
+    is found AND has an email on file, the token is sent via Resend. If Resend is
+    not configured or fails, the token is logged to the backend console."""
     user = await db.users.find_one(
         {"school_code": req.school_code.upper(), "username": req.username.lower()},
-        {"_id": 0, "id": 1, "name": 1, "username": 1},
+        {"_id": 0, "id": 1, "name": 1, "username": 1, "email": 1},
     )
+    delivery = "none"
     if user:
         token = uuid.uuid4().hex
         now = datetime.now(timezone.utc)
@@ -3096,11 +3150,27 @@ async def forgot_password(req: ForgotPasswordRequest):
             "expires_at": (now + timedelta(hours=1)).isoformat(),
             "used": False,
         })
-        logging.getLogger(__name__).info(
-            f"[FORGOT PASSWORD] school={req.school_code} user={req.username} token={token} (valid 1h)"
-        )
-    # Always 200 — no enumeration
-    return {"message": "If the account exists, a reset link has been generated."}
+        sent = False
+        if user.get("email"):
+            sent = await _send_reset_email(
+                user["email"], user.get("name", ""), req.school_code.upper(), token
+            )
+        if sent:
+            delivery = "email"
+            logging.getLogger(__name__).info(
+                f"[FORGOT PASSWORD] school={req.school_code} user={req.username} delivered=email to={user['email']}"
+            )
+        else:
+            delivery = "log"
+            logging.getLogger(__name__).info(
+                f"[FORGOT PASSWORD] school={req.school_code} user={req.username} token={token} "
+                f"(email send {'failed' if user.get('email') else 'skipped: no email on file'}; valid 1h)"
+            )
+    # Always 200 — no enumeration. `delivery` is only useful in dev/tests.
+    return {
+        "message": "If the account exists, a reset code has been sent to the email on file.",
+        "delivery": delivery,
+    }
 
 
 @api_router.post("/auth/reset-password")

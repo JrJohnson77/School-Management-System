@@ -71,6 +71,14 @@ Rebranded from "EduManager" to "Lumina-SIS" with a modern, sleek UI redesign.
 - [ ] Tech-debt: split server.py (~3k lines) into routers by module
 
 ## Changelog
+- **Feb 2026 (Session 18 — Resend email)**: Wired real transactional email for password resets via **Resend** (`resend>=2.0.0`). Tokens are now sent to the user's `email` field with a nicely formatted HTML body. Implementation:
+  - `RESEND_API_KEY` + `SENDER_EMAIL` env vars in `/app/backend/.env`.
+  - `_send_reset_email()` helper uses `asyncio.to_thread(resend.Emails.send, ...)` to keep FastAPI non-blocking.
+  - Graceful fallback: if Resend send fails (e.g. test-mode recipient restriction) the token is still written to `/var/log/supervisor/backend.err.log` so the dev can recover it.
+  - Response shape: `{ "message": "...", "delivery": "email" | "log" | "none" }` (delivery key is dev-only — message stays generic to prevent account enumeration).
+  - Verified end-to-end: JTECH superuser's email set to `jhemounejohnson1000@gmail.com` (Resend's only-verified-recipient-in-test-mode); reset email delivered with `delivery=email`.
+  - Documented in `/app/memory/test_credentials.md` how to enable arbitrary recipients (verify a domain at resend.com/domains, update `SENDER_EMAIL`).
+
 - **Feb 2026 (Session 17 — 20-item enhancement batch)**:
   - **Auth/Session**: Forgot-password flow with console-log token (dev-mock); `/api/auth/forgot-password` + `/api/auth/reset-password`; axios 401 global interceptor + Session-Expired modal; last-visited-page restored across logout/login via `localStorage[lumina_last_page]` (PublicRoute uses `getLastPage()`).
   - **Gradebook**: Live progress bar + letter grade in selected-student card; class A/B/C/D/E/U distribution bar chart (`GET /api/gradebook/{class_id}/distribution`); lock/unlock period (`POST /api/gradebook/{id}/lock|unlock`) — teachers can lock for their classes, only admins unlock; locked entries reject upserts with 403.
