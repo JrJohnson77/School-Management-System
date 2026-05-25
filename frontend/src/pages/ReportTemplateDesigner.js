@@ -7,6 +7,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Switch } from '../components/ui/switch';
+import LuminaDefaultReportCard from '../components/LuminaDefaultReportCard';
 import { toast } from 'sonner';
 import {
     Save, Loader2, ArrowLeft, Plus, Trash2, Type, Image, Minus, Move,
@@ -30,6 +31,37 @@ const PAPER = {
 };
 
 const FONTS = ['Arial','Times New Roman','Georgia','Helvetica','Verdana','Courier New','Trebuchet MS','Palatino'];
+
+// Sample data used to render a live preview of the Lumina default template
+// in the canvas area when the school hasn't started customizing yet.
+const SAMPLE_REPORT_DATA = {
+    class_info: { name: 'Grade 5A', grade_level: 'Grade 5', teacher_name: 'Ms. Aisha Mensah' },
+    student: {
+        first_name: 'Jordan',
+        middle_name: 'Ama',
+        last_name: 'Boateng',
+        student_id: 'STU-1042',
+        photo_url: '',
+    },
+    grades: {
+        overall_score: 82.5,
+        overall_grade: 'B+',
+        subjects: [
+            { subject: 'English Language', score: 86, grade: 'A', comment: 'Strong writing voice; growing critical reader.' },
+            { subject: 'Mathematics',      score: 79, grade: 'B', comment: 'Good problem solving; revise fractions.' },
+            { subject: 'Integrated Science', score: 90, grade: 'A', comment: 'Excellent — outstanding lab work.' },
+            { subject: 'Social Studies',   score: 74, grade: 'B', comment: 'Engaged in class discussions.' },
+            { subject: 'ICT',              score: 88, grade: 'A', comment: 'Picks up new tools quickly.' },
+            { subject: 'French',           score: 68, grade: 'C', comment: 'Keep practicing oral skills.' },
+            { subject: 'Creative Arts',    score: 92, grade: 'A', comment: 'Original, careful, expressive.' },
+        ],
+    },
+    attendance_summary: { present: 56, absent: 2, late: 1, excused: 1, total: 60 },
+    social_skills: { Punctuality: 'Excellent', Participation: 'Very Good', Behaviour: 'Excellent', Effort: 'Good' },
+    position: 4,
+    teacher_comment: 'Jordan has had a productive term — keep up the steady effort.',
+    principal_comment: 'A wonderful term, Jordan. Your curiosity is a gift — keep using it.',
+};
 
 // ==================== DATA FIELD DEFINITIONS ====================
 const DATA_FIELDS = [
@@ -549,13 +581,10 @@ export default function ReportTemplateDesigner({ schoolCodeProp, embedded = fals
             setRawTemplate(tpl);
             setPaperSize(tpl.paper_size || 'legal');
             setBackgroundUrl(tpl.background_url || '');
-            // Clear any existing elements and set fresh from server
-            // This ensures no duplicate/stale elements persist
-            const newElements = tpl.canvas_elements?.length 
-                ? tpl.canvas_elements 
-                : buildDefaultElements(tpl.school_name);
+            // If the school has existing canvas customizations, load them.
+            // Otherwise leave the canvas EMPTY so the Lumina-default preview shows.
+            const newElements = tpl.canvas_elements?.length ? tpl.canvas_elements : [];
             setElements(newElements);
-            // Clear undo history on fresh load
             setUndoHistory([]);
             setClipboard(null);
         } catch (error) {
@@ -566,6 +595,13 @@ export default function ReportTemplateDesigner({ schoolCodeProp, embedded = fals
     }, [schoolCode]);
 
     useEffect(() => { fetchTemplate(); }, [fetchTemplate]);
+
+    // ---- Customize: switch from Lumina default to a custom canvas ----
+    const handleStartCustomizing = () => {
+        const seeded = buildDefaultElements(rawTemplate?.school_name || schoolCode);
+        setElements(seeded);
+        toast.info('Canvas seeded — start editing. Click Save to persist your custom design.');
+    };
 
     // ---- Reset to Lumina default ----
     const handleResetToDefault = async () => {
@@ -1168,6 +1204,58 @@ export default function ReportTemplateDesigner({ schoolCodeProp, embedded = fals
                                 pointerEvents: 'none',
                             }} />
                         ))}
+
+                        {/* Lumina Default preview — shown when the canvas is empty
+                            (i.e. school is still using the pre-built Lumina template). */}
+                        {elements.length === 0 && (
+                            <div
+                                data-testid="lumina-preview-overlay"
+                                style={{
+                                    position: 'absolute',
+                                    inset: 0,
+                                    overflow: 'auto',
+                                    background: '#ffffff',
+                                    pointerEvents: 'auto',
+                                }}
+                            >
+                                <div style={{ transformOrigin: 'top left', transform: 'scale(0.94)', display: 'inline-block' }}>
+                                    <LuminaDefaultReportCard
+                                        data={SAMPLE_REPORT_DATA}
+                                        classInfo={SAMPLE_REPORT_DATA.class_info}
+                                        term="Term 1"
+                                        academicYear={rawTemplate?.school_year || '2025-2026'}
+                                        totalStudents={28}
+                                        signatures={{}}
+                                        template={rawTemplate}
+                                        school={{ name: rawTemplate?.school_name || schoolCode }}
+                                    />
+                                </div>
+                                {/* CTA */}
+                                <div style={{ position: 'sticky', bottom: 12, left: 12, display: 'flex', justifyContent: 'center' }}>
+                                    <button
+                                        onClick={handleStartCustomizing}
+                                        data-testid="customize-template-btn"
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: 8,
+                                            padding: '10px 18px',
+                                            borderRadius: 999,
+                                            background: '#4F46E5',
+                                            color: '#fff',
+                                            fontSize: 13,
+                                            fontWeight: 600,
+                                            border: 'none',
+                                            boxShadow: '0 8px 24px rgba(79, 70, 229, 0.35)',
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        <Sparkles style={{ width: 14, height: 14 }} />
+                                        Customize on canvas
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Elements */}
                         {elements.map(el => (
