@@ -1,0 +1,63 @@
+{
+  "summary": "Backend: 27/27 pytest pass (forgot/reset password, audit logs, gradebook lock+distribution, report-card lock, attendance summary, admissions convert+idempotent, regression smoke). Frontend: Forgot-password page, ConfirmDialog wiring on Classes/Schools/Grades, Audit Log page (26 rows), Session-Expired modal, StudentProfilePage with all 6 tabs, and Gradebook distribution chart (6 bars after class selection) ALL verified working. Two issues found: (1) last-page redirect after logout/login goes to /dashboard instead of last-visited /students; (2) the report-cards page report toolbar (Preview/Export PDF/Print/Send to parents/Lock all) buttons not found on /report-cards landing.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/admissions/{id}", "issue": "AdmissionResponse Pydantic model omits 'converted_student_id' (and 'status' override stays but converted link is dropped). DB stores it correctly and convert endpoint is idempotent; only the GET response hides the field. Add converted_student_id: Optional[str] = None to AdmissionResponse."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "AuthContext / LoginPage", "issue": "After logout, lumina_last_page stored as '/students' but on re-login user is redirected to /dashboard (expected /students per spec). Either logout is clearing lumina_last_page or login redirect is hardcoded to /dashboard.", "selector": "post-login URL", "priority": "MEDIUM"},
+      {"component": "ReportCardsPage (/report-cards)", "issue": "Toolbar buttons (Preview, Export PDF, Print, Send to parents, Lock all) not visible on initial /report-cards page render. They may only appear after selecting class+term+year+student, but the spec asserts the toolbar should be present on /reports → term-reports tab. The route /reports does not exist; only /report-cards is registered in App.js. Confirm the intended route and ensure toolbar is rendered once filters are chosen.", "selector": "button:has-text('Preview')", "priority": "HIGH"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "POST /api/auth/forgot-password (known user) -> 200",
+    "POST /api/auth/forgot-password (unknown user) -> 200 same message",
+    "POST /api/auth/reset-password invalid token -> 400",
+    "POST /api/auth/reset-password password<8 -> 400; valid -> 200; new login works; restore to Admin@123 verified",
+    "GET /api/audit-logs admin 200 / teacher 403",
+    "Student create+update+delete writes 3 audit rows visible via /api/audit-logs?entity_type=student&entity_id=",
+    "Gradebook lock by teacher -> 200; upsert on locked entry -> 403; teacher unlock -> 403; admin unlock -> 200; upsert resumes",
+    "GET /api/gradebook/{class_id}/distribution -> 200 buckets {A,B,C,D,E,U}; teacher accessing class not theirs -> 403",
+    "POST /api/report-cards/{id}/lock admin -> 200, DELETE -> 200, GET /report-cards/locks lists; teacher lock -> 403",
+    "GET /api/students/{id}/attendance/summary -> all required keys; bad month -> 400; cross-tenant -> 404; teacher cross-class -> 403",
+    "POST /api/admissions/{id}/convert -> 200 enrolled student; idempotent same id on second call; audit-log row action=convert present",
+    "Regression: /health, /students, /classes, /attendance, /gradebook, /discipline, /enrollment/preview all 200",
+    "FE: /login forgot-password-link visible & navigates to /forgot-password with data-testids forgot-school-code/forgot-username/forgot-submit-btn",
+    "FE: /students lists 148 profile links; clicking opens StudentProfilePage with all 6 tabs (Overview/Grades/Attendance/Health/Discipline/Documents)",
+    "FE: Audit Log link visible in Administration group; /audit-logs renders 26 rows",
+    "FE: localStorage.lumina_last_page set to '/students' after navigation",
+    "FE: Session-Expired modal renders when token=garbage; visible message + 'Log in again' button",
+    "FE: Gradebook distribution chart renders with 6 bars (A=5,B=6,C=0,D=0,E=0,U=0) after class selection; '11 students graded' caption",
+    "FE: ConfirmDialog wired on /classes (12 delete buttons present); no window.confirm fallback observed"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_lumina_enhancements.py",
+    "/app/test_reports/pytest/lumina_enhancements.xml"
+  ],
+  "action_items": [
+    "Fix last-page redirect after logout+login: ensure lumina_last_page is preserved across logout (don't clear) OR re-read it in LoginPage's onSuccess handler. Currently goes to /dashboard instead of /students.",
+    "ReportCardsPage (/report-cards) toolbar (Preview/Export PDF/Print/Send to parents/Lock all) — verify these render on the landing view (spec used path '/reports' which doesn't exist; only /report-cards is registered). Confirm intended UX and ensure data-testids report-preview-btn / export-pdf-btn / send-parents-btn / lock-all-btn exist.",
+    "Add 'converted_student_id: Optional[str] = None' to AdmissionResponse so the GET /api/admissions/{id} response surfaces the linked student after conversion."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now 3464 lines — strongly recommend splitting into routers (auth, students, gradebook, admissions, audit) to stay under guidelines.",
+    "AdmissionResponse missing 'converted_student_id' and 'status' set by /convert is correctly persisted but the contract is incomplete — API consumers cannot follow the link.",
+    "/auth/forgot-password logs the token at INFO level to backend stdout — fine for dev console-mock per user choice 1a; ensure CI logs don't leak.",
+    "Catch-all Route * -> /dashboard masks 404s. /reports silently redirects to /dashboard with no warning. Consider a real NotFound page or at least a console.warn when a route fallthrough happens.",
+    "test_credentials.md still has no PARENT account; could not exercise parent path on /attendance/summary."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_lumina_enhancements.py (new, 27 tests, 100% pass)"
+  ],
+  "success_rate": {"backend": "100% (27/27)", "frontend": "~80% (last-page-redirect + report-cards toolbar gaps)"},
+  "test_credentials": "SUNF admin/Admin@123 (used), SUNF teacher sarah.thompson.sunf/Teacher@123, RVSD admin/Admin@123. Admin@123 RESTORED at end of password-reset test.",
+  "seed_data_creation": "Each run creates+deletes TEST_Audit student, TEST_Convert admission+student. Gradebook entry on first SUNF teacher class (Grade 1A) for Term 1 2025-2026 left in place to support distribution-chart visibility (already cleaned up if rerun).",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend 100% green via pytest /app/backend/tests/test_lumina_enhancements.py (45s). Login response key is 'access_token' (not 'token'). Forgot-password token grep regex: '\\[FORGOT PASSWORD\\].*?user=admin\\s+token=([0-9a-f]+)' against /var/log/supervisor/backend.err.log. Report-cards route is /report-cards (NOT /reports as spec stated). Convert button on Admissions only shows when status='accepted' — to test, first PUT an admission to status=accepted before checking UI."
+}

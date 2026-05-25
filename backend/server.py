@@ -250,6 +250,7 @@ class StudentBase(BaseModel):
     # Keep old fields for backward compat
     address: Optional[str] = ""
     parent_id: Optional[str] = None
+    enrollment_status: Optional[str] = "enrolled"
 
 class StudentCreate(StudentBase):
     pass
